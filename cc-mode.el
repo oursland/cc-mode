@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.331 $
-;; Last Modified:   $Date: 1996-12-11 00:34:43 $
+;; Version:         $Revision: 4.332 $
+;; Last Modified:   $Date: 1996-12-16 17:14:57 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -835,8 +835,8 @@ All other Emacsen use the `old-re' suite.")
 (define-abbrev-table 'java-mode-abbrev-table ())
 
 (defun c-mode-fsf-menu (name map)
-  ;; Add menu to a keymap.  FSF menus suck.  Don't add them for
-  ;; XEmacs. This feature test will fail on other than Emacs 19.
+  ;; Add menu to a keymap, but don't add them for XEmacs.  This
+  ;; feature test will fail on other than Emacs 19.
   (condition-case nil
       (progn
 	(define-key map [menu-bar] (make-sparse-keymap))
@@ -5035,7 +5035,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.331 $"
+(defconst c-version "$Revision: 4.332 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
