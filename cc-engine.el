@@ -231,21 +231,19 @@
 
 (defun c-forward-syntactic-ws (&optional lim)
   ;; Forward skip of syntactic whitespace for Emacs 19.
-  (save-restriction
-    (let* ((lim (or lim (point-max)))
-	   (here lim)
-	   (hugenum (point-max)))
-      (narrow-to-region lim (point))
-      (while (/= here (point))
-	(setq here (point))
-	(forward-comment hugenum)
-	;; skip preprocessor directives
-	(when (and (eq (char-after) ?#)
-		   (= (c-point 'boi) (point)))
-	  (while (eq (char-before (c-point 'eol)) ?\\)
-	    (forward-line 1))
-	  (end-of-line))
-	))))
+  (let* ((here (point-max))
+	 (hugenum (point-max)))
+    (while (/= here (point))
+      (setq here (point))
+      (forward-comment hugenum)
+      ;; skip preprocessor directives
+      (when (and (eq (char-after) ?#)
+		 (= (c-point 'boi) (point)))
+	(while (eq (char-before (c-point 'eol)) ?\\)
+	  (forward-line 1))
+	(end-of-line))
+      )
+    (if lim (goto-char (min (point) lim)))))
 
 (defsubst c-beginning-of-macro (&optional lim)
   ;; Go to the beginning of a cpp macro definition.  Leaves point at
@@ -264,18 +262,13 @@
 
 (defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
-  (save-restriction
-    (let* ((lim (or lim (c-point 'bod)))
-	   (here lim)
-	   (hugenum (- (point-max))))
-      (when (< lim (point))
-	(narrow-to-region lim (point))
-	(while (/= here (point))
-	  (setq here (point))
-	  (forward-comment hugenum)
-	  (c-beginning-of-macro))
-	))
-    ))
+  (let* ((here (point-min))
+	 (hugenum (- (point-max))))
+    (while (/= here (point))
+      (setq here (point))
+      (forward-comment hugenum)
+      (c-beginning-of-macro))
+    (if lim (goto-char (max (point) lim)))))
 
 
 ;; Return `c' if in a C-style comment, `c++' if in a C++ style
