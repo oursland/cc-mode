@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.371 $
-;; Last Modified:   $Date: 1997-02-18 03:26:22 $
+;; Version:         $Revision: 4.372 $
+;; Last Modified:   $Date: 1997-02-20 04:07:11 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1283,6 +1283,8 @@ The expansion is entirely correct because it uses the C preprocessor."
    ;;"\\(\\s *implements *[^{]+{\\)?"	;and maybe the adopted protocols list
    )
   "Regexp describing a class or protocol declaration for Java.")
+(defconst c-Java-special-key "\\(implements\\|extends\\|throws\\)[^_]"
+  "Regexp describing Java inheritance and throws clauses.")
 (defconst c-Java-conditional-key
   (concat "\\b\\("
 	  (mapconcat 'identity
@@ -3923,6 +3925,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
+	     injava-inher
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
 	     (inextern-p (and inclass-p
@@ -4111,7 +4114,25 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			     (forward-char -1)
 			     (c-backward-syntactic-ws lim)))
 		       (back-to-indentation)
-		       (looking-at c-class-key))))
+		       (looking-at c-class-key)))
+		;; for Java
+		(and (eq major-mode 'java-mode)
+		     (let ((fence (save-excursion
+				    (c-beginning-of-statement-1 lim)
+				    (point)))
+			   cont done)
+		       (save-excursion
+			 (while (not done)
+			   (cond ((looking-at c-Java-special-key)
+				  (setq injava-inher (cons cont (point))
+					done t))
+				 ((or (not (c-safe (forward-sexp -1) t))
+				      (<= (point) fence))
+				  (setq done t))
+				 )
+			   (setq cont t)))
+		       injava-inher))
+		)
 	    (cond
 	     ;; CASE 5C.1: non-hanging colon on an inher intro
 	     ((= char-after-ip ?:)
@@ -4124,7 +4145,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((= char-before-ip ?:)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 5C.3: a continued inheritance line
+	     ;; CASE 5C.3: in a Java implements/extends
+	     (injava-inher
+	      (let ((where (cdr injava-inher))
+		    (cont (car injava-inher))
+		    (here (point)))
+		(goto-char where)
+		(cond ((looking-at "throws[^_]")
+		       (c-add-syntax 'func-decl-cont
+				     (progn (c-beginning-of-statement-1 lim)
+					    (c-point 'boi))))
+		      (cont (c-add-syntax 'inher-cont where))
+		      (t (c-add-syntax 'inher-intro
+				       (progn (goto-char (cdr injava-inher))
+					      (c-beginning-of-statement-1 lim)
+					      (point))))
+		      )))
+	     ;; CASE 5C.4: a continued inheritance line
 	     (t
 	      (c-beginning-of-inheritance-list lim)
 	      (c-add-syntax 'inher-cont (point))
@@ -4167,23 +4204,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(= (following-char) ?:))
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
-	     ;; CASE 5D.3: Java extends, implements, and throws clauses
-	     ((and (eq major-mode 'java-mode)
-		   (save-excursion
-		     (prog1
-			 (re-search-forward
-			  "\\<\\(implements\\|extents\\|throws\\)\\>[^_]"
-			  indent-point t)
-		       (setq placeholder (match-beginning 1)))))
-	      (if (string= (buffer-substring (match-beginning 1)
-					     (match-end 1))
-			   "throws")
-		  (c-add-syntax 'func-decl-cont placeholder)
-		(c-add-syntax 'inher-cont placeholder)))
-	     ;; CASE 5D.4: perhaps a multiple inheritance line?
+	     ;; CASE 5D.3: perhaps a multiple inheritance line?
 	     ((looking-at c-inher-key)
 	      (c-add-syntax 'inher-cont (c-point 'boi)))
-	     ;; CASE 5D.5: perhaps a template list continuation?
+	     ;; CASE 5D.4: perhaps a template list continuation?
 	     ((save-excursion
 		(skip-chars-backward "^<" lim)
 		;; not sure if this is the right test, but it should
@@ -4192,7 +4216,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (not (c-in-literal lim))))
 	      ;; we can probably indent it just like and arglist-cont
 	      (c-add-syntax 'arglist-cont (point)))
-	     ;; CASE 5D.6: perhaps a top-level statement-cont
+	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
 	      ;; skip over any access-specifiers
@@ -4306,10 +4330,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
-	    (if (and (eq major-mode 'java-mode)
-		     (looking-at c-Java-class-key))
-		(c-add-syntax 'inher-intro (c-point 'boi))
-	      (c-add-syntax 'topmost-intro-cont (c-point 'boi))))
+	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))				; end CASE 5
 	 ;; CASE 6: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
@@ -4882,8 +4903,10 @@ With universal argument, inserts the analysis as a comment on that line."
     (let ((cs-curcol (progn (goto-char (cdr langelem))
 			    (current-column))))
       (forward-word 1)
-      (c-forward-syntactic-ws)
-      (- (current-column) cs-curcol))))
+      (if (looking-at "[ \t]*$")
+	  cs-curcol
+	(c-forward-syntactic-ws)
+	(- (current-column) cs-curcol)))))
 
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
@@ -5158,7 +5181,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.371 $"
+(defconst c-version "$Revision: 4.372 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
