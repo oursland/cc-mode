@@ -203,19 +203,28 @@ If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, newlines are inserted before and
 after braces based on the value of `c-hanging-braces-alist'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line before the brace,
-the brace is inserted inside a literal, or `c-syntactic-indentation'
-is nil.
+Also, the line is re-indented unless a numeric ARG is supplied, the
+brace is inserted inside a literal, or `c-syntactic-indentation' is
+nil.
 
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
   (interactive "*P")
   (let* ((c-state-cache (c-parse-state))
 	 (safepos (c-safe-position (point) c-state-cache))
-	 (literal (c-in-literal safepos)))
-    (if (or literal arg)
-	(self-insert-command (prefix-numeric-value arg))
+	 (literal (c-in-literal safepos))
+	 ;; We want to inhibit blinking the paren since this will be
+	 ;; most disruptive.  We'll blink it ourselves later on.
+	 (old-blink-paren blink-paren-function)
+	 blink-paren-function)
+    (cond
+     ((or literal arg)
+      (self-insert-command (prefix-numeric-value arg)))
+     ((not (looking-at "[ \t]*$"))
+      (self-insert-command (prefix-numeric-value arg))
+      (if c-syntactic-indentation
+	  (indent-according-to-mode)))
+     (t
       (let* ((syms
 	      ;; This is the list of brace syntactic symbols that can
 	      ;; hang.  If any new ones are added to c-offsets-alist,
@@ -230,10 +239,6 @@ This function does various newline cleanups based on the value of
 		namespace-open namespace-close
 		inexpr-class-open inexpr-class-close
 		))
-	    ;; we want to inhibit blinking the paren since this will
-	    ;; be most disruptive. we'll blink it ourselves later on
-	    (old-blink-paren blink-paren-function)
-	    blink-paren-function
 	    (insertion-point (point))
 	    delete-temp-newline
 	    (preserve-p (and (not (bobp))
@@ -309,8 +314,7 @@ This function does various newline cleanups based on the value of
 						   t))))
 			(setq c-state-cache
 			      (c-hack-state (point) 'open c-state-cache)))))
-		(if c-syntactic-indentation
-		    (indent-according-to-mode)))
+		(indent-according-to-mode))
 	      (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
 						  (- (c-point 'boi) old-ind)
 						  c-state-cache))
@@ -345,11 +349,7 @@ This function does various newline cleanups based on the value of
 		      c-state-cache (c-parse-state)
 		      syntax nil))))
 	  )
-	(when (and c-syntactic-indentation
-		   (save-excursion
-		     (backward-char)
-		     (skip-chars-backward " \t")
-		     (bolp)))
+	(when c-syntactic-indentation
 	  ;; Now adjust the line's indentation.  Don't update the state
 	  ;; cache since c-guess-basic-syntax isn't called when
 	  ;; c-syntactic-context is set.
@@ -410,21 +410,21 @@ This function does various newline cleanups based on the value of
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
-	(when (and c-syntactic-indentation
-		   (memq 'after newlines))
-	  (newline)
-	  ;; update on c-state-cache
-	  (let* ((bufpos (- (point) 2))
-		 (which (if (eq (char-after bufpos) ?{) 'open 'close))
-		 (c-state-cache (c-hack-state bufpos which c-state-cache)))
-	    (indent-according-to-mode)))
-	;; blink the paren
-	(and (eq last-command-char ?\})
-	     old-blink-paren
-	     (save-excursion
-	       (c-backward-syntactic-ws safepos)
-	       (funcall old-blink-paren)))
-	))))
+	(if (memq 'after newlines)
+	    (progn
+	      (newline)
+	      ;; update on c-state-cache
+	      (let* ((bufpos (- (point) 2))
+		     (which (if (eq (char-after bufpos) ?{) 'open 'close))
+		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
+		(indent-according-to-mode))))
+	)))
+    ;; blink the paren
+    (and (eq last-command-char ?\})
+	 old-blink-paren
+	 (save-excursion
+	   (c-backward-syntactic-ws safepos)
+	   (funcall old-blink-paren)))))
 
 (defun c-electric-slash (arg)
   "Insert a slash character.
@@ -487,9 +487,8 @@ or \"/ah\" string on the mode line, a newline might be inserted.  See
 the variable `c-hanging-semi&comma-criteria' for how newline insertion
 is determined.
 
-When semicolon is inserted, the line is re-indented unless a numeric
-arg is supplied, point is inside a literal, or there are
-non-whitespace characters on the line following the semicolon, or
+When a semicolon is inserted, the line is re-indented unless a numeric
+arg is supplied, point is inside a literal, or
 `c-syntactic-indentation' is nil.
 
 Based on the value of `c-cleanup-list', this function cleans up commas
@@ -500,15 +499,14 @@ following brace lists and semicolons following defuns."
 	 (here (point))
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
-    (if (or literal
-	    arg
-	    (not (looking-at "[ \t]*$")))
+    (if (or literal arg)
 	(self-insert-command (prefix-numeric-value arg))
       ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
       ;; do all cleanups and newline insertions if c-auto-newline is
       ;; turned on
-      (if (not c-auto-newline)
+      (if (or (not c-auto-newline)
+	      (not (looking-at "[ \t]*$")))
 	  (if c-syntactic-indentation
 	      (indent-according-to-mode))
 	;; clean ups
@@ -542,10 +540,9 @@ following brace lists and semicolons following defuns."
 	      ;; only 'stop specifically says do not add a newline
 	      (setq add-newline-p (not (eq answer 'stop)))
 	      ))
-	  (when (and add-newline-p
-		     c-syntactic-indentation)
-	    (newline)
-	    (indent-according-to-mode))
+	  (if add-newline-p
+	      (progn (newline)
+		     (indent-according-to-mode)))
 	  )))))
 
 (defun c-electric-colon (arg)
@@ -555,8 +552,7 @@ If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, newlines are inserted before and
 after colons based on the value of `c-hanging-colons-alist'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the colon, the
+Also, the line is re-indented unless a numeric ARG is supplied, the
 colon is inserted inside a literal, or `c-syntactic-indentation' is
 nil.
 
@@ -568,10 +564,14 @@ value of `c-cleanup-list'."
 	 syntax newlines is-scope-op
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
-    (if (or literal
-	    arg
-	    (not (looking-at "[ \t]*$")))
-	(self-insert-command (prefix-numeric-value arg))
+    (cond
+     ((or literal arg)
+      (self-insert-command (prefix-numeric-value arg)))
+     ((not (looking-at "[ \t]*$"))
+      (self-insert-command (prefix-numeric-value arg))
+      (if c-syntactic-indentation
+	  (indent-according-to-mode)))
+     (t
       ;; insert the colon, then do any specified cleanups
       (self-insert-command (prefix-numeric-value arg))
       (let ((pos (- (point-max) (point)))
@@ -629,7 +629,7 @@ value of `c-cleanup-list'."
 	  (progn
 	    (newline)
 	    (indent-according-to-mode)))
-      )))
+      ))))
 
 (defun c-electric-lt-gt (arg)
   "Insert a less-than, or greater-than character.
@@ -655,10 +655,9 @@ will not be re-indented."
 Some newline cleanups are done if appropriate; see the variable
 `c-cleanup-list'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the
-parenthesis, the parenthesis is inserted inside a literal, or
-`c-syntactic-indentation' is nil."
+Also, the line is re-indented unless a numeric ARG is supplied, the
+parenthesis is inserted inside a literal, or `c-syntactic-indentation'
+is nil."
   (interactive "*P")
   (let (;; shut this up
 	(c-echo-syntactic-information-p nil))
@@ -672,9 +671,9 @@ parenthesis, the parenthesis is inserted inside a literal, or
 	     (old-blink-paren blink-paren-function)
 	     blink-paren-function)
 	(self-insert-command (prefix-numeric-value arg))
+	(if c-syntactic-indentation
+	    (indent-according-to-mode))
 	(when (looking-at "[ \t]*$")
-	  (if c-syntactic-indentation
-	      (indent-according-to-mode))
 	  (when c-auto-newline
 	    ;; Do all appropriate clean ups
 	    (let ((here (point))
@@ -1449,15 +1448,15 @@ literals (comments and strings) and inside preprocessor directives,
 but the line is always reindented.
 
 If `c-syntactic-indentation' is t, indentation is done according to
-the syntactic context.  If it's nil, the line is just indented one
+the syntactic context.  A numeric argument, regardless of its value,
+means indent rigidly all the lines of the expression starting after
+point so that this line becomes properly indented.  The relative
+indentation among the lines of the expression is preserved.
+
+If `c-syntactic-indentation' is nil, the line is just indented one
 step according to `c-basic-offset'.  In this mode, a numeric argument
 indents a number of such steps, positive or negative, and an empty
 prefix argument is equivalent to -1.
-
-If `c-syntactic-indentation' is t, then a numeric argument, regardless
-of its value, means indent rigidly all the lines of the expression
-starting after point so that this line becomes properly indented.  The
-relative indentation among the lines of the expression is preserved.
 
   [*] The amount and kind of whitespace inserted is controlled by the
   variable `c-insert-tab-function', which is called to do the actual
@@ -1580,8 +1579,9 @@ syntactically."
       (set-marker here nil))))
 
 (defun c-indent-region (start end &optional quiet)
-  "Indent every line whose first char is between START and END inclusive.
-Be silent about syntactic errors if the optional argument QUIET is non-nil."
+  "Indent syntactically every line whose first char is between START
+and END inclusive.  Be silent about syntactic errors if the optional
+argument QUIET is non-nil."
   (save-excursion
     (goto-char start)
     ;; Advance to first nonblank line.
@@ -1672,7 +1672,8 @@ Be silent about syntactic errors if the optional argument QUIET is non-nil."
   (c-region-is-active-p))
 
 (defun c-indent-line-or-region ()
-  "When the region is active, indent it.  Otherwise indent the current line."
+  "When the region is active, indent it syntactically.  Otherwise
+indent the current line."
   ;; Emacs has a variable called mark-active, XEmacs uses region-active-p
   (interactive)
   (if (c-region-is-active-p)
@@ -2548,7 +2549,9 @@ If a fill prefix is specified, it overrides all the above."
   "Do a line break suitable to the context.
 
 When point is outside a comment, insert a newline and indent according
-to the syntactic context.
+to the syntactic context, unless `c-syntactic-indentation' is nil,
+which causes the new line to be indented as the previous non-empty
+line instead.
 
 When point is inside a comment, continue it with the appropriate
 comment prefix (see the `c-comment-prefix-regexp' and
@@ -2569,14 +2572,16 @@ C++-style line comment doesn't count as inside the comment, though."
       (newline)
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
+      ;; That also fixes the indentation when c-syntactic-indentation
+      ;; is nil.
       (let ((col (save-excursion
 		   (forward-line -1)
-		   (while (progn (back-to-indentation)
-				 (and (looking-at "^\\s *$")
-				      (= (forward-line -1) 0))))
-		   (current-column))))
+		   (while (and (looking-at "^\\s *$")
+			       (= (forward-line -1) 0)))
+		   (current-indentation))))
 	(indent-to col))
-      (indent-according-to-mode))))
+      (if c-syntactic-indentation
+	  (indent-according-to-mode)))))
 
 
 (cc-provide 'cc-cmds)
