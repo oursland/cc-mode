@@ -673,7 +673,10 @@ to be set as a file local variable.")
 			      (cc-test-log
 			       "%s:%d: c-guess-basic-syntax error: %s"
 			       filename (1+ (count-lines (point-min) (point)))
-			       (error-message-string err)))
+			       (error-message-string err))
+			      (when cc-test-last-backtrace
+				(cc-test-log "%s" cc-test-last-backtrace)
+				(setq cc-test-last-backtrace nil)))
 			  (signal (car err) (cdr err)))
 			""))
 		     ))
@@ -702,7 +705,10 @@ to be set as a file local variable.")
 			  "%s:%d: c-indent-line error: %s"
 			  filename (1+ (count-lines (point-min)
 						    (c-point 'bol)))
-			  (error-message-string err)))
+			  (error-message-string err))
+			 (when cc-test-last-backtrace
+			   (cc-test-log "%s" cc-test-last-backtrace)
+			   (setq cc-test-last-backtrace nil)))
 		     (signal (car err) (cdr err))))))))
 
 	  (cc-test-tmp-message "Testing %s" filename)
