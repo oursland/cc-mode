@@ -396,19 +396,71 @@ This function does not do any hidden buffer changes."
   (or count (setq count 1))
   `(c-forward-sexp ,(if (numberp count) (- count) `(- ,count))))
 
+
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
-;;
-;; These functions do not do any hidden buffer changes.
-(defmacro c-up-list-forward (pos)
-  `(c-safe (scan-lists ,pos 1 1)))
-(defmacro c-up-list-backward (pos)
-  `(c-safe (scan-lists ,pos -1 1)))
-(defmacro c-down-list-forward (pos)
-  `(c-safe (scan-lists ,pos 1 -1)))
-(defmacro c-down-list-backward (pos)
-  `(c-safe (scan-lists ,pos -1 -1)))
 
+(defmacro c-up-list-forward (&optional pos)
+  "Return the first position after the list sexp containing POS,
+or nil if no such position exists.  The point is used if POS is left out.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (scan-lists ,(or pos `(point)) 1 1)))
+
+(defmacro c-up-list-backward (&optional pos)
+  "Return the position of the start of the list sexp containing POS,
+or nil if no such position exists.  The point is used if POS is left out.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (scan-lists ,(or pos `(point)) -1 1)))
+
+(defmacro c-down-list-forward (&optional pos)
+  "Return the first position inside the first list sexp after POS,
+or nil if no such position exists.  The point is used if POS is left out.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (scan-lists ,(or pos `(point)) 1 -1)))
+
+(defmacro c-down-list-backward (&optional pos)
+  "Return the last position inside the last list sexp before POS,
+or nil if no such position exists.  The point is used if POS is left out.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (scan-lists ,(or pos `(point)) -1 -1)))
+
+(defmacro c-go-up-list-forward (&optional pos)
+  "Move the point to the first position after the list sexp containing POS,
+or the point if POS is left out.  Return t if such a position exists,
+otherwise nil is returned and the point isn't moved.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 1)) t))
+
+(defmacro c-go-up-list-backward (&optional pos)
+  "Move the point to the position of the start of the list sexp containing POS,
+or the point if POS is left out.  Return t if such a position exists,
+otherwise nil is returned and the point isn't moved.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 1)) t))
+
+(defmacro c-go-down-list-forward (&optional pos)
+  "Move the point to the first position inside the first list sexp after POS,
+or the point if POS is left out.  Return t if such a position exists,
+otherwise nil is returned and the point isn't moved.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 -1)) t))
+
+(defmacro c-go-down-list-backward (&optional pos)
+  "Move the point to the last position inside the last list sexp before POS,
+or the point if POS is left out.  Return t if such a position exists,
+otherwise nil is returned and the point isn't moved.
+
+This function does not do any hidden buffer changes."
+  `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t))
+
+
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
@@ -931,7 +983,7 @@ This macro does not do any hidden buffer changes."
       (setq args (cdr args)))
 
     (or args
-	(error "No assignments in `c-lang-defconst'"))
+	(error "No assignments in `c-lang-defconst' for %s" name))
 
     ;; Rework ARGS to an association list to make it easier to handle.
     ;; It's reversed at the same time to make it easier to implement
