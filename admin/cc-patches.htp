@@ -3,21 +3,9 @@ Author: bwarsaw@python.org
 
 <h1>CC Mode Patches</h1>
 
-The <a href="index.html">main distribution</a> is CC Mode version
-4.379, but there have been a number of patches developed since then.
-These are being distributed in Unix diff(1) patch form instead of
-updating the tarball -- mostly because that makes life easier for me!
-If you have a version older than 4.379, you should first download the
-tarball, then apply the appropriate patch set described below.
-
-<p>
-<a href="http://www.xemacs.org/">XEmacs 19.15</a> was released with CC
-Mode version 4.388.  <a href="patches/cc-patch-1.txt">Here</a>
-is a patch to get
-you from 4.388 to the latest version.  This is primarily a bug fix
-patch, with an emphasis on improved Java support.
-
-<p>
-If you grabbed the 4.379 tarball, <a href="patches/cc-patch-2.txt">here
-</a> is a patch to get you to version 4.388.  The improves the Java
-support.
+CC Mode version 5.11 is the first public v5 release.  There are no
+patches available to get you from version 4.379 to version 5.11.  If
+you are using the last beta release 5.09, then
+<a href="patches/cc-mode-5.09-5.11.txt">this patch</a> will upgrade
+you to version 5.11.  Be sure to run <code>make</code> after patching
+to rebuild the <code>.elc</code> files.
