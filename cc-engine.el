@@ -85,6 +85,7 @@
 (cc-bytecomp-defun c-awk-completed-stmt-ws-ends-line-p)
 (cc-bytecomp-defun c-awk-completed-stmt-ws-ends-prev-line-p)
 (cc-bytecomp-defun c-awk-prev-line-incomplete-p)
+(cc-bytecomp-defun c-awk-after-change)
 
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
