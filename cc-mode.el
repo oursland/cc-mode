@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.198 $
-;; Last Modified:   $Date: 1995-04-19 00:27:05 $
+;; Version:         $Revision: 4.199 $
+;; Last Modified:   $Date: 1995-04-19 01:08:20 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-19 00:27:05 $|$Revision: 4.198 $|
+;; |$Date: 1995-04-19 01:08:20 $|$Revision: 4.199 $|
 
 ;;; Code:
 
@@ -397,7 +397,10 @@ one of the following values:
 
   nil       -- no determination made, continue checking
   non-nil   -- insert a newline, and stop checking
-  'stop     -- do not insert a newline, but stop checking")
+  'stop     -- do not insert a newline, but stop checking
+
+If every function in the list is called with no determination made,
+then no newline is inserted.")
 
 (defvar c-hanging-comment-ender-p t
   "*If nil, `c-fill-paragraph' leaves C block comment enders on their own line.
@@ -4565,7 +4568,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.198 $"
+(defconst c-version "$Revision: 4.199 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
