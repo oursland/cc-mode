@@ -4,7 +4,7 @@ void DetectorImp<T, U>::submitOp(AppTransaction*) {}
 
 class DetectOS {
     virtual Detector<SubConfigChange,  AppMO>&
-	detector(SubConfigChange* = 0,  AppMO* = 0) const;
+    detector(SubConfigChange* = 0,  AppMO* = 0) const;
     // ...
 };
 
@@ -12,6 +12,6 @@ class DetectOS {
 class DetectOS {
     // ...
     virtual Detector<SubConfigChange,  AppMO>&
-	detector(SubConfigChange* = 0,  AppMO* = 0) const;
+    detector(SubConfigChange* = 0,  AppMO* = 0) const;
     // ...
 };
