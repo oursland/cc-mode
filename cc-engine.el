@@ -6649,9 +6649,9 @@ This function does not do any hidden buffer changes."
 	;; Set syntactic-relpos.
 	(let ((p c-syntactic-context))
 	  (while (and p
-		      (if (integerp (car-safe (cdr-safe (car p))))
+		      (if (integerp (c-langelem-pos (car p)))
 			  (progn
-			    (setq syntactic-relpos (car (cdr (car p))))
+			    (setq syntactic-relpos (c-langelem-pos (car p)))
 			    nil)
 			t))
 	    (setq p (cdr p))))
@@ -6709,8 +6709,8 @@ This function does not do any hidden buffer changes."
    ((numberp offset)       offset)
    ((functionp offset)     (c-evaluate-offset
 			    (funcall offset
-				     (cons (car langelem)
-					   (car-safe (cdr langelem))))
+				     (cons (c-langelem-sym langelem)
+					   (c-langelem-pos langelem)))
 			    langelem symbol))
    ((vectorp offset)       offset)
    ((null offset)          nil)
@@ -6732,7 +6732,7 @@ This function does not do any hidden buffer changes."
   ;; given then the first is the relpos (or nil).  The symbol is
   ;; matched against `c-offsets-alist' and the offset calculated from
   ;; that is returned.
-  (let* ((symbol (car langelem))
+  (let* ((symbol (c-langelem-sym langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
     (if match
@@ -6752,8 +6752,9 @@ This function does not do any hidden buffer changes."
   ;; someone is calling it directly.  It takes an old style syntactic
   ;; element on the form (SYMBOL . RELPOS) and converts it to the new
   ;; list form.
-  (if (cdr langelem)
-      (c-calc-offset (list (car langelem) (cdr langelem)))
+  (if (c-langelem-pos langelem)
+      (c-calc-offset (list (c-langelem-sym langelem)
+			   (c-langelem-pos langelem)))
     (c-calc-offset langelem)))
 
 (defun c-get-syntactic-indentation (langelems)
@@ -6786,7 +6787,7 @@ This function does not do any hidden buffer changes."
 	  ;; Use the anchor position from the first syntactic
 	  ;; element with one.
 	  (unless anchor
-	    (let ((relpos (car-safe (cdr (car langelems)))))
+	    (let ((relpos (c-langelem-pos (car langelems))))
 	      (if relpos
 		  (setq anchor relpos)))))
 

@@ -91,7 +91,7 @@ statement-cont.)
 Works with: topmost-intro-cont."
   (save-excursion
     (beginning-of-line)
-    (c-backward-syntactic-ws (cdr langelem))
+    (c-backward-syntactic-ws (c-langelem-pos langelem))
     (if (memq (char-before) '(?} ?,))
 	c-basic-offset)))
 
@@ -115,7 +115,7 @@ indent such cases this way.
 
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (goto-char (1+ (elt c-syntactic-element 2)))
+    (goto-char (1+ (c-langelem-2nd-pos c-syntactic-element)))
 
     ;; Don't stop in the middle of a special brace list opener
     ;; like "({".
@@ -172,7 +172,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
       ;; isn't, go back to the last position in it.  We do this by
       ;; stepping back over open parens until we get to the open paren
       ;; of our argument list.
-      (let ((open-paren (elt c-syntactic-element 2))
+      (let ((open-paren (c-langelem-2nd-pos c-syntactic-element))
 	    (paren-state (c-parse-state)))
 	(while (not (eq (car paren-state) open-paren))
 	  (goto-char (car paren-state))
@@ -241,8 +241,9 @@ Works with: Almost all symbols, but are typically most useful on
 arglist-close, brace-list-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
     (let (special-list paren-start savepos)
-      (if (memq (car langelem) '(arglist-cont-nonempty arglist-close))
-	  (goto-char (elt c-syntactic-element 2))
+      (if (memq (c-langelem-sym langelem)
+		'(arglist-cont-nonempty arglist-close))
+	  (goto-char (c-langelem-2nd-pos c-syntactic-element))
 	(beginning-of-line)
 	(c-go-up-list-backward))
 
@@ -354,7 +355,7 @@ Works with: All *-close symbols."
 
 Works with: stream-op."
   (save-excursion
-    (goto-char (cdr langelem))
+    (goto-char (c-langelem-pos langelem))
     (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
     (goto-char (match-beginning 0))
     (vector (current-column))))
@@ -383,7 +384,8 @@ Works with: inher-cont, member-init-cont."
 	   (char-after-ip (progn
 			    (skip-chars-forward " \t")
 			    (char-after))))
-      (if (cdr langelem) (goto-char (cdr langelem)))
+      (if (c-langelem-pos langelem)
+	  (goto-char (c-langelem-pos langelem)))
 
       ;; This kludge is necessary to support both inher-cont and
       ;; member-init-cont, since they have different anchor positions.
@@ -417,7 +419,7 @@ class Foo             class Foo
 
 Works with: inher-cont."
   (save-excursion
-    (goto-char (cdr langelem))
+    (goto-char (c-langelem-pos langelem))
     (forward-word 1)
     (if (looking-at "[ \t]*$")
 	c-basic-offset
@@ -441,7 +443,7 @@ Works with: func-decl-cont."
   (save-excursion
     (let* ((lim (1- (c-point 'bol)))
 	   (throws (catch 'done
-		     (goto-char (cdr langelem))
+		     (goto-char (c-langelem-pos langelem))
 		     (while (zerop (c-forward-token-2 1 t lim))
 		       (if (looking-at "throws\\>[^_]")
 			   (throw 'done t))))))
@@ -539,13 +541,13 @@ Works with: The `c' syntactic symbol."
 	    ;; matches comment-start-skip, and choose whichever is
 	    ;; longest.
 	    (max (save-excursion
-		   (goto-char (1+ (cdr langelem)))
+		   (goto-char (1+ (c-langelem-pos langelem)))
 		   (if (and (match-string 0)
 			    (looking-at (regexp-quote (match-string 0))))
 		       (- (match-end 0) (match-beginning 0))
 		     0))
 		 (save-excursion
-		   (goto-char (cdr langelem))
+		   (goto-char (c-langelem-pos langelem))
 		   (looking-at comment-start-skip)
 		   (- (or (match-end 1)
 			  (save-excursion
@@ -561,7 +563,7 @@ Works with: The `c' syntactic symbol."
 	  (vector (current-column))
 	(forward-line -1)
 	(back-to-indentation)
-	(if (>= (cdr langelem) (point))
+	(if (>= (c-langelem-pos langelem) (point))
 	    ;; On the second line in the comment.
 	    (if (zerop prefixlen)
 		;; No nonempty comment prefix. Align after comment
@@ -582,9 +584,9 @@ Works with: The `c' syntactic symbol."
 	      ;; Javadoc style comments.
 	      (if (> starterlen prefixlen)
 		  (progn
-		    (goto-char (cdr langelem))
+		    (goto-char (c-langelem-pos langelem))
 		    (vector (1+ (current-column))))
-		(goto-char (+ (cdr langelem) starterlen 1))
+		(goto-char (+ (c-langelem-pos langelem) starterlen 1))
 		(vector (- (current-column) prefixlen))))
 	  ;; Not on the second line in the comment.  If the previous
 	  ;; line has a nonempty comment prefix, align with it.
@@ -595,14 +597,14 @@ Works with: The `c' syntactic symbol."
 	    (goto-char here)
 	    (back-to-indentation)
 	    (if (looking-at (concat "\\(" c-current-comment-prefix "\\)\\*/"))
-		(goto-char (cdr langelem))
+		(goto-char (c-langelem-pos langelem))
 	      (while (and (zerop (forward-line -1))
 			  (looking-at "^[ \t]*$")))
 	      (back-to-indentation)
-	      (if (< (point) (cdr langelem))
+	      (if (< (point) (c-langelem-pos langelem))
 		  ;; Align with the comment starter rather than
 		  ;; with the code before it.
-		  (goto-char (cdr langelem)))))
+		  (goto-char (c-langelem-pos langelem)))))
 	  (vector (current-column)))))))
 
 (defun c-lineup-comment (langelem)
@@ -667,9 +669,10 @@ If there is no statement after the opening brace to align with, nil is
 returned.  This makes the function usable in list expressions.
 
 Works with: The `statement' syntactic symbol."
-  (if (eq (char-after (cdr langelem)) ?{)
+  (if (eq (char-after (c-langelem-pos langelem)) ?{)
       (save-excursion
-	(if (cdr langelem) (goto-char (cdr langelem)))
+	(if (c-langelem-pos langelem)
+	    (goto-char (c-langelem-pos langelem)))
 	(forward-char 1)
 	(skip-chars-forward " \t")
 	(unless (eolp)
@@ -685,20 +688,20 @@ Works with: topmost-intro-cont, statement-cont, arglist-cont,
 arglist-cont-nonempty."
   (let (startpos endpos equalp)
 
-    (if (eq (car langelem) 'arglist-cont-nonempty)
+    (if (eq (c-langelem-sym langelem) 'arglist-cont-nonempty)
 	;; If it's an arglist-cont-nonempty then we're only interested
 	;; in equal signs outside it.  We don't search for a "=" on
 	;; the current line since that'd have a different nesting
 	;; compared to the one we should align with.
 	(save-excursion
 	  (save-restriction
-	    (setq endpos (nth 2 c-syntactic-element))
-	    (narrow-to-region (cdr langelem) endpos)
+	    (setq endpos (c-langelem-2nd-pos c-syntactic-element))
+	    (narrow-to-region (c-langelem-pos langelem) endpos)
 	    (if (setq startpos (c-up-list-backward endpos))
 		(setq startpos (1+ startpos))
-	      (setq startpos (cdr langelem)))))
+	      (setq startpos (c-langelem-pos langelem)))))
 
-      (setq startpos (cdr langelem)
+      (setq startpos (c-langelem-pos langelem)
 	    endpos (point))
 
       ;; Find a syntactically relevant and unnested "=" token on the
@@ -755,8 +758,8 @@ expressions.
 Works with: topmost-intro-cont, statement-cont, arglist-cont,
 arglist-cont-nonempty."
 
-  (if (and (eq (car langelem) 'arglist-cont-nonempty)
-	   (not (eq (nth 2 c-syntactic-element)
+  (if (and (eq (c-langelem-sym langelem) 'arglist-cont-nonempty)
+	   (not (eq (c-langelem-2nd-pos c-syntactic-element)
 		    (c-most-enclosing-brace (c-parse-state)))))
       ;; The innermost open paren is not our one, so don't do
       ;; anything.  This can occur for arglist-cont-nonempty with
@@ -767,7 +770,7 @@ arglist-cont-nonempty."
       (back-to-indentation)
       (let ((operator (and (looking-at "->\\|\\.")
 			   (regexp-quote (match-string 0))))
-	    (stmt-start (cdr langelem)) col)
+	    (stmt-start (c-langelem-pos langelem)) col)
 
 	(when (and operator
 		   (looking-at operator)
@@ -836,11 +839,11 @@ Works with: objc-method-call-cont."
   (save-excursion
     (let* ((extra (save-excursion
 		    (back-to-indentation)
-		    (c-backward-syntactic-ws (cdr langelem))
+		    (c-backward-syntactic-ws (c-langelem-pos langelem))
 		    (if (eq (char-before) ?:)
 			(- c-basic-offset)
 		      0)))
-	   (open-bracket-pos (cdr langelem))
+	   (open-bracket-pos (c-langelem-pos langelem))
            (open-bracket-col (progn
 			       (goto-char open-bracket-pos)
 			       (current-column)))
@@ -864,7 +867,7 @@ Works with: objc-method-args-cont."
     (let* ((here (c-point 'boi))
 	   (curcol (progn (goto-char here) (current-column)))
 	   (eol (c-point 'eol))
-	   (relpos (cdr langelem))
+	   (relpos (c-langelem-pos langelem))
 	   (first-col-column (progn
 			       (goto-char relpos)
 			       (skip-chars-forward "^:" eol)
@@ -888,7 +891,7 @@ Works with: objc-method-args-cont."
     (let* ((here (c-point 'boi))
 	   (curcol (progn (goto-char here) (current-column)))
 	   (eol (c-point 'eol))
-	   (relpos (cdr langelem))
+	   (relpos (c-langelem-pos langelem))
 	   (prev-col-column (progn
 			      (skip-chars-backward "^:" relpos)
 			      (and (eq (char-before) ?:)
@@ -950,7 +953,7 @@ Works with: defun-close, defun-block-intro, block-close,
 brace-list-close, brace-list-intro, statement-block-intro and all in*
 symbols, e.g. inclass and inextern-lang."
   (save-excursion
-    (goto-char (cdr langelem))
+    (goto-char (c-langelem-pos langelem))
     (back-to-indentation)
     (if (eq (char-syntax (char-after)) ?\()
 	0
@@ -1070,7 +1073,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
        ;; This can occur for arglist-cont-nonempty with nested arglist
        ;; starts on the same line.
        (or (not (eq (car elem) 'arglist-cont-nonempty))
-	   (eq (elt c-syntactic-element 2)
+	   (eq (c-langelem-2nd-pos c-syntactic-element)
 	       (c-most-enclosing-brace (c-parse-state))))
 
        ;; Find the ":" to align to.  Look for this first so as to quickly
@@ -1111,7 +1114,7 @@ ACTION associated with `block-close' syntax."
     (let (langelem)
       (if (and (eq syntax 'block-close)
 	       (setq langelem (assq 'block-close c-syntactic-context))
-	       (progn (goto-char (elt langelem 1))
+	       (progn (goto-char (c-langelem-pos langelem))
 		      (if (eq (char-after) ?{)
 			  (c-safe (c-forward-sexp -1)))
 		      (looking-at "\\<do\\>[^_]")))
