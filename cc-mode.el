@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-18 14:25:52 $
-;; Version:         $Revision: 2.114 $
+;; Last Modified:   $Date: 1992-06-18 14:50:28 $
+;; Version:         $Revision: 2.115 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-18 14:25:52 $|$Revision: 2.114 $|
+;; |$Date: 1992-06-18 14:50:28 $|$Revision: 2.115 $|
 
 
 ;; ======================================================================
@@ -63,6 +63,7 @@
   (define-key c++-mode-map "{"         'c++-electric-brace)
   (define-key c++-mode-map "}"         'c++-electric-brace)
   (define-key c++-mode-map ";"         'c++-electric-semi)
+  (define-key c++-mode-map "#"         'c++-electric-pound)
   (define-key c++-mode-map "\e\C-h"    'mark-c-function)
   (define-key c++-mode-map "\e\C-q"    'c++-indent-exp)
   (define-key c++-mode-map "\t"        'c++-indent-command)
@@ -209,6 +210,9 @@ indentation, you will likely need to have c++-relative-offset-p set to
 nil.")
 (defvar c++-delete-function 'backward-delete-char-untabify
   "*Function called by c++-electric-delete when deleting a single char.")
+(defvar c++-electric-pound-behavior nil
+  "*List of behaviors for electric pound insertion.
+Only currently supported behavior is '(alignleft).")
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
@@ -227,7 +231,7 @@ nil.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.114 $
+  "Major mode for editing C++ code.  $Revision: 2.115 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -339,6 +343,10 @@ from their c-mode cousins.
     characters in comment regions. It is recommended that you keep the
     default setting to workaround a nasty emacs bug.  Otherwise, this
     variable contains a list of characters to escape.
+ c++-delete-function
+    Function called by c++-electric-delete when deleting a single char.
+ c++-electric-pound-behavior
+    List of behaviors for electric pound insertion.
 
 Auto-newlining is no longer an all or nothing proposition. To be
 specific I don't believe it is possible to implement a perfect
@@ -552,13 +560,31 @@ backward-delete-char-untabify."
 	 (funcall c++-delete-function (prefix-numeric-value arg)))
 	((let ((bod (c++-point-bod)))
 	   (not (or (c++-in-comment-p bod)
-		    (c++-in-open-string-p bod))))
+		    (c++-in-open-string-p bod)
+		    (save-excursion
+		      (skip-chars-backward " \t")
+		      (= (preceding-char) ?#)))))
 	 (let ((here (point)))
 	   (skip-chars-backward " \t\n")
 	   (if (/= (point) here)
 	       (delete-region (point) here)
 	     (funcall c++-delete-function 1))))
 	(t (funcall c++-delete-function 1))))
+
+(defun c++-electric-pound (arg)
+  (interactive "p")
+  (if (or (c++-in-open-string-p)
+	  (c++-in-comment-p))
+      (self-insert-command arg)
+    (let ((here (make-marker))
+	  (bolp (bolp)))
+      (set-marker here (point))
+      (if (memq 'alignleft c++-electric-pound-behavior)
+	  (beginning-of-line))
+      (self-insert-command arg)
+      (if (not bolp)
+	  (goto-char here))
+      (set-marker here nil))))
 
 (defun c++-electric-brace (arg)
   "Insert character and correct line's indentation."
@@ -824,8 +850,8 @@ of the expression are preserved."
        ((or (c++-in-open-string-p bod)
 	    (c++-in-comment-p bod)
 	    (save-excursion
-	      (back-to-indentation)
-	      (eq (char-after (point)) ?#)))
+	      (skip-chars-backward " \t")
+	      (= (preceding-char) ?#)))
 	(let ((here (point))
 	      (boi (save-excursion (back-to-indentation) (point)))
 	      (indent-p nil))
@@ -1864,7 +1890,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.114 $"
+(defconst c++-version "$Revision: 2.115 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1899,6 +1925,8 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-tab-always-indent
 		       'c++-untame-characters
 		       'c++-relative-offset-p
+		       'c++-electric-pound-behavior
+		       'c++-delete-function
 		       'c-indent-level
 		       'c-continued-statement-offset
 		       'c-continued-brace-offset
