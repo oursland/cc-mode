@@ -245,13 +245,6 @@
 	 (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
 	     (c-add-syntax 'inexpr-class))))))
 
-(defmacro c-auto-newline ()
-  ;; if auto-newline feature is turned on, insert a newline character
-  ;; and return t, otherwise return nil.
-  `(and c-auto-newline
-	(not (c-in-literal))
-	(not (newline))))
-
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
