@@ -1856,7 +1856,7 @@
 		  (c-forward-token-1 1 nil indent-point))
 	      (goto-char containing-sexp))
 	    (forward-char)
-	    (c-forward-syntactic-ws indent-point)
+	    (skip-chars-forward " \t\n\r" indent-point)
 	    (cond
 	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
