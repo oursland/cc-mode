@@ -49,12 +49,6 @@
 
 (cc-require 'cc-defs)
 
-;; Kluge over a frivolous incompatibility on Xemacs's part.  :-(
-;; FIXME:  For release, this can probably be removed (2002/10/19).
-(if (and (boundp 'lookup-syntax-properties)
-         (not (boundp 'parse-sexp-lookup-properties)))
-    (defvaralias 'parse-sexp-lookup-properties 'lookup-syntax-properties))
-
 (defvar awk-mode-syntax-table
   (let ((st (make-syntax-table)))
     (modify-syntax-entry ?\\ "\\" st)
@@ -691,81 +685,12 @@
           (setq anchor-state-/div nil)))
     nil))
 
-;; Regexps written with help from Peter Galbraith <galbraith@mixing.qc.dfo.ca>.
-
-;; Take GNU Emacs's 'words out of the following regexp-opts.  They dont work
-;; in Xemacs 21.4.4.  ACM 2002/9/19.
-(defconst awk-font-lock-keywords
-  (eval-when-compile
-    (list
-     ;; Function names.
-     '("^[ \t]*\\(func\\(tion\\)?\\)\\>[ \t]*\\(\\sw+\\)?"
-       (1 font-lock-keyword-face) (3 font-lock-function-name-face nil t))
-     ;;
-     ;; Variable names.
-     (cons
-      (concat "\\<"
-              (c-regexp-opt
-               '("ARGC" "ARGIND" "ARGV" "BINMODE" "CONVFMT" "ENVIRON" "ERRNO"
-                 "FIELDWIDTHS" "FILENAME" "FNR" "FS" "IGNORECASE" "LINT" "NF"
-                 "NR" "OFMT" "OFS" "ORS" "PROCINFO" "RLENGTH" "RS" "RSTART" "RT"
-                 "SUBSEP" "TEXTDOMAIN" "dev/stdin" "/dev/stdout" "dev/stderr")
-               t) "\\>")
-      'font-lock-variable-name-face)
-     ;; 
-     ;; Special file names.  (ACM, 2002/7/22)
-     ;; The following regexp was created by first evaluating this:
-     ;; (c-regexp-opt '("/dev/stdin" "/dev/stdout" "/dev/stderr" "/dev/fd/n" "/dev/pid"
-     ;;                "/dev/ppid" "/dev/pgrpid" "dev/user") 'words)
-     ;; then removing the "?:" from each "\\(?:" (for backward compatibility),
-     ;; then replacing the "n" in "dev/fd/n" with "[0-9]+".
-     (cons "\\<\\(/dev/\\(fd/[0-9]+\\|p\\(\\(\\(gr\\)?p\\)?id\\)\\|std\\(err\\|\
-in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
-
-     ;; Keywords.
-     (concat "\\<"
-             (c-regexp-opt
-              '("BEGIN" "END" "break" "close" "continue" "delete" "do" "exit" "else"
-                "fflush" "for" "getline" "if" "in" "next" "nextfile" "return" "system"
-                "while") t) "\\>")
-
-     ;; Builtins.
-     (list (concat "\\<"
-                   (c-regexp-opt
-                    '("and" "asort" "atan2" "bindtextdomain" "compl" "cos"
-                      "ctime" "dcgettext" "exp" "extension" "gensub" "gsub"
-                      "index" "int" "length" "log" "lshift" "match" "mktime"
-                      "or" "print" "printf" "rand" "rshift" "sin" "split"
-                      "sprintf" "sqrt" "srand" "strftime" "strtonum" "sub"
-                      "substr" "systime" "time" "tolower" "toupper" "xor") t)
-                   "\\>") 0 c-preprocessor-face)
-
-     ;; gawk debugging keywords.  (ACM, 2002/7/21)
-     (list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
-           0 'font-lock-warning-face)
-
-     ;; User defined functions with a spurious space before the opening
-     ;; parenthesis.  ACM, 2002/5/30.
-     `(,(concat "\\(\\w\\|_\\)" c-awk-escaped-nls* "[ \t]"
-             c-awk-escaped-nls*-with-space* "(") (0 'font-lock-warning-face))
-
-     ;; Space after \ in what looks like an escaped newline.  ACM, 2002/5/31
-     '("\\\\[ \t]+$" 0 font-lock-warning-face t)
-
-     ;; Unbalanced string (") or regexp (/) delimiters.  ACM 2002/02/16.
-     '("\\s|" 0 font-lock-warning-face t nil)
-     ;; Patterns for gawk 3.1 localizable strings ( _"translate me!").  ACM,
-     ;; 2002/5/21
-     '("\\(_\\)\\s|" 1 font-lock-warning-face)
-     '("\\(_\\)\\s\"" 1 font-lock-string-face) ; FIXME! not for XEmacs. 2002/10/6
-     ))
- "Default expressions to highlight in AWK mode.")
 
 ;; ACM, 2002/07/21: Thoughts: We need an awk-mode after-change function to set
 ;; the syntax-table properties even when font-lock isn't enabled, for the
 ;; subsequent use of movement functions, etc.  However, it seems that if font
 ;; lock _is_ enabled, we can always leave it to do the job.
-(defvar c-awk-old-EOLL nil)
+(defvar c-awk-old-EOLL 0)
 ;; End of logical line following the region which is about to be changed.  Set
 ;; in c-awk-before-change and used in c-awk-after-change.  This variable is
 ;; buffer local.
