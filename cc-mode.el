@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.9 $
-;; Last Modified:   $Date: 1994-06-13 17:40:08 $
+;; Version:         $Revision: 4.10 $
+;; Last Modified:   $Date: 1994-06-14 22:25:09 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-13 17:40:08 $|$Revision: 4.9 $|
+;; |$Date: 1994-06-14 22:25:09 $|$Revision: 4.10 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.9 $
+cc-mode Revision: $Revision: 4.10 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.9 $
+cc-mode Revision: $Revision: 4.10 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.9 $
+cc-mode Revision: $Revision: 4.10 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2117,7 +2117,10 @@ move backward across a preprocessor conditional."
 		    ;; If this line exits a level of conditional, exit
 		    ;; inner loop.
 		    (if (< depth 0)
-			(setq found (point)))))))
+			(setq found (point))))
+		;; else
+		(if forward (forward-line 1))
+		)))
 	  (or found
 	      (error "No containing preprocessor conditional"))
 	  (goto-char (setq new found)))
@@ -3799,7 +3802,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.9 $"
+(defconst c-version "$Revision: 4.10 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
