@@ -35,17 +35,17 @@
 ;; Note: The version string is in cc-defs.
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
-;; Objective-C, Java, CORBA's IDL and Pike code.  As of the latest
-;; Emacs and XEmacs releases, it is the default package for editing
-;; these languages.  This package is called "CC Mode", and should be
-;; spelled exactly this way.
+;; Objective-C, Java, CORBA's IDL, Pike and AWK code.  As of the
+;; latest Emacs and XEmacs releases, it is the default package for
+;; editing these languages.  This package is called "CC Mode", and
+;; should be spelled exactly this way.
 
 ;; CC Mode supports K&R and ANSI C, ANSI C++, Objective-C, Java,
-;; CORBA's IDL, and Pike with a consistent indentation model across
-;; all modes.  This indentation model is intuitive and very flexible,
-;; so that almost any desired style of indentation can be supported.
-;; Installation, usage, and programming details are contained in an
-;; accompanying texinfo manual.
+;; CORBA's IDL, Pike and AWK with a consistent indentation model
+;; across all modes.  This indentation model is intuitive and very
+;; flexible, so that almost any desired style of indentation can be
+;; supported.  Installation, usage, and programming details are
+;; contained in an accompanying texinfo manual.
 
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
@@ -82,6 +82,7 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
+;(cc-require 'cc-fix)
 (cc-require 'cc-defs)
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
@@ -91,14 +92,15 @@
 (cc-require 'cc-align)
 (cc-require 'cc-menus)
 
-;; Silence the compiler.
+;; SILENCE the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
 
-;; We set this variable during mode init, yet we don't require
+;; We set these variables during mode init, yet we don't require
 ;; font-lock.
 (cc-bytecomp-defvar font-lock-defaults)
+(cc-bytecomp-defvar font-lock-syntactic-keywords)
 
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!
@@ -144,7 +146,6 @@ is necessary too (which gives more control).  See \"cc-mode.el\" for
 more info."
   ;;
   ;; This function does not do any hidden buffer changes.
-
   (setq c-buffer-is-cc-mode t)
 
   (let ((initprop 'cc-mode-is-initialized)
@@ -175,10 +176,10 @@ more info."
 (defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
     (cond
-     ;; XEmacs 19 & 20
+     ;; XEmacs
      ((fboundp 'set-keymap-parents)
       (set-keymap-parents map c-mode-base-map))
-     ;; Emacs 19
+     ;; Emacs
      ((fboundp 'set-keymap-parent)
       (set-keymap-parent map c-mode-base-map))
      ;; incompatible
@@ -374,7 +375,6 @@ that requires a literal mode spec at compile time."
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
 	normal-auto-fill-function 'c-do-auto-fill
-	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
 
   ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
@@ -470,13 +470,16 @@ that requires a literal mode spec at compile time."
 (defun c-font-lock-init ()
   "Set up the font-lock variables for using the font-lock support in CC Mode.
 This does not load the font-lock package.  Use after
-`c-basic-common-init'."
+`c-basic-common-init' and after cc-fonts has been loaded."
 
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
-	`(,(mapcar 'c-mode-symbol
-		   '("font-lock-keywords" "font-lock-keywords-1"
-		     "font-lock-keywords-2" "font-lock-keywords-3"))
+	`(,(if (c-major-mode-is 'awk-mode)
+	       ;; awk-mode currently has only one font lock level.
+	       'awk-font-lock-keywords
+	     (mapcar 'c-mode-symbol
+		     '("font-lock-keywords" "font-lock-keywords-1"
+		       "font-lock-keywords-2" "font-lock-keywords-3")))
 	  nil nil
 	  ,c-identifier-syntax-modifications
 	  c-beginning-of-syntax
@@ -955,6 +958,91 @@ Key bindings:
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))
+
+
+;; Support for awk.  This is purposely disabled for older (X)Emacsen which
+;; don't support syntax-table properties.
+
+(if (not (memq 'syntax-properties c-emacs-features))
+    (autoload 'awk-mode "awk-mode.el" "awk-mode doc string FIXME!!!" t)
+  (defvar awk-mode-abbrev-table nil
+    "Abbreviation table used in awk-mode buffers.")
+  (c-define-abbrev-table 'awk-mode-abbrev-table
+    '(("else" "else" c-electric-continued-statement 0)
+      ("while" "while" c-electric-continued-statement 0)))
+
+  (defvar awk-mode-map ()
+    "Keymap used in awk-mode buffers.")
+  (if awk-mode-map
+      nil
+    (setq awk-mode-map (c-make-inherited-keymap))
+    ;; add bindings which are only useful for awk.
+    (define-key awk-mode-map "#" 'self-insert-command)
+    (define-key awk-mode-map "/" 'self-insert-command)
+    (define-key awk-mode-map "*" 'self-insert-command)
+    (define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
+    (define-key awk-mode-map "\C-c\C-p" 'undefined)
+    (define-key awk-mode-map "\C-c\C-u" 'undefined)
+    (define-key awk-mode-map "\M-a" 'undefined) ; c-awk-beginning-of-statement isn't yet implemented.
+    (define-key awk-mode-map "\M-e" 'undefined) ; c-awk-end-of-statement isn't yet implemented.
+    (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
+    (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
+
+  (easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
+    (cons "AWK" (c-lang-const c-mode-menu awk)))
+
+;; In XEmacs >= 21.5 modes should add their own entries to
+;; `auto-mode-alist' and `interpreter-mode-alist'.
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.awk\\'" . awk-mode))
+;;;###autoload (add-to-list 'interpreter-mode-alist '(("awk" . awk-mode) ("mawk" . awk-mode) ("nawk" . awk-mode) ("gawk" . awk-mode)))
+
+;;;###autoload
+  (defun awk-mode ()
+    "Major mode for editing AWK code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+awk-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `awk-mode-hook'.
+
+Key bindings:
+\\{awk-mode-map}"
+    (interactive)
+    (kill-all-local-variables)
+    (c-initialize-cc-mode)
+    (set-syntax-table awk-mode-syntax-table)
+    (setq major-mode 'awk-mode
+          mode-name "AWK"
+          local-abbrev-table awk-mode-abbrev-table
+          abbrev-mode t)
+    (use-local-map awk-mode-map)
+    (c-init-language-vars awk-mode)
+    (c-common-init 'awk-mode)
+    ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
+    ;; so it's not set by `c-font-lock-init'.
+    (make-local-variable 'font-lock-syntactic-keywords)
+    (setq font-lock-syntactic-keywords
+          '((c-awk-set-syntax-table-properties
+             0 (0)                      ; Everything on this line is a dummy.
+             nil t)))
+    (c-awk-unstick-NL-prop)
+    (add-hook 'before-change-functions 'c-awk-before-change nil t)
+    (add-hook 'after-change-functions 'c-awk-after-change nil t)
+    (c-save-buffer-state nil
+      (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))))
+
+    ;; Prevent Xemacs's buffer-syntactic-context being used.  See the comment
+    ;; in cc-engine.el, just before (defun c-fast-in-literal ...
+    (defalias 'c-in-literal 'c-slow-in-literal)
+
+    (run-hooks 'c-mode-common-hook)
+    (run-hooks 'awk-mode-hook)
+    (c-update-modeline))
+) ;; closes the (if (not (memq 'syntax-properties c-emacs-features))
 
 
 ;; bug reporting

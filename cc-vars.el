@@ -1472,6 +1472,10 @@ names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
+;; (defvar awk-font-lock-extra-types nil)  ;; FIXME!!! Remove this completely (ACM 2002/11/18)
+;; This variable is a required place-holder for awk-mode to work.  It has no
+;; other purpose (awk has no type declarations.)
+
 
 ;; Non-customizable variables, still part of the interface to CC Mode
 (defvar c-file-style nil

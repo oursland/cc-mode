@@ -298,7 +298,8 @@ the new syntax, as accepted by `modify-syntax-entry'."
   ;; machine generated identifiers.
   t    '((?_ . "w") (?$ . "w"))
   objc (append '((?@ . "w"))
-	       (c-lang-const c-identifier-syntax-modifications)))
+	       (c-lang-const c-identifier-syntax-modifications))
+  awk  '((?_ . "w")))
 (c-lang-defvar c-identifier-syntax-modifications
   (c-lang-const c-identifier-syntax-modifications))
 
@@ -520,7 +521,7 @@ that at least one does when the regexp has matched."
 normally use that macro preprocessor.  Tested at bol or at boi.
 Assumed to not contain any submatches or \\| operators."
   t "\\s *#\\s *"
-  java nil)
+  (java awk) nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
 
 (c-lang-defconst c-opt-cpp-start
@@ -769,7 +770,8 @@ operators."
 	       (c-lang-const c-other-op-syntax-tokens))
   pike (append '("..")
 	       (c-lang-const c-other-op-syntax-tokens)
-	       (c-lang-const c-overloadable-operators)))
+	       (c-lang-const c-overloadable-operators))
+  awk '("{" "}" "(" ")" "[" "]" ";" "," "=" "/"))
 
 (c-lang-defconst c-nonsymbol-token-regexp
   ;; Regexp matching all tokens in the punctuation and parenthesis
@@ -806,14 +808,21 @@ operators."
 		      (c-lang-const c-operator-list)))))
 (c-lang-defvar c->-op-cont-regexp (c-lang-const c->-op-cont-regexp))
 
-(c-lang-defvar c-stmt-delim-chars "^;{}?:")
-;; The characters that should be considered to bound statements.  To
-;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
-;; begin with "^" to negate the set.  If ? : operators should be
-;; detected then the string must end with "?:".
+(c-lang-defconst c-stmt-delim-chars
+  ;; The characters that should be considered to bound statements.  To
+  ;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
+  ;; begin with "^" to negate the set.  If ? : operators should be
+  ;; detected then the string must end with "?:".
+  t    "^;{}?:"
+  awk  "^;{}\n\r?:") ; The newline chars gets special treatment.
+(c-lang-defvar c-stmt-delim-chars (c-lang-const c-stmt-delim-chars))
 
-(c-lang-defvar c-stmt-delim-chars-with-comma "^;,{}?:")
-;; Variant of `c-stmt-delim-chars' that additionally contains ','.
+(c-lang-defconst c-stmt-delim-chars-with-comma
+  ;; Variant of `c-stmt-delim-chars' that additionally contains ','.
+  t    "^;,{}?:"
+  awk  "^;,{}\n\r?:") ; The newline chars gets special treatment.
+(c-lang-defvar c-stmt-delim-chars-with-comma
+  (c-lang-const c-stmt-delim-chars-with-comma))
 
 
 ;;; Syntactic whitespace.
@@ -823,10 +832,8 @@ operators."
   ;;
   ;; TODO: Ought to use `c-comment-prefix-regexp' with some
   ;; modifications instead of this.
-  ;;
-  ;; Might seem like overkill to make this a language dependent
-  ;; constant, but awk-mode is on its way..
-  t "/[/*]")
+  t    "/[/*]"
+  awk  "#")
 (c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
 
 (c-lang-defconst c-literal-start-regexp
@@ -851,26 +858,42 @@ operators."
 (c-lang-defconst comment-start
   "String that starts comments inserted with M-; etc.
 `comment-start' is initialized from this."
-  t "// "
-  c "/* ")
+  t    "// "
+  c    "/* "
+  awk  "# ")
 (c-lang-defvar comment-start (c-lang-const comment-start)
   'dont-doc)
 
 (c-lang-defconst comment-end
   "String that ends comments inserted with M-; etc.
 `comment-end' is initialized from this."
-  t ""
-  c "*/")
+  t    ""
+  c    "*/")
 (c-lang-defvar comment-end (c-lang-const comment-end)
   'dont-doc)
 
-(c-lang-defvar c-syntactic-ws-start "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]")
-;; Regexp matching any sequence that can start syntactic whitespace.
-;; The only uncertain case is '#' when there are cpp directives.
+(c-lang-defconst comment-start-skip
+  "Regexp to match the start of a comment plus everything up to its body.
+`comment-start-skip' is initialized from this."
+  t    "/\\*+ *\\|//+ *"
+  awk  "#+ *")
+(c-lang-defvar comment-start-skip (c-lang-const comment-start-skip)
+  'dont-doc)
 
-(c-lang-defvar c-syntactic-ws-end "[ \n\t\r\v\f/]")
-;; Regexp matching any single character that might end syntactic
-;; whitespace.
+(c-lang-defconst syntactic-ws-start
+  "Regexp matching any sequence that can start syntactic whitespace.
+The only uncertain case is '#' when there are cpp directives."
+  t     "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]"
+  awk   "[ \n\t\r\v\f#]\\|\\\\[\n\r]")
+(c-lang-defvar c-syntactic-ws-start (c-lang-const syntactic-ws-start)
+  'dont-doc)
+
+(c-lang-defconst syntactic-ws-end
+  "Regexp matching any single character that might end syntactic whitespace."
+  t     "[ \n\t\r\v\f/]"
+  awk   "[ \n\t\r\v\f]")
+(c-lang-defvar c-syntactic-ws-end (c-lang-const syntactic-ws-end)
+  'dont-doc)
 
 (c-lang-defconst c-nonwhite-syntactic-ws
   ;; Regexp matching a piece of syntactic whitespace that isn't a
@@ -890,7 +913,8 @@ operators."
 		 "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
 		 "\\)")
 	    "\\|"
-	    "\\\\[\n\r]"))		; Line continuations.
+	    "\\\\[\n\r]")		; Line continuations.
+  awk ("#.*[\n\r]\\|\\\\[\n\r]"))
 
 (c-lang-defconst c-syntactic-ws
   ;; Regexp matching syntactic whitespace, including possibly the
@@ -925,7 +949,8 @@ operators."
   ;; a \| operator at the top level.
   t (concat "[ \t]*\\("
 	    "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
-	    "[ \t]*\\)*"))
+	    "[ \t]*\\)*")
+  awk ("[ \t]*\\(#.*$\\)?"))
 
 (c-lang-defconst c-single-line-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
@@ -1116,7 +1141,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
 `c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("enum")
-  java nil)
+  (java awk) nil)
 
 (c-lang-defconst c-brace-list-key
   ;; Regexp matching the start of declarations where the following
@@ -1152,7 +1177,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
 `c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("typedef")
-  java nil)
+  (java awk) nil)
 
 (c-lang-defconst c-typeless-decl-kwds
   "Keywords introducing declarations where the identifier (declarator)
@@ -1301,7 +1326,7 @@ too.
 Note: Use `c-typeless-decl-kwds' for keywords followed by a function
 or variable identifier (that's being defined)."
   t    '("struct" "union" "enum")
-  (c c++) nil
+  (c c++ awk) nil
   objc (append '("@class" "@interface" "@implementation" "@protocol")
 	       (c-lang-const c-type-list-kwds))
   java '("class" "import" "interface" "new" "extends" "implements" "throws")
@@ -1421,7 +1446,8 @@ identifiers that follows the type in a normal declaration."
   c++  '("for" "if" "switch" "while" "catch")
   java '("for" "if" "switch" "while" "catch" "synchronized")
   idl  nil
-  pike '("for" "if" "switch" "while" "foreach"))
+  pike '("for" "if" "switch" "while" "foreach")
+  awk  '("for" "if" "while"))
 
 (c-lang-defconst c-block-stmt-2-key
   ;; Regexp matching the start of any statement followed by a paren sexp
@@ -1446,7 +1472,10 @@ identifiers that follows the type in a normal declaration."
   ;; Note: `goto' is not valid in Java, but the keyword is still reserved.
   java '("break" "continue" "goto" "return" "throw")
   idl  nil
-  pike '("break" "continue" "return"))
+  pike '("break" "continue" "return")
+  awk  '(;; Not sure about "delete", "exit", "getline", etc. ; ACM 2002/5/30
+	 "break" "continue" "return" "delete" "exit" "getline" "next"
+	 "nextfile" "print" "printf"))
 
 (c-lang-defconst c-simple-stmt-key
   ;; Adorned regexp matching `c-simple-stmt-kwds'.
@@ -1478,14 +1507,16 @@ nevertheless contains a list separated with ';' and not ','."
 
 (c-lang-defconst c-label-kwds
   "Keywords introducing labels in blocks."
-  t '("case" "default"))
+  t '("case" "default")
+  awk nil)
 
 (c-lang-defconst c-before-label-kwds
   "Keywords that might be followed by a label identifier."
   t    '("goto")
   (java pike) (append '("break" "continue")
 		      (c-lang-const c-before-label-kwds))
-  idl  nil)
+  idl  nil
+  awk  nil)
 
 (c-lang-defconst c-label-kwds-regexp
   ;; Regexp matching any keyword that introduces a label.
@@ -2015,7 +2046,8 @@ is in effect or not."
   ;; submatch is the one that matches the type.  Note that this regexp
   ;; assumes that symbol constituents like '_' and '$' have word
   ;; syntax.
-  (let ((extra-types (c-mode-var "font-lock-extra-types")))
+  (let ((extra-types (when (boundp (c-mode-symbol "font-lock-extra-types"))
+                       (c-mode-var "font-lock-extra-types"))))
     (concat "\\<\\("
 	    (c-make-keywords-re nil (c-lang-const c-primitive-type-kwds))
 	    (if (consp extra-types)

@@ -47,6 +47,22 @@
 ;; `require' in XEmacs doesn't have the third NOERROR argument.
 (condition-case nil (require 'regexp-opt) (file-error nil))
 
+;; Silence the compiler.
+(cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
+(cc-bytecomp-defvar c-emacs-features)	; In cc-vars.el
+(cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
+(cc-bytecomp-defun region-active-p)	; XEmacs
+(cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
+(cc-bytecomp-defvar zmacs-regions)	; XEmacs
+(cc-bytecomp-defvar mark-active)	; Emacs
+(cc-bytecomp-defvar deactivate-mark)	; Emacs
+(cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
+(cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
+(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
+(cc-bytecomp-defun string-to-syntax)	; Emacs 21
+(cc-bytecomp-defun regexp-opt-depth)	; (X)Emacs 20+
+
 
 ;; cc-mode-19.el contains compatibility macros that should be used if
 ;; needed.
@@ -61,26 +77,23 @@
 	  (not (fboundp 'when))
 	  (not (fboundp 'unless))
 	  (not (fboundp 'regexp-opt))
-	  (not (fboundp 'regexp-opt-depth)))
+	  (not (cc-bytecomp-fboundp 'regexp-opt-depth))
+	  (/= (regexp-opt-depth "\\(\\(\\)\\)") 2))
       (cc-load "cc-mode-19")
     (defalias 'c-regexp-opt 'regexp-opt)
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
 
-(require 'cl)
+(eval-after-load "font-lock"
+  '(if (and (not (featurep 'cc-mode-19)) ; only load the file once.
+            (let (font-lock-keywords)
+              (font-lock-compile-keywords '("\\<\\>"))
+	      font-lock-keywords))     ; did the previous call foul this up?
+       ;; Buglet: This only works if the CC Mode directory is in the
+       ;; load path.  No need to bother; it'd only affect odd people
+       ;; such as the developers.. ;)
+       (load "cc-mode-19")))
 
-;; Silence the compiler.
-(cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
-(cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
-(cc-bytecomp-defun region-active-p)	; XEmacs
-(cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
-(cc-bytecomp-defvar zmacs-regions)	; XEmacs
-(cc-bytecomp-defvar mark-active)	; Emacs
-(cc-bytecomp-defvar deactivate-mark)	; Emacs
-(cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
-(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
-(cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
-(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
-(cc-bytecomp-defun string-to-syntax)	; Emacs 21
+(require 'cl)
 
 
 ;;; Variables also used at compile time.
@@ -888,6 +901,7 @@ This function does not do any hidden buffer changes."
 (put 'java-mode 'c-mode-prefix "java-")
 (put 'idl-mode  'c-mode-prefix "idl-")
 (put 'pike-mode 'c-mode-prefix "pike-")
+(put 'awk-mode  'c-mode-prefix "awk-")
 
 (defsubst c-mode-symbol (suffix)
   "Prefix the current mode prefix (e.g. \"c-\") to SUFFIX and return
@@ -908,6 +922,13 @@ the value of the variable with that name.
 
 This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
+
+(defsubst c-mode-is-new-awk-p ()
+  ;; Is the current mode the "new" awk mode?  It is important for
+  ;; (e.g.) the cc-engine functions do distinguish between the old and
+  ;; new awk-modes.
+  (and (c-major-mode-is 'awk-mode)
+       (memq 'syntax-properties c-emacs-features)))
 
 (defsubst c-got-face-at (pos faces)
   "Return non-nil if position POS in the current buffer has any of the

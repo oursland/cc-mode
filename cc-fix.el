@@ -44,6 +44,7 @@
 ;; Silence the compiler (in case this file is compiled by other
 ;; Emacsen even though it isn't used by them).
 (cc-bytecomp-obsolete-fun byte-code-function-p)
+(cc-bytecomp-defun regexp-opt-depth)
 
 (require 'advice)
 
@@ -74,29 +75,25 @@
 	   (byte-defop-compiler char-after))))))
 
 (if (fboundp 'char-before)
-    ;; (or (condition-case nil
-    ;;         (progn (char-before) t)
-    ;;       (error nil))
-    ;;
-    ;; This test is commented out since it confuses the byte code
-    ;; optimizer (verified in Emacs 20.2 and XEmacs 20.4).  The effect
-    ;; of this is that the advice below may be activated in those
-    ;; versions, which is unnecessary but won't break anything.  It
-    ;; only occurs when this file is explicitly loaded; in normal use
-    ;; the test in cc-defs.el will skip it altogether.
+    (condition-case nil
+        (eval '(char-before))           ; `eval' avoids argcount warnings
+      (error                            ; too few parameters
+       ;; Will (probably) only trigger for Emacs 19.xx, which doesn't mind
+       ;; being given a superfluous parameter, and "MULE Emacs 19" (a forked
+       ;; version of Emacs) which must handle the extra paramter.  XEmacs will
+       ;; never trigger this.
 
-    ;; MULE based on Emacs 19.34 has a char-before function, but
-    ;; it requires a position.  It also has a second optional
-    ;; argument that we must pass on.
-    (progn
-      (ad-define-subr-args 'char-before '(pos &optional byte-unit))
-      (defadvice char-before (before c-char-before-advice
-				     (&optional pos byte-unit)
-				     activate preactivate)
-	"POS is optional and defaults to the position of point."
-	(if (not pos)
-	    (setq pos (point))))))
-
+       ;; MULE based on Emacs 19.34 has a char-before function, but
+       ;; it requires a position.  It also has a second optional
+       ;; argument that we must pass on.
+       (ad-define-subr-args 'char-before '(pos &optional byte-unit))
+       (defadvice char-before (before c-char-before-advice
+                                      (&optional pos byte-unit)
+                                      activate preactivate)
+         "POS is optional and defaults to the position of point."
+         (if (not pos)
+             (setq pos (point)))))))
+  
 ;; The `eval' construct is necessary since later versions complain at
 ;; compile time on the defsubst for `char-before' since it has become
 ;; a built-in primitive.
@@ -146,23 +143,70 @@
 	(concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
       (mapconcat 'regexp-quote strings "\\|"))))
 
-(if (fboundp 'regexp-opt-depth)
+(if (and (fboundp 'regexp-opt-depth)
+         (eq (regexp-opt-depth "\\(\\(\\)\\)") 2))
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
   ;; (X)Emacs 19 doesn't have the regexp-opt package.
-  (defun c-regexp-opt-depth (regexp)
-    ;; This is the definition of `regexp-opt-depth' in Emacs 21 with
-    ;; the exception that "shy" grouping parens aren't detected.
-    (save-match-data
-      ;; Hack to signal an error if REGEXP does not have balanced
-      ;; parentheses.
-      (string-match regexp "")
-      (let ((count 0) start)
-	(while (string-match "\\(\\`\\|[^\\]\\)\\\\\\(\\\\\\\\\\)*("
-			     regexp start)
-	  (setq count (1+ count)
-		start (- (match-end 0) 1)))
-	count))))
+  ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents cc-mode building.
+  ;; Those in Emacs 21.[23] are not entirely accurate.
+  ;; The following definition comes from Emacs's regexp-opt.el CVS version 1.25
+  ;; and is believed to be a rigorously correct implementation.
+  (defconst regexp-opt-not-groupie*-re
+    (let* ((harmless-ch "[^\\\\[]")
+           (esc-pair-not-lp "\\\\[^(]")
+           (class-harmless-ch "[^][]")
+           (class-lb-harmless "[^]:]")
+           (class-lb-colon-maybe-charclass ":\\([a-z]+:]\\)?")
+           (class-lb (concat "\\[\\(" class-lb-harmless
+                             "\\|" class-lb-colon-maybe-charclass "\\)"))
+           (class
+            (concat "\\[^?]?"
+                    "\\(" class-harmless-ch
+                    "\\|" class-lb "\\)*"
+                    "\\[?]"))       ; special handling for bare [ at end of re
+           (shy-lp "\\\\(\\?:"))
+      (concat "\\(" harmless-ch "\\|" esc-pair-not-lp
+              "\\|" class "\\|" shy-lp "\\)*"))
+    "Matches any part of a regular expression EXCEPT for non-shy \"\\\\(\"s")
 
+  (defun c-regexp-opt-depth (regexp)
+    "Return the depth of REGEXP.
+This means the number of regexp grouping constructs (parenthesised expressions)
+in REGEXP."
+    (save-match-data
+      ;; Hack to signal an error if REGEXP does not have balanced parentheses.
+      (string-match regexp "")
+      ;; Count the number of open parentheses in REGEXP.
+      (let ((count 0) start)
+        (while
+            (progn
+              (string-match regexp-opt-not-groupie*-re regexp start)
+              (setq start ( + (match-end 0) 2)) ; +2 for "\\(" after match-end.
+              (<= start (length regexp)))
+          (setq count (1+ count)))
+        count)))
+  )
+
+;; Some XEmacs versions have a bug in which font-lock-compile-keywords
+;; overwrites the variable font-lock-keywords with its result.  This causes
+;; havoc when what the function is compiling is font-lock-SYNTACTIC-keywords,
+;; hence....
+(eval-after-load "font-lock"
+  '(when (let (font-lock-keywords)
+           (font-lock-compile-keywords '("\\<\\>"))
+           font-lock-keywords)        ; did the previous call foul this up?
+     (defun font-lock-compile-keywords (keywords)
+       "Compile KEYWORDS (a list) and return the list of compiled keywords.
+Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
+       (if (eq (car-safe keywords) t)
+           keywords
+         (cons t (mapcar 'font-lock-compile-keyword keywords))))
+     (defadvice font-lock-fontify-keywords-region (before c-compile-font-lock-keywords
+                                                          activate preactivate)
+       (unless (eq (car-safe font-lock-keywords) t)
+         (setq font-lock-keywords
+               (font-lock-compile-keywords font-lock-keywords))))
+     ))
 
 (cc-provide 'cc-mode-19)
 ;;; cc-mode-19.el ends here

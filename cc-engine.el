@@ -75,6 +75,15 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
+;; On older versions of Emacs, invoking awk-mode will cause the old
+;; awk-mode.el to get loaded.
+(if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
+
+;; Avoid warnings for functions defined in cc-awk when it can't be used.
+(cc-bytecomp-defun c-awk-unstick-NL-prop)
+(cc-bytecomp-defun c-awk-clear-NL-props)
+(cc-bytecomp-defvar awk-mode-syntax-table)
+
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
@@ -241,6 +250,8 @@
 ;; better way should be implemented, but this will at least shut up
 ;; the byte compiler.
 (defvar c-maybe-labelp nil)
+
+;; New awk-compatible version of c-beginning-of-statement-1, ACM 2002/6/22
 
 ;; Macros used internally in c-beginning-of-statement-1 for the
 ;; automaton actions.
@@ -438,8 +449,13 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; that we've moved.
       (while (progn
 	       (setq pos (point))
-	       (c-backward-syntactic-ws)
-	       (/= (skip-chars-backward "-+!*&~@`#") 0)))
+	       (c-backward-syntactic-ws) ; might go back an awk-mode virtual semicolon, here.
+                                        ; How about using c-awk-NL-prop for AWK Mode, here.
+                                        ; Something like c-awk-backward-syntactic-ws.
+                                        ; 2002/6/22.  Doesn't matter!  Leave it as it is.
+	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
+							  ; Make a variable in
+							  ; cc-langs.el, maybe
 
       ;; Skip back over any semicolon here.  If it was a bare semicolon, we're
       ;; done.  Later on we ignore the boundaries for statements that doesn't
@@ -448,10 +464,15 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
-		      (c-backward-syntactic-ws)
+		      (if (c-mode-is-new-awk-p)
+                          (c-awk-backward-syntactic-ws)
+                        (c-backward-syntactic-ws))
 		      (or (memq (char-before) delims)
 			  (memq (char-before) '(?: nil))
-			  (eq (char-syntax (char-before)) ?\())))
+			  (eq (char-syntax (char-before)) ?\()
+                          (and (c-mode-is-new-awk-p)
+                               (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
+          ;; ACM, 2002/7/20:  What about giving a limit to the above function?
 	  (setq ret 'previous
 		pos saved)
 
@@ -469,7 +490,9 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
-	       ;; Check for macro start.
+	       ;; Check for macro start.  Take this out for AWK Mode (ACM, 2002/5/31)
+               ;; NO!! just make sure macro-start is nil in AWK Mode (ACM, 2002/6/22)
+               ;; It always is (ACM, 2002/6/23)
 	       ((save-excursion
 		  (and macro-start
 		       (progn (skip-chars-backward " \t")
@@ -578,11 +601,22 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			   (setq state 'else))
 			  ((eq sym 'while)
 			   (when (or (not pptok)
-				     (memq (char-after pptok) delims))
+				     (memq (char-after pptok) delims)
+                                     (and (c-mode-is-new-awk-p)
+                                          (or
+                                        ;; might we be calling this from
+                                        ;; c-awk-after-if-do-for-while-condition-p?
+                                        ;; If so, avoid infinite recursion.
+                                           (and (eq (point) start)
+                                                (c-awk-NL-prop-not-set))
+                                           ;; The following may recursively
+                                           ;; call this function.
+                                           (c-awk-completed-stmt-ws-ends-line-p pptok))))
 			     ;; Since this can cause backtracking we do a
 			     ;; little more careful analysis to avoid it: If
 			     ;; the while isn't followed by a semicolon it
 			     ;; can't be a do-while.
+                             ;; ACM, 2002/5/31;  IT CAN IN AWK Mode. ;-(
 			     (c-bos-push-state)
 			     (setq state 'while)))
 			  ((memq sym '(catch finally))
@@ -621,7 +655,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			     ;; If we started inside a macro then this
 			     ;; sexp is always interesting.
 			     nil)
-			    (t
+			    ((not (c-mode-is-new-awk-p)) ; Changed from t, ACM 2002/6/25
 			     ;; Otherwise check that we didn't step
 			     ;; into a macro from the end.
 			     (let ((macro-start
@@ -724,7 +758,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (goto-char pos)
       (while (progn
 	       (c-backward-syntactic-ws)
-	       (/= (skip-chars-backward "-+!*&~@`#") 0))
+	       (/= (skip-chars-backward "-+!*&~@`#") 0)) ; Hopefully the # won't hurt awk.
 	(setq pos (point)))
       (goto-char pos)
       ret)))
@@ -732,7 +766,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 (defun c-crosses-statement-barrier-p (from to)
   "Return non-nil if buffer positions FROM to TO cross one or more
 statement or declaration boundaries.  The returned value is actually
-the position of the earliest boundary char.
+the position of the earliest boundary char.  FROM must not be within
+a string or comment.
 
 The variable `c-maybe-labelp' is set to the position of the first `:' that
 might start a label (i.e. not part of `::' and not preceded by `?').  If a
@@ -744,8 +779,10 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	(goto-char from)
 	(while (progn (skip-chars-forward skip-chars to)
 		      (< (point) to))
-	  (if (setq lit-range (c-literal-limits from))
-	      (goto-char (setq from (cdr lit-range)))
+	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
+	      (progn (goto-char (setq from (cdr lit-range)))
+                     (if (and (c-mode-is-new-awk-p) (bolp)) ; ACM 2002/7/17. Make sure we
+                         (backward-char))) ; don't skip over a virtual semi-colon after an awk comment.  :-(
 	    (cond ((eq (char-after) ?:)
 		   (forward-char)
 		   (if (and (eq (char-after) ?:)
@@ -758,6 +795,12 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		   ;; looking for more : and ?.
 		   (setq c-maybe-labelp nil
 			 skip-chars (substring c-stmt-delim-chars 0 -2)))
+                  ((and (eolp)  ; Can only happen in AWK Mode
+                        (not (c-awk-completed-stmt-ws-ends-line-p)))
+                   (forward-char))
+                  ((and (c-mode-is-new-awk-p)
+                        (bolp) lit-range ; awk: comment/string ended prev line.
+                        (not (c-awk-completed-stmt-ws-ends-prev-line-p))))
 		  (t (throw 'done (point))))))
 	nil))))
 
@@ -2491,7 +2534,7 @@ This function does not do any hidden buffer changes."
 
 ;; Tools for handling comments and string literals.
 
-(defun c-in-literal (&optional lim detect-cpp)
+(defun c-slow-in-literal (&optional lim detect-cpp)
   "Return the type of literal point is in, if any.
 The return value is `c' if in a C-style comment, `c++' if in a C++
 style comment, `string' if in a string literal, `pound' if DETECT-CPP
@@ -2526,6 +2569,27 @@ This function does not do any hidden buffer changes."
 ;; I don't think we even need the cache, which makes our lives more
 ;; complicated anyway.  In this case, lim is only used to detect
 ;; cpp directives.
+;;
+;; Note that there is a bug in Xemacs's buffer-syntactic-context when used in
+;; conjunction with syntax-table-properties.  The bug is present in, e.g.,
+;; Xemacs 21.4.4.  It manifested itself thus:
+;;
+;; Starting with an empty AWK Mode buffer, type
+;; /regexp/ {<C-j>
+;; Point gets wrongly left at column 0, rather than being indented to tab-width.
+;;
+;; AWK Mode is designed such that when the first / is typed, it gets the
+;; syntax-table property "string fence".  When the second / is typed, BOTH /s
+;; are given the s-t property "string".  However, buffer-syntactic-context
+;; fails to take account of the change of the s-t property on the opening / to
+;; "string", and reports that the { is within a string started by the second /.
+;;
+;; The workaround for this is for the AWK Mode initialisation to switch the
+;; defalias for c-in-literal to c-slow-in-literal.  This will slow down other
+;; cc-modes in Xemacs whenever an awk-buffer has been initialised.
+;; 
+;; (Alan Mackenzie, 2003/4/30).
+
 (defun c-fast-in-literal (&optional lim detect-cpp)
   (let ((context (buffer-syntactic-context)))
     (cond
@@ -2534,8 +2598,13 @@ This function does not do any hidden buffer changes."
      ((eq context 'block-comment) 'c)
      ((and detect-cpp (save-excursion (c-beginning-of-macro lim))) 'pound))))
 
-(if (fboundp 'buffer-syntactic-context)
-    (defalias 'c-in-literal 'c-fast-in-literal))
+(defalias 'c-in-literal
+  (if (fboundp 'buffer-syntactic-context)
+    'c-fast-in-literal                  ; Xemacs
+    'c-slow-in-literal))                ; GNU Emacs
+
+;; The defalias above isn't enough to shut up the byte compiler.
+(cc-bytecomp-defun c-in-literal)
 
 (defun c-literal-limits (&optional lim near not-in-delimiter)
   "Return a cons of the beginning and end positions of the comment or
@@ -2759,7 +2828,10 @@ This function does not do any hidden buffer changes."
       (save-excursion
 	(goto-char (car range))
 	(cond ((looking-at c-string-limit-regexp) 'string)
-	      ((looking-at "//") 'c++)
+	      ((and (looking-at "\\s<") ; comment starter
+                    (or (looking-at "//") ; c++ line comment
+                        (looking-at "#"))) ; awk comment.
+               'c++)
 	      (t 'c)))			; Assuming the range is valid.
     range))
 
@@ -5435,7 +5507,9 @@ brace."
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
-		 (not (eq char-before-ip ?\;))
+		 (if (c-mode-is-new-awk-p)
+                     (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
+                   (not (eq char-before-ip ?\;)))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
 		     (c-looking-at-inexpr-block-backward c-state-cache))
@@ -6097,12 +6171,13 @@ brace."
 	    (c-add-syntax 'inher-cont (point))
 	    )))
 	 ;; CASE 9: we are inside a brace-list
-	 ((setq special-brace-list
-		(or (and c-special-brace-lists
-			 (save-excursion
-			   (goto-char containing-sexp)
-			   (c-looking-at-special-brace-list)))
-		    (c-inside-bracelist-p containing-sexp paren-state)))
+	 ((and (not (c-mode-is-new-awk-p))  ; Maybe this isn't needed (ACM, 2002/3/29)
+               (setq special-brace-list
+                     (or (and c-special-brace-lists
+                              (save-excursion
+                                (goto-char containing-sexp)
+                                (c-looking-at-special-brace-list)))
+                         (c-inside-bracelist-p containing-sexp paren-state))))
 	  (cond
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
@@ -6187,9 +6262,11 @@ brace."
 		  ))
 	     ))))
 	 ;; CASE 10: A continued statement or top level construct.
-	 ((and (not (memq char-before-ip '(?\; ?:)))
-	       (or (not (eq char-before-ip ?}))
-		   (c-looking-at-inexpr-block-backward c-state-cache))
+	 ((and (if (eq major-mode 'awk-mode)
+                   (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
+                 (and (not (memq char-before-ip '(?\; ?:)))
+                      (or (not (eq char-before-ip ?}))
+                          (c-looking-at-inexpr-block-backward c-state-cache))))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
