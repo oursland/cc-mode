@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.159 $
-;; Last Modified:   $Date: 1993-12-29 17:06:28 $
+;; Version:         $Revision: 3.160 $
+;; Last Modified:   $Date: 1993-12-29 17:30:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-29 17:06:28 $|$Revision: 3.159 $|
+;; |$Date: 1993-12-29 17:30:38 $|$Revision: 3.160 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.159 $
+CC-MODE REVISION: $Revision: 3.160 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.159 $
+CC-MODE REVISION: $Revision: 3.160 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1469,8 +1469,9 @@ search."
 			    ))
 		      (not (looking-at c-conditional-key))
 		      )
-	    (setq last-begin (point)
-		  first nil))
+	    (if (not (looking-at c-label-key))
+		(setq last-begin (point)
+		      first nil)))
 	  (if (not (looking-at c-conditional-key))
 	      (goto-char last-begin)))
       ;; error for condition-case
@@ -2533,10 +2534,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (c-add-semantics 'block-open)))
 	   ))
 	 ;; CASE 8: A continued statement
-	 ((and (not (memq char-before-ip '(?\; ?})))
+	 ((and (not (memq char-before-ip '(?\; ?} ?:)))
 	       (> (point)
 		  (save-excursion
-		    (c-beginning-of-statement nil containing-sexp)
+		    (c-beginning-of-statement 1 containing-sexp)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
 	  (goto-char indent-point)
@@ -2945,7 +2946,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.159 $"
+(defconst c-version "$Revision: 3.160 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
