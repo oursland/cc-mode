@@ -288,6 +288,7 @@ class Foo                 Foo::Foo (int a, int b)
 
 Works with: inher-cont, member-init-cont."
   (save-excursion
+    (back-to-indentation)
     (let* ((eol (c-point 'eol))
 	   (here (point))
 	   (char-after-ip (progn
