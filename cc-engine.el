@@ -936,7 +936,9 @@ See `c-forward-token-1' for details."
 		 ;; Match inside a block comment.  Skip to the '*/'.
 		 (re-search-forward "\\*/" bound noerror))
 
-		((save-excursion (c-beginning-of-macro start))
+		((save-excursion
+		   (save-match-data
+		     (c-beginning-of-macro start)))
 		 ;; Match inside a macro.  Skip to the end of it.
 		 (c-end-of-macro))
 

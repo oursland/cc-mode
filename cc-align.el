@@ -592,11 +592,14 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 
     (save-excursion
       (goto-char startpos)
-      (if (or (not (c-syntactic-re-search-forward
-		    "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
-		    (min endpos (c-point 'eol)) t 1 t))
+      (if (or (if (c-syntactic-re-search-forward
+		   "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
+		   (min endpos (c-point 'eol)) t 1 t)
+		  (progn
+		    (goto-char (match-beginning 2))
+		    nil)
+		t)
 	      (save-excursion
-		(goto-char (match-beginning 2))
 		(c-forward-syntactic-ws (c-point 'eol))
 		(eolp)))
 	  ;; There's no equal sign on the line, or there is one but
@@ -605,7 +608,6 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 
 	;; calculate indentation column after equals and ws, unless
 	;; our line contains an equals sign
-	(goto-char (match-beginning 2))
 	(if (not equalp)
 	    (progn
 	      (skip-chars-forward " \t")
