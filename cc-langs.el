@@ -32,10 +32,10 @@
 ;;; Commentary:
 
 ;; This file contains all the language dependent variables, except
-;; those used for font locking which reside in cc-fonts.el.  As far as
-;; possible, all the differences between the languages that CC Mode
-;; supports are described with these variables only, so that the code
-;; can be shared.
+;; those specific for font locking which reside in cc-fonts.el.  As
+;; far as possible, all the differences between the languages that CC
+;; Mode supports are described with these variables only, so that the
+;; code can be shared.
 ;;
 ;; The language constant system (see cc-defs.el) is used to specify
 ;; various language dependent info at a high level, such as lists of
@@ -1673,17 +1673,15 @@ first submatch.  It must not include any following whitespace."
   ;; begins with a declaration.
   t "\\([\{\}\(\);,]+\\)"
   java "\\([\{\}\(;,]+\\)"
-  ;; Match open paren syntax in C++ to get the first argument in a
-  ;; template arglist, where the "<" got that syntax.  This means that
-  ;; "[" also is matched, which we really don't want.
-  ;; `c-font-lock-declarations' has a special kludge to check for
-  ;; that.
+  ;; Match "<" in C++ to get the first argument in a template arglist.
+  ;; In that case there's an additional check in `c-find-decl-spots'
+  ;; that it got open paren syntax.
   ;;
   ;; Also match a single ":" for protection labels.  We cheat a little
   ;; and require a symbol immediately before to avoid false matches
   ;; when starting directly on a single ":", which can be the start of
   ;; the base class initializer list in a constructor.
-  c++ "\\([\}\);,]+\\|\\s\(\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
+  c++ "\\([\{\}\(\);,<]+\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
   ;; Additionally match the protection directives in Objective-C.
   ;; Note that this doesn't cope with the longer directives, which we
   ;; would have to match from start to end since they don't end with
@@ -1863,7 +1861,9 @@ expression is considered to be a type."
 (c-lang-defconst c-opt-<>-arglist-start
   ;; Regexp matching the start of angle bracket arglists in languages
   ;; where `c-recognize-<>-arglists' is set.  Does not exclude
-  ;; keywords outside `c-<>-arglist-kwds'.
+  ;; keywords outside `c-<>-arglist-kwds'.  The first submatch is
+  ;; assumed to surround the preceding symbol.  The whole match is
+  ;; assumed to end directly after the opening "<".
   t (if (c-lang-const c-recognize-<>-arglists)
 	(concat "\\("
 		(c-lang-const c-symbol-key)
