@@ -929,18 +929,11 @@ Key bindings:
      (require 'reporter)
      (reporter-submit-bug-report
       c-mode-help-address
-      (concat "CC Mode " c-version " ("
-	      (cond ((eq major-mode 'c++-mode)  "C++")
-		    ((eq major-mode 'c-mode)    "C")
-		    ((eq major-mode 'objc-mode) "ObjC")
-		    ((eq major-mode 'java-mode) "Java")
-		    ((eq major-mode 'idl-mode)  "IDL")
-		    ((eq major-mode 'pike-mode) "Pike")
-		    (t (symbol-name major-mode)))
-	      ")")
+      (concat "CC Mode " c-version " (" mode-name ")")
       (let ((vars (append
 		   c-style-variables
-		   '(c-tab-always-indent
+		   '(c-buffer-is-cc-mode
+		     c-tab-always-indent
 		     c-syntactic-indentation
 		     c-syntactic-indentation-in-macros
 		     c-ignore-auto-fill
