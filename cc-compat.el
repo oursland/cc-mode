@@ -5,8 +5,8 @@
 ;; Author:        1994-1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       August 1994, split from cc-mode.el
-;; Version:       $Revision: 1.4 $
-;; Last Modified: $Date: 1995-06-11 20:09:54 $
+;; Version:       $Revision: 1.5 $
+;; Last Modified: $Date: 1995-06-11 20:15:44 $
 ;; Keywords: c languages oop
 
 ;; This file is part of GNU Emacs.
@@ -36,11 +36,6 @@
 ;;
 ;; (require 'cc-compat)
 ;; (c-set-style "BOCM")
-
-;; LCD Archive Entry:
-;; cc-compat.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
-;; |cc-mode compatibility with c-mode.el confusion
-;; |$Date: 1995-06-11 20:09:54 $|$Revision: 1.4 $|
 
 ;;; Code:
 
