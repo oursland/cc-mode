@@ -69,7 +69,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
 ;; erroneous values in the language handling is miniscule since these
-;; constant are not used very much (yet, anyway) in the actual syntax
+;; constants are not used very much (yet, anyway) in the actual syntax
 ;; detection code, but I'd still appreciate help to get them correct.
 
 ;; Primitive type keywords.
