@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.42 $
+@comment manual version: $Revision: 2.43 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-31 15:03:27 $
+@comment Last modification: $Date: 1996-05-31 19:22:25 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.42 $)
+@center (manual revision: $Revision: 2.43 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -781,6 +781,8 @@ on, then that line is on is also indented according to
 @cindex block-close syntactic symbol
 @cindex substatement-open syntactic symbol
 @cindex statement-case-open syntactic symbol
+@cindex extern-lang-open syntactic symbol
+@cindex extern-lang-close syntactic symbol
 
 The insertion of newlines is controlled by the
 @code{c-hanging-braces-alist} variable.  This variable contains a
@@ -790,8 +792,10 @@ this list are: @code{class-open}, @code{class-close}, @code{defun-open},
 @code{defun-close}, @code{inline-open}, @code{inline-close},
 @code{brace-list-open}, @code{brace-list-close},
 @code{brace-list-intro}, @code{brace-list-entry}, @code{block-open},
-@code{block-close}, @code{substatement-open}, and
-@code{statement-case-open}.  @xref{Syntactic Symbols} for a more
+@code{block-close}, @code{substatement-open}, 
+@code{statement-case-open},
+@code{extern-lang-open}, and @code{extern-lang-close}.
+@xref{Syntactic Symbols} for a more
 detailed description of these syntactic symbols.
 
 @cindex custom indentation function
@@ -2110,6 +2114,11 @@ you can check the syntax of any line by using @kbd{C-c C-s}.
 @end group
 @end example
 
+@cindex topmost-intro syntactic symbol
+@cindex topmost-intro-cont syntactic symbol
+@cindex defun-open syntactic symbol
+@cindex defun-close syntactic symbol
+@cindex defun-block-intro syntactic symbol
 Line 1 shows a @code{topmost-intro} since it is the first line that
 introduces a top-level construct.  Line 2 is a continuation of the
 top-level construct introduction so it has the syntax
@@ -2120,6 +2129,8 @@ function definition.  Line 4 is a @code{defun-block-intro}, i.e. it is
 the first line of a brace-block, which happens to be enclosed in a
 top-level function definition.
 
+@cindex statement syntactic symbol
+@cindex statement-cont syntactic symbol
 Lines 5, 6, and 7 are all given @code{statement} syntax since there
 isn't much special about them.  Note however that line 8 is given
 @code{statement-cont} syntax since it continues the statement begun
@@ -2146,11 +2157,14 @@ symbols:
   14:         dString.tune( 'D' );
   15:         gString.tune( 'G' );
   16:     @}
-  17: @}
+  17:     friend class Luthier;
+  18: @}
 
 @end group
 @end example
 
+@cindex class-open syntactic symbol
+@cindex class-close syntactic symbol
 As in the previous example, line 1 has the @code{topmost-intro} syntax.
 Here however, the brace that opens a C++ class definition on line 4 is
 assigned the @code{class-open} syntax.  Note that in C++, structs and
@@ -2160,13 +2174,28 @@ above with @code{struct} or @code{union} would still result in a syntax
 of @code{class-open} for line 4 @footnote{This is the case even for C
 and Objective-C.  For consistency, structs in all three languages are
 syntactically equivalent to classes.  Note however that the keyword
-@code{class} is meaningless in C and Objective-C.}.  Similarly, line 17
+@code{class} is meaningless in C and Objective-C.}.  Similarly, line 18
 is assigned @code{class-close} syntax.
 
+@cindex friend syntactic symbol
+Line 17 is interesting in that it's syntactic analysis list contains
+three elements:
+
+@example
+@code{((friend) (inclass . 58) (topmost-intro . 380))}
+@end example
+
+The @code{friend} syntactic symbol is a modifier that typically does not
+have a relative buffer position.
+
+@cindex inher-intro syntactic symbol
+@cindex inher-cont syntactic symbol
 Line 2 introduces the inheritance list for the class so it is assigned
 the @code{inher-intro} syntax, and line 3, which continues the
 inheritance list is given @code{inher-cont} syntax.
 
+@cindex access-label syntactic symbol
+@cindex inclass syntactic symbol
 Things get interesting at line 5.  The primary syntactic symbol for this
 line is @code{access-label} since this a label keyword that specifies
 access protection in C++.  However, this line actually shows two
@@ -2175,6 +2204,8 @@ also a top-level construct inside a class definition.  Thus the other
 syntactic symbol assigned to this line is @code{inclass}.  Similarly,
 line 6 is given both @code{inclass} and @code{topmost-intro} syntax.
 
+@cindex member-init-intro syntactic symbol
+@cindex member-init-cont syntactic symbol
 Line 7 introduces a C++ member initialization list and as such is given
 @code{member-init-intro} syntax.  Note that in this case it is
 @emph{not} assigned @code{inclass} since this is not considered a
@@ -2183,6 +2214,8 @@ top-level construct.  Lines 8 through 10 are all assigned
 list started on line 7.
 
 @cindex in-class inline methods
+@cindex inline-open syntactic symbol
+@cindex inline-close syntactic symbol
 Line 11 is assigned @code{inline-open} because it opens an
 @dfn{in-class} C++ inline method definition.  This is distinct from, but
 related to, the C++ notion of an inline function in that its definition
@@ -2253,6 +2286,9 @@ is assigned to various conditional constructs:
 @noindent
 Only the lines that illustrate new syntactic symbols will be discussed.
 
+@cindex substatement-open syntactic symbol
+@cindex substatement-block-intro syntactic symbol
+@cindex block-close syntactic symbol
 Line 4 has a brace which opens a conditional's substatement block.  It
 is thus assigned @code{substatement-open} syntax, and since line 5 is
 the first line in the substatement block, it is assigned
@@ -2261,17 +2297,21 @@ similar syntax.  Line 8 contains the brace that closes the inner
 substatement block.  It is given the generic syntax @code{block-close},
 as are lines 11 and 14.
 
+@cindex else-clause syntactic symbol
+@cindex substatement syntactic symbol
 Line 9 is a little different -- since it contains the keyword
 @code{else} matching the @code{if} statement introduced on line 5; it is
 given the @code{else-clause} syntax.  Note also that line 10 is slightly
 different too.  Because @code{else} is considered a conditional
 introducing keyword @footnote{The list of conditional keywords are (in
-C, Objective-C and C++): @code{for}, @code{if}, @code{do}, @code{else},
-@code{while}, and @code{switch}.  C++ has two additional conditional
-keywords: @code{try} and @code{catch}.}, and because the following
-substatement is not a brace block, line 10 is assigned the
+C, Objective-C, C++, and Java): @code{for}, @code{if}, @code{do},
+@code{else}, @code{while}, and @code{switch}.  C++ and Java have two
+additional conditional keywords: @code{try} and @code{catch}.  Java also
+has the @code{finally} and @code{synchronized} keywords}, and because
+the following substatement is not a brace block, line 10 is assigned the
 @code{substatement} syntax.
 
+@cindex do-while-closure syntactic symbol
 One other difference is seen on line 15.  The @code{while} construct
 that closes a @code{do} conditional is given the special syntax
 @code{do-while-closure} if it appears on a line by itself.  Note that if
@@ -2303,6 +2343,9 @@ example:
 @end group
 @end example
 
+@cindex case-label syntactic symbol
+@cindex statement-case-intro syntactic symbol
+@cindex statement-case-open syntactic symbol
 Here, lines 4, 7, and 10 are all assigned @code{case-label} syntax,
 while lines 5 and 8 are assigned @code{statement-case-intro}.  Line 11
 is treated slightly differently since it contains a brace that opens a
@@ -2326,12 +2369,36 @@ initialize an array of structs.  For example:
 @end group
 @end example
 
+@cindex brace-list-open syntactic symbol
+@cindex brace-list-intro syntactic symbol
+@cindex brace-list-close syntactic symbol
+@cindex brace-list-entry syntactic symbol
 Following convention, line 2 in this example is assigned
 @code{brace-list-open} syntax, and line 3 is assigned
 @code{brace-list-intro} syntax.  Likewise, line 6 is assigned
 @code{brace-list-close} syntax.  Lines 4 and 5 however, are assigned
 @code{brace-list-entry} syntax, as would all subsequent lines in this
 initializer list.
+
+External language definition blocks also have their own syntactic
+symbols.  In this example:
+@example
+@group
+
+   1: extern "C" 
+   2: @{
+   3:     int thing_one( int );
+   4:     int thing_two( double );
+   5: @}
+
+@end group
+@end example
+
+@cindex extern-lang-open syntactic symbol
+@cindex extern-lang-close syntactic symbol
+@noindent
+line 2 is given the @code{extern-lang-open} syntax while line 5 is given
+the @code{extern-lang-close} syntax.
 
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
@@ -2361,11 +2428,15 @@ calls.  This example illustrates these:
 @end group
 @end example
 
+@cindex arglist-intro syntactic symbol
+@cindex arglist-close syntactic symbol
 Lines 5 and 12 are assigned @code{arglist-intro} syntax since they are
 the first line following the open parenthesis, and lines 7 and 14 are
 assigned @code{arglist-close} syntax since they contain the parenthesis
 that closes the argument list.
 
+@cindex arglist-cont-nonempty syntactic symbol
+@cindex arglist-cont syntactic symbol
 The other lines with relevant syntactic symbols include lines 2 and 17
 which are assigned @code{arglist-cont-nonempty} syntax.  What this means
 is that they continue an argument list, but that the line containing the
@@ -2416,9 +2487,11 @@ The lines to note in this example include:
 
 @itemize @bullet
 
+@cindex ansi-funcdecl-cont syntactic symbol
 @item
 line 2 which is assigned the @code{ansi-funcdecl-cont} syntax;
 
+@cindex comment-intro syntactic symbol
 @item
 line 4 which is assigned both @code{defun-block-intro} @emph{and}
 @code{comment-intro} syntax @footnote{The @code{comment-intro} syntactic
@@ -2426,6 +2499,7 @@ symbol is known generically as a @dfn{modifier} since it always appears
 on a syntactic analysis list with other symbols, and never has a
 relative buffer position.};
 
+@cindex c syntactic symbol
 @item
 line 5 which is assigned @code{c} syntax;
 
@@ -2438,18 +2512,23 @@ comment on lines 4 and 5 do not cause line 6 to be assigned
 @dfn{syntactic whitespace}, which are essentially ignored when analyzing
 code;
 
+@cindex string syntactic symbol
 @item
 line 8 which is assigned @code{string} syntax;
 
+@cindex label syntactic symbol
 @item
 line 10 which is assigned @code{label} syntax;
 
+@cindex block-open syntactic symbol
 @item
 line 11 which is assigned @code{block-open} syntax;
 
+@cindex cpp-macro syntactic symbol
 @item
 lines 12 and 14 which are assigned @code{cpp-macro} syntax;
 
+@cindex stream-op syntactic symbol
 @item
 line 17 which is assigned @code{stream-op} syntax @footnote{In C++ only.}.
 
@@ -2472,14 +2551,35 @@ illustrating these:
 @end group
 @end example
 
+@cindex objc-method-intro syntactic symbol
+@cindex objc-method-args-cont syntactic symbol
+@cindex objc-method-call-cont syntactic symbol
 Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
 assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
 assigned @code{objc-method-call-cont} syntax.
 
-Other syntactic symbols may be recognized by @code{cc-mode}, but these
-are more obscure and so I haven't included examples of them.  These
-include: @code{knr-argdecl-intro}, @code{knr-argdecl}, and the
-@code{friend} modifier.
+@cindex knr-argdecl-intro
+@cindex knr-argdecl
+Two other syntactic symbols can appear in old style, non-prototyped C
+code @footnote{a.k.a. K&R C, or Kernighan & Ritchie C}:
+@example
+@group
+
+  1: int add_three_integers(a, b, c)
+  2:      int a;
+  3:      int b;
+  4:      int c;
+  5: @{
+  6:     return a + b + c;
+  7: @}
+
+@end group
+@end example
+
+Here, line 2 is the first line in an argument declaration list and so is
+given the @code{knr-argdecl-intro} syntactic symbol.  Subsequent lines
+(i.e. lines 3 and 4 in this example), are given @code{knr-argdecl}
+syntax.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Performance Issues, Frequently Asked Questions, Syntactic Symbols, Top
