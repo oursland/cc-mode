@@ -153,6 +153,7 @@
 	(inexpr-class          . +)
 	))
     (c-echo-syntactic-information-p . t)
+    (c-indent-comment-alist . nil)
     )
   "Style for testing.")
 
