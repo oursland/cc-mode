@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.222 $
-;; Last Modified:   $Date: 1995-06-01 16:51:16 $
+;; Version:         $Revision: 4.223 $
+;; Last Modified:   $Date: 1995-06-26 15:55:11 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-06-01 16:51:16 $|$Revision: 4.222 $|
+;; |$Date: 1995-06-26 15:55:11 $|$Revision: 4.223 $|
 
 ;;; Code:
 
@@ -1003,9 +1003,9 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 
 ;; main entry points for the modes
-;;;###autoload
 (defconst c-list-of-mode-names nil)
 
+;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
@@ -4486,7 +4486,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.222 $"
+(defconst c-version "$Revision: 4.223 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
