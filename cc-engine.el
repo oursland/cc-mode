@@ -651,102 +651,184 @@
 (defvar c-parsing-error nil)
 
 (defun c-parse-state ()
-  ;; Finds and records all open parens between some important point
-  ;; earlier in the file and point.
+  ;; Finds and records all noteworthy parens between some good point
+  ;; earlier in the file and point.  That good point is at least the
+  ;; beginning of the top-level construct we are in, or the beginning
+  ;; of the preceding top-level construct if we aren't in one.
   ;;
-  ;; if there's a state cache, return it
-  (if c-state-cache c-state-cache
-    (let* (at-bob
-	   (pos (save-excursion
-		  ;; go back 2 bods, but ignore any bogus positions
-		  ;; returned by beginning-of-defun (i.e. open paren
-		  ;; in column zero)
-		  (let ((cnt 2))
-		    (while (not (or at-bob (zerop cnt)))
-		      (goto-char (c-point 'bod))
-		      (if (and
-			   (eq (char-after) ?\{)
-			   ;; The following catches an obscure special
-			   ;; case where the brace is preceded by an
-			   ;; open paren.  That can only legally occur
-			   ;; with blocks inside expressions and in
-			   ;; Pike special brace lists.  Even so, this
-			   ;; test is still bogus then, but hopefully
-			   ;; good enough.  (We don't want to use
-			   ;; up-list here since it might be slow.)
-			   (save-excursion
-			     (c-backward-syntactic-ws)
-			     (not (eq (char-before) ?\())))
-			  (setq cnt (1- cnt)))
-		      (if (bobp)
-			  (setq at-bob t))))
-		  (point)))
-	   (here (save-excursion
-		   ;;(skip-chars-forward " \t}")
-		   (point)))
-	   (last-bod here) (last-pos pos)
-	   placeholder state sexp-end)
-      ;; cache last bod position
-      (while (catch 'backup-bod
-	       (setq state nil)
-	       (while (and pos (< pos here))
-		 (setq last-pos pos)
-		 (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
-			  (<= pos here))
-		     (progn
-		       (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
-		       (if (and sexp-end
-				(<= sexp-end here))
-			   ;; we want to record both the start and end
-			   ;; of this sexp, but we only want to record
-			   ;; the last-most of any of them before here
-			   (progn
-			     (if (and (eq (char-after (1- pos)) ?\{)
-				      (not (save-excursion
-					     (goto-char pos)
-					     (c-beginning-of-macro))))
-				 (setq state (cons (cons (1- pos) sexp-end)
-						   (if (consp (car state))
-						       (cdr state)
-						     state))))
-			     (setq pos sexp-end))
-			 ;; we're contained in this sexp so put pos on
-			 ;; front of list
-			 (setq state (cons (1- pos) state))))
-		   ;; something bad happened. check to see if we
-		   ;; crossed an unbalanced close brace. if so, we
-		   ;; didn't really find the right `important bufpos'
-		   ;; so lets back up and try again
-		   (if (and (not pos) (not at-bob)
-			    (setq placeholder
-				  (c-safe (scan-lists last-pos 1 1)))
-			    ;;(char-after (1- placeholder))
-			    (<= placeholder here)
-			    (eq (char-after (1- placeholder)) ?\}))
-		       (while t
-			 (setq last-bod (c-safe (scan-lists last-bod -1 1)))
-			 (if (not last-bod)
+  ;; The returned value is a list of the noteworthy parens with the
+  ;; last one first.  If an element in the list is an integer, it's
+  ;; the position of an open paren which have not been closed before
+  ;; point.  If an element is a cons, it gives the position of a
+  ;; closed brace paren pair; the car is the start paren position and
+  ;; the cdr is the position following the closing paren.  Only the
+  ;; last closed brace paren pair before each open paren is recorded,
+  ;; and thus the state never contains two cons elements in
+  ;; succession.
+  ;;
+  ;; If c-state-cache contains state info, it's used to cut down the
+  ;; amount of searching.
+  (save-restriction
+    (narrow-to-region (point-min) (point))
+    (let* ((here (point))
+	   (old-state (and c-state-cache
+			   ;; Try to use cached info before point.
+			   (c-whack-state-after here c-state-cache)))
+	   (state old-state)
+	   (pos (if state
+		    (if (consp (car state))
+			(cdr (car state))
+		      (1+ (car state)))
+		  (save-excursion
+		    ;; go back 2 bods, but ignore any bogus positions
+		    ;; returned by beginning-of-defun (i.e. open paren
+		    ;; in column zero)
+		    (let ((cnt 2))
+		      (while (not (or (bobp) (zerop cnt)))
+			(c-beginning-of-defun-1)
+			(if (and
+			     (eq (char-after) ?\{)
+			     ;; The following catches an obscure special
+			     ;; case where the brace is preceded by an
+			     ;; open paren.  That can only legally occur
+			     ;; with blocks inside expressions and in
+			     ;; Pike special brace lists.  Even so, this
+			     ;; test is still bogus then, but hopefully
+			     ;; good enough.  (We don't want to use
+			     ;; up-list here since it might be slow.)
 			     (save-excursion
-			       ;; bogus, but what can we do here?
-			       (goto-char placeholder)
-			       (beginning-of-line)
-			       (setq c-parsing-error
-				     (format "\
-Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
-			       (throw 'backup-bod nil))
-			   (setq at-bob (= last-bod (point-min))
-				 pos last-bod)
-			   (if (= (char-after last-bod) ?\{)
-			       (throw 'backup-bod t)))
-			 ))		;end-if
-		   ))			;end-while
-	       nil))
+			       (c-backward-syntactic-ws)
+			       (not (eq (char-before) ?\())))
+			    (setq cnt (1- cnt)))))
+		    (point))))
+	   last-pos placeholder sexp-pos inside)
+      (while pos
+	(setq last-pos pos)
+	(if (setq pos (c-safe (scan-lists pos 1 -1)))
+	    (if (setq sexp-pos (c-safe (scan-lists pos 1 1)))
+		;; we want to record both the start and end
+		;; of this sexp, but we only want to record
+		;; the last-most of any of them before here
+		(progn
+		  (if (and (eq (char-before pos) ?\{)
+			   (not (save-excursion
+				  (goto-char pos)
+				  (c-beginning-of-macro))))
+		      (setq state (cons (cons (1- pos) sexp-pos)
+					(if (consp (car state))
+					    (cdr state)
+					  state))))
+		  (setq pos sexp-pos))
+	      ;; we're contained in this sexp so put pos on
+	      ;; front of list
+	      (setq inside t
+		    state (cons (1- pos) state)))
+	  ;; No unbalanced paren between last-pos and here.  If we
+	  ;; aren't inside any paren since the start of the search and
+	  ;; if we crossed an unbalanced close brace, then we didn't
+	  ;; really find the right `important bufpos'.
+	  ;;
+	  ;; Actually the later condition is not correct; there might
+	  ;; still be a surrounding brace pair that we should have on
+	  ;; the list, but searching for it would mean to scan
+	  ;; backward to the beginning of the buffer every time we're
+	  ;; between top-level constructs.
+	  (when (and (not inside)
+		     (setq placeholder (c-safe (scan-lists last-pos 1 1))))
+	    (setq pos (c-safe (scan-lists here -1 1)))
+	    ;; Go over to plan B: Search and build state backwards.
+	    ;; First we must fix up state with any balanced brace sexp
+	    ;; before point.  We can't use one that might be found
+	    ;; above, since that's on the wrong side of the closing
+	    ;; paren.
+	    (setq last-pos here)
+	    (while (and (setq sexp-pos
+			      (c-safe (scan-sexps last-pos -1)))
+			(not (eq (char-after sexp-pos) ?\{)))
+	      (setq last-pos sexp-pos))
+	    (setq state (cons nil
+			      (if sexp-pos
+				  (list (cons sexp-pos
+					      (save-excursion
+						(goto-char last-pos)
+						(c-backward-syntactic-ws)
+						(point)))))))
+	    (unless pos
+	      (save-excursion
+		;; bogus, but what can we do here?
+		(goto-char placeholder)
+		(beginning-of-line)
+		(setq c-parsing-error
+		      (format "Unbalanced close brace at line %d"
+			      (1+ (count-lines 1 (point)))))))
+	    (let ((ptr (or (cdr state) state))
+		  oldptr prev-pos prev-prev-pos)
+	      (while pos
+		;; Check if the cached state can help us.
+		(setq oldptr old-state)
+		(while (and oldptr
+			    (not (eq pos (car oldptr))))
+		  (if (< pos (if (consp (car oldptr))
+				 (car (car oldptr))
+			       (car oldptr)))
+		      (setq old-state (cdr oldptr)))
+		  (setq oldptr (cdr oldptr)))
+		(if oldptr
+		    ;; The cached state got relevant info from this
+		    ;; point on.  Let's use it and we're done.
+		    (progn
+		      (setcdr ptr oldptr)
+		      (setq pos nil))
+		  (setcdr ptr (list pos))
+		  (setq ptr (cdr ptr))
+		  ;; Search backwards for a balanced brace sexp.
+		  (setq last-pos pos)
+		  (while (and (setq sexp-pos
+				    (c-safe (scan-sexps last-pos -1)))
+			      (not (eq (char-after sexp-pos) ?\{)))
+		    (setq last-pos sexp-pos))
+		  (when sexp-pos
+		    (setcdr ptr (list (cons sexp-pos
+					    (save-excursion
+					      (goto-char last-pos)
+					      (c-backward-syntactic-ws)
+					      (point)))))
+		    (setq ptr (cdr ptr)
+			  last-pos sexp-pos))
+		  ;; Try to back up another level if we haven't found
+		  ;; two opening braces in succession.
+		  (if (and prev-prev-pos
+			   (eq (char-after prev-pos) ?\{)
+			   (eq (char-after prev-prev-pos) ?\{))
+		      (setq pos nil)
+		    (setq prev-prev-pos prev-pos
+			  prev-pos pos
+			  pos (c-safe (scan-lists pos -1 1)))))))
+	    (setq pos nil
+		  state (cdr state)))))
       state)))
 
-(defun c-whack-state (bufpos state)
-  ;; whack off any state information that appears on STATE which lies
-  ;; after the bounds of BUFPOS.
-  (let (newstate car)
+(defun c-whack-state-before (bufpos state)
+  ;; Whack off any state information from STATE which lies before
+  ;; BUFPOS.
+  (let* ((newstate (list nil))
+	 (ptr newstate)
+	 car)
+    (while state
+      (setq car (car state)
+	    state (cdr state))
+      (if (< (if (consp car) (car car) car) bufpos)
+	  (setq state nil)
+	(setcdr ptr (list car))
+	(setq ptr (cdr ptr))))
+    (cdr newstate)))
+
+(defun c-whack-state-after (bufpos state)
+  ;; Whack off any state information from STATE which lies at or after
+  ;; BUFPOS.
+  (let* ((newstate (list nil))
+	 (ptr newstate)
+	 car)
     (while state
       (setq car (car state)
 	    state (cdr state))
@@ -761,23 +843,45 @@ Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
 	    ;; the close brace is after.  In that case, convert this
 	    ;; to a non-cons element.
 	    (if (<= bufpos (cdr car))
-		(setq newstate (append newstate (list (car car))))
+		(progn
+		  (setcdr ptr (list (car car)))
+		  (setq ptr (cdr ptr)))
 	      ;; we know that both the open and close braces are
 	      ;; before bufpos, so we also know that everything else
 	      ;; on state is before bufpos, so we can glom up the
 	      ;; whole thing and exit.
-	      (setq newstate (append newstate (list car) state)
-		    state nil)))
+	      (setcdr ptr (cons car state))
+	      (setq state nil)))
 	(if (<= bufpos car)
 	    nil				; whack it off
 	  ;; it's before bufpos, so everything else should too
-	  (setq newstate (append newstate (list car) state)
-		state nil))))
-    newstate))
+	  (setcdr ptr (cons car state))
+	  (setq state nil))))
+    (cdr newstate)))
+
+(defun c-whack-state (bufpos state)
+  (c-whack-state-after bufpos state))
+(make-obsolete 'c-whack-state 'c-whack-state-after)
 
 (defun c-hack-state (bufpos which state)
   ;; Using BUFPOS buffer position, and WHICH (must be 'open or
   ;; 'close), hack the c-parse-state STATE and return the results.
+  ;;
+  ;; From code inspection, "hack" above is found out to mean:
+  ;;
+  ;; o  If WHICH is 'open: Prepend BUFPOS to the state if it's not
+  ;;    there already.  If the state has a cons as the first element,
+  ;;    its car is _not_ examined to see whether it's equal to BUFPOS.
+  ;;
+  ;; o  If WHICH is 'close: If the first element of the state isn't a
+  ;;    cons, make it a cons with BUFPOS as the cdr.  If the first
+  ;;    element is a cons, remove it from the state and check whether
+  ;;    the same thing can be done to the second element (which now
+  ;;    has become the first).
+  ;;
+  ;;    The state is assumed to not contain two or more cons in
+  ;;    succession, and the function also ensures that holds when a
+  ;;    cons is added to it.
   (if (eq which 'open)
       (let ((car (car state)))
 	(if (or (null car)
@@ -785,8 +889,6 @@ Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
 		(/= bufpos car))
 	    (cons bufpos state)
 	  state))
-    (if (not (eq which 'close))
-	(error "c-hack-state, bad argument: %s" which))
     ;; 'close brace
     (let ((car (car state))
 	  (cdr (cdr state)))
@@ -795,7 +897,7 @@ Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
 		cdr (cdr cdr)))
       ;; TBD: is this test relevant???
       (if (consp car)
-	  state				;on error, don't change
+	  (error "Got two cons in succession in state: %s" state)
 	;; watch out for balanced expr already on cdr of list
 	(cons (cons car bufpos)
 	      (if (consp (car cdr))
@@ -1529,7 +1631,7 @@ brace."
 
 (defun c-narrow-out-enclosing-class (state lim)
   ;; narrow the buffer so that the enclosing class is hidden
-  (setq state (c-whack-state (point) state))
+  (setq state (c-whack-state-after (point) state))
   (let (inclass-p)
     (and state
 	 (setq inclass-p (c-search-uplist-for-classkey state))
@@ -1569,6 +1671,9 @@ brace."
 	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     (c-state-cache (if inclass-p
+				(c-whack-state-before (point-min) fullstate)
+			      fullstate))
 	     inenclosing-p)
 	;; check for meta top-level enclosing constructs, possible
 	;; extern language definitions, possibly (in C++) namespace
@@ -1698,14 +1803,7 @@ brace."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
-		;; TBD: watch out! there could be a bogus
-		;; c-state-cache in place when we get here.  we have
-		;; to go through much chicanery to ignore the cache.
-		;; But of course, there may not be!  BLECH!  BOGUS!
-		(let ((decl
-		       (let ((c-state-cache nil))
-			 (c-search-uplist-for-classkey (c-parse-state))
-			 )))
+		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 		  (and decl
 		       (setq placeholder (aref decl 0)))
 		  ))
@@ -2810,7 +2908,8 @@ brace."
   "Show syntactic information for current line.
 With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
-  (let ((syntax (c-guess-basic-syntax)))
+  (let* ((c-parsing-error nil)
+	 (syntax (c-guess-basic-syntax)))
     (if (not (consp arg))
 	(message "syntactic analysis: %s" syntax)
       (indent-for-comment)
