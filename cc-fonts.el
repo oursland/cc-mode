@@ -602,10 +602,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 						font-lock-reference-face))
 		      (goto-char (match-end 1)))))))))
 
-      ;; Fontify class names in the beginning of message expressions
-      ;; in Objective-C.
+      ;; Fontify the special declarations in Objective-C.
       ,@(when (c-major-mode-is 'objc-mode)
-	  `(,(c-make-font-lock-search-function
+	  `(;; Fontify class names in the beginning of message expressions.
+	    ,(c-make-font-lock-search-function
 	      "\\["
 	      '((c-fontify-types-and-refs ()
 		  (c-forward-syntactic-ws limit)
@@ -615,7 +615,25 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      (goto-char start)
 		      (let ((c-promote-possible-types t))
 			(c-forward-type))))
-		  (if (> (point) limit) (goto-char limit)))))))
+		  (if (> (point) limit) (goto-char limit)))))
+
+	    ;; The @interface/@implementation/@protocol directives.
+	    (,(concat "\\<"
+		      (c-regexp-opt
+		       '("@interface" "@implementation" "@protocol")
+		       t)
+		      "\\>")
+	     (,(byte-compile
+		(lambda (limit)
+		  (let (;; The font-lock package in Emacs is known to clobber
+			;; `parse-sexp-lookup-properties' (when it exists).
+			(parse-sexp-lookup-properties
+			 (cc-eval-when-compile
+			   (boundp 'parse-sexp-lookup-properties))))
+		    (save-restriction
+		      (narrow-to-region (point-min) limit)
+		      (c-font-lock-objc-iip-decl)))
+		  nil))))))
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
@@ -1638,28 +1656,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
   "Simple font lock matchers for types and declarations.  These are used
 on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
-  t `(;; Fontify the special declarations in Objective-C.
+  t `(;; Objective-C methods.
       ,@(when (c-major-mode-is 'objc-mode)
-	  `(;; The @interface/@implementation/@protocol directives.
-	    (,(concat "\\<"
-		      (c-regexp-opt
-		       '("@interface" "@implementation" "@protocol")
-		       t)
-		      "\\>")
-	     (,(byte-compile
-		(lambda (limit)
-		  (let (;; The font-lock package in Emacs is known to clobber
-			;; `parse-sexp-lookup-properties' (when it exists).
-			(parse-sexp-lookup-properties
-			 (cc-eval-when-compile
-			   (boundp 'parse-sexp-lookup-properties))))
-		    (save-restriction
-		      (narrow-to-region (point-min) limit)
-		      (c-font-lock-objc-iip-decl)))
-		  nil))))
-
-	    ;; Methods.
-	    (,(c-lang-const c-opt-method-key)
+	  `((,(c-lang-const c-opt-method-key)
 	     (,(byte-compile
 		(lambda (limit)
 		  (let (;; The font-lock package in Emacs is known to clobber
@@ -1728,9 +1727,25 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
 
-      ;; Fontify the special declarations in Objective-C.
+      ;; Fontify method declarations in Objective-C, but first we have
+      ;; to put the `c-decl-end' `c-type' property on all the @-style
+      ;; directives that haven't been handled in
+      ;; `c-basic-matchers-before'.
       ,@(when (c-major-mode-is 'objc-mode)
-	  `(c-font-lock-objc-decls))
+	  `((,(c-make-keywords-re t
+		;; Exclude "@class" since that directive ends with a
+		;; semicolon anyway.
+		(delete "@class"
+			(append (c-lang-const c-protection-kwds)
+				(c-lang-const c-other-decl-kwds)
+				nil)))
+	     (,(byte-compile
+		(lambda (limit)
+		  (c-put-char-property (1- (match-end 1))
+				       'c-type 'c-decl-end)
+		  nil))))
+
+	    c-font-lock-objc-methods))
 
       ;; Fontify all declarations and casts.
       c-font-lock-declarations
@@ -2283,10 +2298,12 @@ need for `c++-font-lock-extra-types'.")
 	  (c-forward-syntactic-ws)))
 
       ;; Look for a protocol reference list.
-      (if (eq (char-after) ?<)
-	  (progn
-	    (setq c-recognize-<>-arglists t)
-	    (c-forward-<>-arglist t t))
+      (when (if (eq (char-after) ?<)
+		(progn
+		  (setq c-recognize-<>-arglists t)
+		  (c-forward-<>-arglist t t))
+	      t)
+	(c-put-char-property (1- (point)) 'c-type 'c-decl-end)
 	t))))
 
 (defun c-font-lock-objc-method ()
@@ -2339,15 +2356,9 @@ need for `c++-font-lock-extra-types'.")
       (forward-char)
       (setq first nil))))
 
-(defun c-font-lock-objc-decls (limit)
-  ;; Fontify the special declaration-level directives and method
-  ;; declarations in Objective-C.  Nil is always returned.
-  ;;
-  ;; Both types are done in the same pass since we cannot detect the
-  ;; end of the directives with `c-decl-prefix-re'.  We thus need to
-  ;; continue directly with the next declaration when the end of a
-  ;; directive is found.  For this reason all directives are searched
-  ;; for here, even those that don't need special handling.
+(defun c-font-lock-objc-methods (limit)
+  ;; Fontify method declarations in Objective-C.  Nil is always
+  ;; returned.
 
   (let (;; The font-lock package in Emacs is known to clobber
 	;; `parse-sexp-lookup-properties' (when it exists).
@@ -2357,34 +2368,12 @@ need for `c++-font-lock-extra-types'.")
 
     (c-find-decl-spots
      limit
-     "[-+@]"
+     "[-+]"
      '(nil font-lock-keyword-face)
 
      (lambda (match-pos inside-macro)
-       ;; Fontify a sequence of compiler directives.
-       (while (eq (char-after) ?@)
-	 (unless (cond
-		  ;; Handle an @interface/@implementation/@protocol
-		  ;; directive.
-		  ((looking-at c-class-key)
-		   (goto-char (match-end 1))
-		   (c-font-lock-objc-iip-decl))
-		  ;; Handle a @class directive.  Fontification is done
-		  ;; through `c-type-list-kwds', so we only need to
-		  ;; skip to the end.
-		  ((looking-at "@class\\>")
-		   (c-syntactic-re-search-forward ";" nil t))
-		  ;; Otherwise we assume it's a protection directive.
-		  (t (skip-syntax-forward "w_")))
-	   ;; Failed to parse the directive.  Try to recover by
-	   ;; skipping to eol.
-	   (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
-	     (goto-char (match-beginning 0))))
-	 (c-forward-syntactic-ws))
-
-       (when (looking-at "[-+]")
-	 (forward-char)
-	 (c-font-lock-objc-method)))))
+       (forward-char)
+       (c-font-lock-objc-method))))
   nil)
 
 (c-override-default-keywords 'objc-font-lock-keywords)
