@@ -70,7 +70,7 @@
 			 ))
      )
     ("bsd"
-     (c-basic-offset . 4)
+     (c-basic-offset . 8)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . +)
