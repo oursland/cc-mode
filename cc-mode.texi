@@ -2462,6 +2462,8 @@ definition
 @item
 @code{inextern-lang} --- analogous to `inclass' syntactic symbol, but
 for @code{extern} blocks.
+@item
+@code{template-args-cont} --- C++ template argument list continuations
 @end itemize
 
 @cindex -open syntactic symbols
@@ -2670,6 +2672,21 @@ elements:
 
 The @code{friend} syntactic symbol is a modifier that typically does not
 have a relative buffer position.
+
+Template definitions introduce yet another syntactic symbol:
+
+@example
+@group
+
+   1: ThingManager <int,
+   2:    Framework::Callback *,
+   3:    Mutex> framework_callbacks;
+
+@group
+@end example
+
+Here, line 1 is analyzed as a @code{topmost-intro}, but lines 2 and 3
+are both analyzed as @code{template-args-cont} lines.
 
 Here is another (totally contrived) example which illustrates how syntax
 is assigned to various conditional constructs:
