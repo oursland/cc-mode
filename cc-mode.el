@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.231 $
-;; Last Modified:   $Date: 1995-07-20 20:13:42 $
+;; Version:         $Revision: 4.232 $
+;; Last Modified:   $Date: 1995-07-20 20:19:33 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-20 20:13:42 $|$Revision: 4.231 $|
+;; |$Date: 1995-07-20 20:19:33 $|$Revision: 4.232 $|
 
 ;;; Code:
 
@@ -1604,7 +1604,9 @@ the brace is inserted inside a literal."
 		 ;; if there is whitespace before point, then preserve
 		 ;; at least one space.
 		 (delete-indentation)
-		 (and preserve-p (just-one-space))))
+		 (just-one-space)
+		 (if (not preserve-p)
+		     (delete-char -1))))
 	  ;; since we're hanging the brace, we need to recalculate
 	  ;; syntax.  Update the state to accurately reflect the
 	  ;; beginning of the line.  We punt if we cross any open or
@@ -4511,7 +4513,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.231 $"
+(defconst c-version "$Revision: 4.232 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
