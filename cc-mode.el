@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.117 $
-;; Last Modified:   $Date: 1994-12-13 23:58:48 $
+;; Version:         $Revision: 4.118 $
+;; Last Modified:   $Date: 1994-12-14 23:11:59 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-13 23:58:48 $|$Revision: 4.117 $|
+;; |$Date: 1994-12-14 23:11:59 $|$Revision: 4.118 $|
 
 ;;; Code:
 
@@ -1189,8 +1189,8 @@ Key bindings:
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist))))
 
-(defun c-find-file-hook ()
-  "Hook that runs whenever a cc-mode buffer is visited.
+(defun c-postprocess-file-styles ()
+  "Function that post processes relevent file local variables.
 Currently, this function simply applies any style and offset settings
 found in the file's Local Variable list.  It first applies any style
 setting found in `c-file-style', then it applies any offset settings
@@ -1208,12 +1208,11 @@ it finds in `c-file-offsets'."
 	     )))
 	c-file-offsets)))
 
-;; now add the hook to find-file-hooks, if both it and add-hook are
-;; defined.  This won't work for Emacs 18, but then you shouldn't be
-;; using Emacs 18 anymore anyway.
+;; Add the function to hack-local-variables-hook. as of 14-Dec-1994
+;; no Emacs supports this, although it is hoped XEmacs 19.12 and Emacs
+;; 19.29 will when they are released.
 (and (fboundp 'add-hook)
-     (boundp 'find-file-hooks)
-     (add-hook 'find-file-hooks 'c-find-file-hook))
+     (add-hook 'hack-local-variables-hooks 'c-postprocess-file-styles))
 
 
 ;; macros must be defined before first use
@@ -4313,7 +4312,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.117 $"
+(defconst c-version "$Revision: 4.118 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
