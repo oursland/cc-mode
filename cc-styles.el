@@ -397,7 +397,10 @@ return an integer offset.
 
 OFFSET can also be a list, in which case it is recursively evaluated
 using the semantics described above.  The first element of the list to 
-return a non-nil value succeeds.
+return a non-nil value succeeds.  If none of the elements returns a
+non-nil value, then what happends depends on the value of
+`c-strict-syntax-p'.  When `c-strict-syntax-p' is nil, then an offset
+of zero is used, otherwise an error is generated.
 
 Here is the current list of valid syntactic element symbols:
 
