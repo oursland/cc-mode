@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.195 $
-;; Last Modified:   $Date: 1994-01-14 18:59:57 $
+;; Version:         $Revision: 3.196 $
+;; Last Modified:   $Date: 1994-01-21 22:19:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -50,11 +50,25 @@
 ;; don't send bug reports to my personal account, I may not get it for
 ;; a long time.
 
+;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
+;; the multi-Emacsen support. FSF 19, Lucid 19, and GNU 18 all do
+;; things differently and there's no way to shut the byte-compiler up
+;; at the necessary granularity.
+
+;; If your Emacs is dumped with either c-mode.el or c++-mode.el, you
+;; will need to add the following to your .emacs file before any other
+;; reference to c-mode or c++-mode:
+;;
+;; (fmakunbound 'c-mode)
+;; (makunbound 'c-mode-map)
+;; (fmakunbound 'c++-mode)
+;; (makunbound 'c++-mode-map)
+
 ;; There are two major mode entry points provided by this package, one
 ;; for editing C++ code and the other for editing C code (both K&R and
-;; ANSI sytle).  To use CC-MODE, add the following to your .emacs
-;; file.  This assumes you will use .cc or .C extensions for your C++
-;; source, and .c for your C code:
+;; ANSI).  To use CC-MODE, add the following to your .emacs file.
+;; This assumes you will use .cc or .C extensions for your C++ source,
+;; and .c for your C code:
 ;;
 ;; (autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
 ;; (autoload 'c-mode   "cc-mode" "C Editing Mode" t)
@@ -65,18 +79,11 @@
 ;;             ("\\.h$"  . c-mode)   ; to edit C code
 ;;            ) auto-mode-alist))
 ;;
-;; If your Emacs session already has either c-mode.el or c++-mode.el
-;; loaded in, you will need to add the following to your .emacs file:
-;;
-;; (fmakunbound 'c-mode)
-;; (makunbound 'c-mode-map)
-;; (fmakunbound 'c++-mode)
-;; (makunbound 'c++-mode-map)
-
 ;; If you would like to join the beta testers list, send add/drop
 ;; requests to cc-mode-victims-request@anthem.nlm.nih.gov.
 ;; Discussions go to cc-mode-victims@anthem.nlm.nih.gov, but bug
-;; reports and such should still be sent to cc-mode-help only.
+;; reports and such should still be sent to cc-mode-help only (see
+;; above).
 ;;
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, and code contributions,
@@ -85,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-14 18:59:57 $|$Revision: 3.195 $|
+;; |$Date: 1994-01-21 22:19:27 $|$Revision: 3.196 $|
 
 ;;; Code:
 
@@ -507,6 +514,8 @@ supported list, along with the values for this variable:
   "Keymap used in c-mode buffers.")
 (if c-mode-map
     ()
+  ;; TBD: should we even worry about naming this keymap. My vote: no,
+  ;; because FSF and Lucid do it differently.
   (setq c-mode-map (make-sparse-keymap))
   ;; put standard keybindings into MAP
   ;; the following mappings correspond more or less directly to BOCM
@@ -515,12 +524,19 @@ supported list, along with the values for this variable:
   (define-key c-mode-map ";"         'c-electric-semi&comma)
   (define-key c-mode-map "#"         'c-electric-pound)
   (define-key c-mode-map ":"         'c-electric-colon)
+  ;; Lemacs 19.9 defines these two, the second of which is commented out
+  ;; (define-key c-mode-map "\e{" 'c-insert-braces)
+  ;; Commented out electric square brackets because nobody likes them.
+  ;; (define-key c-mode-map "[" 'c-insert-brackets)
   (define-key c-mode-map "\e\C-h"    'c-mark-function)
   (define-key c-mode-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-map "\ee"       'c-end-of-statement)
-  ; use filladapt instead of this cruft
-  ;(define-key c-mode-map "\eq"        'c-fill-paragraph)
+  ;; use filladapt instead of this cruft.
+  ;; TBD: Lucid and FSF versions of c-mode.el have different
+  ;; c-fill-paragraph's.  Its highly possible neither will work for
+  ;; C++ anyway.
+  ;; (define-key c-mode-map "\eq"        'c-fill-paragraph)
   (define-key c-mode-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
@@ -685,7 +701,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.195 $
+cc-mode Revision: $Revision: 3.196 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -716,7 +732,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.195 $
+cc-mode Revision: $Revision: 3.196 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1409,6 +1425,24 @@ forward."
   (interactive "p")
   (c-forward-into-nomenclature (- (or arg 1)))
   (c-keep-region-active))
+
+;; TBD: These are from Lucid Emacs 19.9's version of c-mode.el
+;;(defun c-insert-brackets ()
+;;  (interactive)
+;;  (insert ?[)
+;;  (save-excursion
+;;    (insert ?])))
+
+;;(defun c-insert-braces ()
+;;  (interactive)
+;;  (setq last-command-char ?{)
+;;  (electric-c-brace 1)
+;;  (newline)
+;;  (c-indent-line)
+;;  (save-excursion
+;;    (newline)
+;;    (insert ?})
+;;    (c-indent-line)))
 
 
 (defun c-beginning-of-statement (&optional count lim)
@@ -2979,7 +3013,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.195 $"
+(defconst c-version "$Revision: 3.196 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3032,6 +3066,44 @@ region."
 	)))
     ))
   (c-keep-region-active))
+
+
+;; menus
+(if (memq 'FSF c-emacs-features)
+    (progn
+      (define-key c-mode-map [menu-bar] (make-sparse-keymap))
+
+      (define-key c-mode-map [menu-bar c]
+	(cons "C" (make-sparse-keymap "C")))
+
+      (define-key c-mode-map [menu-bar c comment-region]
+	'("Comment Out Region" . comment-region))
+      (define-key c-mode-map [menu-bar c c-macro-expand]
+	'("Macro Expand Region" . c-macro-expand))
+      (define-key c-mode-map [menu-bar c c-backslash-region]
+	'("Backslashify" . c-backslash-region))
+      (define-key c-mode-map [menu-bar c indent-exp]
+	'("Indent Expression" . indent-c-exp))
+      (define-key c-mode-map [menu-bar c indent-line]
+	'("Indent Line" . c-indent-command))
+      (define-key c-mode-map [menu-bar c fill]
+	'("Fill Comment Paragraph" . c-fill-paragraph))
+      (define-key c-mode-map [menu-bar c up]
+	'("Up Conditional" . c-up-conditional))
+      (define-key c-mode-map [menu-bar c backward]
+	'("Backward Conditional" . c-backward-conditional))
+      (define-key c-mode-map [menu-bar c forward]
+	'("Forward Conditional" . c-forward-conditional))
+      (define-key c-mode-map [menu-bar c backward-stmt]
+	'("Backward Statement" . c-beginning-of-statement))
+      (define-key c-mode-map [menu-bar c forward-stmt]
+	'("Forward Statement" . c-end-of-statement))
+      )
+  (if (memq 'Lucid c-emacs-features)
+      (progn
+	;; TBD: What menus should be used in Lucid?
+	)
+    ))
 
 
 ;; fsets for compatibility with BOCM
