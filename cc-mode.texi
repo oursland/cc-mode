@@ -5511,6 +5511,25 @@ interpreter tries to call the macro as a function, it shows this
 (somewhat cryptic) error message.}. If you are using the standalone
 @ccmode{} distribution, try recompiling it according to the instructions
 in the @file{README} file.
+
+@item
+@cindex open paren in column zero
+@emph{I have an open paren character at column zero inside a comment or
+multiline string literal, and it causes the fontification and/or
+indentation to go haywire.  What gives?}
+
+It's due to the ad-hoc rule in (X)Emacs that such open parens always
+start defuns (which translates to functions, classes, namespaces or any
+other top-level block constructs in the @ccmode{} languages).
+@xref{Left Margin Paren,,, emacs, The Emacs Editor}, for details
+(@xref{Defuns,,, emacs, The Emacs Editor}, in the Emacs 20 manual).
+
+This heuristic is built into the core syntax analysis routines in
+(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21 it
+has become possible to turn it off@footnote{Using the variable
+@code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
+there since it got its own system to keep track of blocks.
+
 @end itemize
 
 
