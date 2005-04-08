@@ -1,5 +1,5 @@
 \input texinfo
-@c $Id: cc-mode.texi,v 5.209 2005-04-03 14:10:20 acmacm Exp $
+@c $Id: cc-mode.texi,v 5.210 2005-04-08 18:39:40 acmacm Exp $
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -147,7 +147,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.209 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.210 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -186,7 +186,6 @@ functions, classes etc - there are other packages for that.
 * Indentation Engine Basics::   
 * Customizing Indentation::     
 * Custom Macros::               
-* Advanced Customizations::     
 * Odds and Ends::               
 * Sample .emacs File::          
 * Performance Issues::          
@@ -1296,8 +1295,8 @@ and @kbd{C-d}.
 
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
-Delete,,,emacs}, might be helpful if you're having trouble with this.
-@c FIXME!!! 2004/11/4:  Put in a note to say ``GNU Emacs'' in the above.
+Delete,,,emacs}, might be helpful if you're having trouble with this
+in GNU Emacs.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Minor Modes, Commands
@@ -2297,7 +2296,6 @@ style variable values are made local to that buffer.
 @chapter Customizing Filling and Line Breaking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@c FIXME!!!  ACM 2004/8/20.  The following is perhaps redundant.
 Since there's a lot of normal text in comments and string literals,
 @ccmode{} provides features to edit these like in text mode.  It does
 this by hooking in on the different line breaking functions and tuning
@@ -2827,7 +2825,6 @@ been found for this feature, it isn't currently implemented!
 @cindex hanging commas
 @cindex customization, semicolon newlines
 @cindex customization, comma newlines
-@c FIXME!!! Do I want all of these concept index entries??? 2004/10/15
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @defopt c-hanging-semi&comma-criteria
@@ -5692,7 +5689,7 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Macros, Advanced Customizations, Customizing Indentation, Top
+@node    Custom Macros, Odds and Ends, Customizing Indentation, Top
 @comment node-name, next, previous, up
 @chapter Customizing Macros
 @cindex macros
@@ -5751,36 +5748,7 @@ get aligned only when you explicitly invoke the command
 @end defopt
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Advanced Customizations, Odds and Ends, Custom Macros, Top
-@comment node-name, next, previous, up
-@chapter Advanced Customizations
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-For most users, @ccmode{} will support their coding styles with very
-little need for more advanced customizations.  Usually, one of the
-standard styles (@pxref{Built-in Styles}) will do the trick.  At most,
-perhaps one of the syntactic symbol offsets will need to be tweaked
-slightly, or maybe @code{c-basic-offset} will need to be changed.
-However, some styles require a more flexible framework for
-customization, and one of the real strengths of @ccmode{} is that the
-syntactic analysis model provides just such a framework. This allows
-you to implement custom indentation calculations for situations not
-handled by the mode directly.
-
-FIXME!!! The above blurb may still be wanted somewhere, but not really
-here, now that the last of the ``advanced'' menu items has reverted to
-its logical position.  2004/10/15.
-        
-@c @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@c @node    Syntactic Symbols, Line-Up Functions, Customizing Indentation, Top
-@c @comment node-name, next, previous, up
-@c @was a chapter Syntactic Symbols
-@c @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@c Moved to ``Indentation Engine'' chapter, 2004/8/17.
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Odds and Ends, Sample .emacs File, Advanced Customizations, Top
+@node    Odds and Ends, Sample .emacs File, Custom Macros, Top
 @comment node-name, next, previous, up
 @chapter Odds and Ends
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
