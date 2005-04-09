@@ -6103,7 +6103,9 @@ This function does not do any hidden buffer changes."
 		;; Note: We use the fact that lim is always after any
 		;; preceding brace sexp.
 		(while (and (zerop (c-backward-token-2 1 t lim))
-			    (not (looking-at "[;<,=]"))))
+			    (or (not (looking-at "[;<,=]"))
+				(and c-overloadable-operators-regexp
+				     (looking-at c-overloadable-operators-regexp)))))
 		(or (memq (char-after) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
 			 (zerop (c-backward-token-2 1 nil lim))
