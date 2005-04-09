@@ -608,7 +608,7 @@ submatch surrounds the directive name."
   java (append (c-lang-const c-assignment-operators)
 	       '(">>>="))
   c++  (append (c-lang-const c-assignment-operators)
-	       '("and_eq" "or_eq" "xor_eq" "??!="))
+	       '("and_eq" "or_eq" "xor_eq" "??!=" "??'="))
   idl  nil)
 
 (c-lang-defconst c-operators
