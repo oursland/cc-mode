@@ -1,5 +1,10 @@
 \input texinfo
-@c $Id: cc-mode.texi,v 5.210 2005-04-08 18:39:40 acmacm Exp $
+
+@comment
+@comment FIXME: cc-subword docs.
+@comment
+
+@c $Id: cc-mode.texi,v 5.211 2005-04-09 14:30:28 mast Exp $
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -147,7 +152,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.210 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.211 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -290,7 +295,7 @@ originally contain the font lock support for its languages --- that
 was added in version 5.30.
 
 This manual describes @ccmode{}
-@comment The following line must appear on its own, so that the automated
+@comment The following line must appear on its own, so that the
 version 5.31.
 @comment Release.py script can update the version number automatically
 
@@ -378,7 +383,7 @@ The next few chapters, describe in detail how to customize the various
 features of @ccmode{}.
 
 @item
-Finally, there is a sample @file{.emacs} fragment, which may help you
+Finally, there is a sample @file{.emacs} fragment, which might help you
 in creating your own customization.
 @end itemize
 
@@ -416,15 +421,15 @@ Finally, there are the customary indices.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If you got this version of @ccmode{} with Emacs or XEmacs, it should
-work just fine right out of the box.  Note however that you may not have
-the latest @ccmode{} release and may want to upgrade your copy.
+work just fine right out of the box.  Note however that you might not
+have the latest @ccmode{} release and might want to upgrade your copy.
 
 If you are upgrading an existing @ccmode{} installation, please see
 the @file{README} file for installation details.  In particular, if
 you are going to be editing AWK files, @file{README} describes how to
 configure your (X)Emacs so that @ccmode{} will supersede the obsolete
-@code{awk-mode.el} which may have been supplied with your (X)Emacs.
-@ccmode{} may not work with older versions of Emacs or XEmacs.  See
+@code{awk-mode.el} which might have been supplied with your (X)Emacs.
+@ccmode{} might not work with older versions of Emacs or XEmacs.  See
 the @ccmode{} release notes at @uref{http://cc-mode.sourceforge.net}
 for the latest information on Emacs version and package compatibility
 (@pxref{Updating CC Mode}).
@@ -605,14 +610,14 @@ These variables are also useful when indenting code:
 @defopt c-tab-always-indent
 @vindex tab-always-indent (c-)
 @cindex literal
-This variable controls how @kbd{TAB} (@code{c-indent-command})
-operates.  When it is @code{t}, @kbd{TAB} always indents the current
-line.  When it is @code{nil}, the line is indented only if point is at
-the left margin, or on or before the first non-whitespace character on
-the line, otherwise some whitespace is inserted.  If this variable is
-some other value (not @code{nil} or @code{t}), then some whitespace is
-inserted only within strings and comments (literals), but the line is
-always reindented.
+This variable controls how @kbd{TAB} (@code{c-indent-command}) operates.
+When it is @code{t}, @kbd{TAB} always indents the current line.  When it
+is @code{nil}, the line is (re)indented only if point is at the left
+margin, or on or before the first non-whitespace character on the line,
+otherwise some whitespace (a tab or an equivalent number of spaces - see
+below) is inserted at point.  If this variable is some other value then
+some whitespace is inserted at point only if it's within a string or
+comment, but the line is always reindented.
 @end defopt
 
 @defopt c-insert-tab-function
@@ -629,7 +634,7 @@ Some people, however, set @code{c-insert-tab-function} to
 @defopt indent-tabs-mode
 This is a standard Emacs variable that controls how line indentation
 is composed.  When it's non-@code{nil}, tabs can be used in a line's
-indentation, otherwise only spaces can be used.
+indentation, otherwise only spaces are used.
 @end defopt
 
 @defopt c-progress-interval
@@ -688,7 +693,7 @@ functionality being entirely equivalent to @code{beginning-of-defun}
 and @code{end-of-defun}.
 
 AWK Mode @dfn{defuns} are either pattern/action pairs (either of which
-may be implicit) or user defined functions.  Having the @samp{@{} and
+might be implicit) or user defined functions.  Having the @samp{@{} and
 @samp{@}} (if there are any) in column zero, as is suggested for some
 modes, is neither necessary nor helpful in AWK mode.
 
@@ -796,11 +801,11 @@ If @var{n} is negative, move in the opposite direction.
 
 Since there's a lot of normal text in comments and string literals,
 @ccmode{} provides features to edit these like in text mode.  The goal
-is to do it as seamlessly as possible, i.e. you can use auto fill
-mode, sentence and paragraph movement, paragraph filling, adaptive
-filling etc. wherever there's a piece of normal text without having to
-think much about it.  @ccmode{} keeps the indentation, fixes the
-comment line decorations, and so on, for you.
+is to do it seamlessly, i.e. you can use auto fill mode, sentence and
+paragraph movement, paragraph filling, adaptive filling etc. wherever
+there's a piece of normal text without having to think much about it.
+@ccmode{} keeps the indentation, fixes suitable comment line prefixes,
+and so on.
 
 You can configure the exact way comments get filled and broken, and
 where Emacs does auto-filling (see @pxref{Custom Filling and
@@ -816,6 +821,7 @@ whether they are made by auto fill mode (@pxref{Auto Fill,,,
 @kbd{M-q}), or explicitly with @kbd{M-j} or similar methods.  In
 string literals, the new line gets the same indentation as the
 previous nonempty line (may be changed with the @code{string}
+@c FIXME: Crossref.
 syntactic symbol).
 
 @table @asis
@@ -831,13 +837,15 @@ line style comments.  In Java buffers, the Javadoc markup words are
 recognized as paragraph starters.  The line oriented Pike autodoc markup
 words are recognized in the same way in Pike mode.
 
-The function keeps the comment starters and enders of block comments as
-they were before the filling.  This means that a comment ender on the
-same line as the paragraph being filled will be filled with the
-paragraph, and one on a line by itself will stay as it is.  The comment
+The formatting of the starters (@code{/*}) and enders (@code{*/}) of
+block comments are kept as they were before the filling.  I.e. if the
+comment ender followed directly after the last word in the paragraph
+before the filling then it stays that way afterwards too - a newline is
+never inserted between it and the preceding word.  Conversely, if the
+ender were on a line of its own then it's kept that way.  The comment
 starter is handled similarly@footnote{This means that the variables
 @code{c-hanging-comment-starter-p} and @code{c-hanging-comment-ender-p},
-which controlled this behavior in earlier versions of @ccmode{}, are now
+which controlled this behavior in earlier versions of @ccmode{}, are
 obsolete.}.
 
 @item @kbd{M-j} (@code{c-indent-new-comment-line})
@@ -845,28 +853,26 @@ obsolete.}.
 @findex c-indent-new-comment-line
 @findex indent-new-comment-line (c-)
 This is the replacement for @code{indent-new-comment-line}.  It breaks
-the line at point and indents the new line like the current one.
+the line at point and ensures the new line get the right indentation and
+comment line prefix.
 
 @comment I might need a thing about comment-multi-line here.  2004/8/19
 
 @item @kbd{M-x c-context-line-break}
 @findex c-context-line-break
 @findex context-line-break (c-)
-This is a function that works like @code{indent-new-comment-line} in
-comments and @code{newline-and-indent} elsewhere, thus combining those
-two in a way that uses each one in the context it's best suited for.
-I.e. in comments the comment line prefix and indentation is kept for
-the new line, and in normal code it's indented according to context by
-the indentation engine.
+Insert a line break suitable to the context: If the point is inside a
+comment, the new line gets the suitable indentation and comment line
+prefix like @code{c-indent-new-comment-line}.  In normal code it's
+indented like @code{newline-and-indent} would do.  In macros it acts
+like @code{newline-and-indent} but additionally inserts and optionally
+aligns the line ending backslash so that the macro remains unbroken.
+@xref{Custom Macros}, for details about the backslash alignment.
 
-In macros it acts like @code{newline-and-indent} but additionally
-inserts and optionally aligns the line ending backslash so that the
-macro remains unbroken.  @xref{Custom Macros}, for details about the
-backslash alignment.
-
-It's not bound to a key by default, but it's intended to be used on the
-@kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
-@kbd{RET}, you should consider switching to this function.
+This function is not bound to a key by default, but it's intended to be
+used on the @kbd{RET} key.  If you like the behavior of
+@code{newline-and-indent} on @kbd{RET}, you should consider switching to
+this function.
 
 @item @kbd{M-x c-context-open-line}
 @findex c-context-open-line
@@ -886,8 +892,8 @@ line break.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Most punctuation keys provide @dfn{electric} behavior - as well as
-inserting themselves they perform some other action, such as
-reindenting the line.  A few keywords, such as @code{else}, also
+inserting themselves they can perform some other action, such as
+reindenting the line.  A few keywords, such as @code{else}, can also
 trigger electric action.
 
 Common to all of them is that they only behave electrically when used
@@ -1052,13 +1058,12 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains two minor-mode-like features that you might find
-useful while entering new C code.  The first is called
-@dfn{auto-newline} mode, and automatically inserts newlines where
-you'd probably want to type them yourself.  The second is called
-@dfn{hungry-delete} mode, and lets you delete a contiguous block of
-whitespace in a single operation - for example, the newline and
-indentation just inserted by auto-newline when you want to back up and
-write a comment after the last statement.
+useful while writing new code.  The first is called @dfn{auto-newline}
+mode, and automatically inserts newlines where you'd probably want to
+type them yourself.  The second is called @dfn{hungry-delete} mode, and
+lets you delete a contiguous block of whitespace in a single operation -
+for example, the newline and indentation just inserted by auto-newline
+when you want to back up and write a comment after the last statement.
 
 Full details on how these minor modes work are at @ref{Auto-newlines}
 and @ref{Hungry WS Deletion}.
@@ -1077,6 +1082,7 @@ is enabled you will see @samp{C/h} and if both modes were enabled,
 you'd see @samp{C/ah}.
 
 Here are commands to toggle these modes:
+
 @table @asis
 @item @kbd{C-c C-a} (@code{c-toggle-auto-state})
 @kindex C-c C-a
@@ -1381,11 +1387,6 @@ ask for help in the standard (X)Emacs forums.
 @cindex font locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{Please note:} The font locking in AWK mode is currently not
-integrated with the rest of @ccmode{}.  Only the last section of this
-chapter, @ref{AWK Mode Font Locking}, applies to AWK.  The other
-sections apply to the other languages.
-
 @cindex Font Lock mode
 
 @ccmode{} provides font locking for its supported languages by
@@ -1395,6 +1396,11 @@ strings, keywords and types, which is very helpful in telling them
 apart at a glance and discovering syntactic errors.  @xref{Font
 Lock,,, emacs, GNU Emacs Manual}, for ways to enable font locking in
 @ccmode{} buffers.
+
+@strong{Please note:} The font locking in AWK mode is currently not
+integrated with the rest of @ccmode{}.  Only the last section of this
+chapter, @ref{AWK Mode Font Locking}, applies to AWK.  The other
+sections apply to the other languages.
 
 @menu
 * Font Locking Preliminaries::  
@@ -1421,12 +1427,13 @@ that it's a bit different in most languages now.
 
 The main goal for the font locking in @ccmode{} is accuracy, to provide
 a dependable aid in recognizing the various constructs.  Some, like
-strings and comments, are easy to recognize while others like
-declarations and types can be very tricky.  @ccmode{} can go to great
+strings and comments, are easy to recognize while others, like
+declarations and types, can be very tricky.  @ccmode{} can go to great
 lengths to recognize declarations and casts correctly, especially when
 the types aren't recognized by standard patterns.  This is a fairly
 demanding analysis which can be slow on older hardware, and it can
 therefore be disabled by choosing a lower decoration level with the
+@c FIXME: Crossref.
 variable @code{font-lock-maximum-decoration}.
 
 @vindex font-lock-maximum-decoration
@@ -1441,8 +1448,8 @@ directives (in the languages that use cpp).
 
 @comment 2
 @item
-Fast normal font locking: In addition to level 1, fontify keywords,
-simple types and declarations that are easy to recognize.  The variables
+Fast font locking: In addition to level 1, fontify keywords, simple
+types and declarations that are easy to recognize.  The variables
 @code{*-font-lock-extra-types} (where @samp{*} is the name of the
 language) are used to recognize types (see below).  Documentation
 comments like Javadoc are fontified according to
@@ -1453,8 +1460,8 @@ corresponding level to level 3 in the old font lock patterns.
 
 @comment 3
 @item
-Accurate normal font locking: Like level 2 but uses a different approach
-that can recognize types and declarations much more accurately.  The
+Accurate font locking: Like level 2 but uses a different approach that
+can recognize types and declarations much more accurately.  The
 @code{*-font-lock-extra-types} variables are still used, but user
 defined types are recognized correctly anyway in most cases.  Therefore
 those variables should be fairly restrictive and not contain patterns
@@ -1465,7 +1472,9 @@ that are uncertain.
 
 This level is designed for fairly modern hardware and a font lock
 support mode like Lazy Lock or Just-in-time Lock mode that only
-fontifies the parts that are actually shown.
+fontifies the parts that are actually shown.  Fontifying the whole
+buffer at once can easily get bothersomely slow even on contemporary
+hardware.
 @end enumerate
 
 @cindex user defined types
@@ -1666,7 +1675,7 @@ initialization and the result is prepended.  For an example, see
 @code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
 
 If you add support for another doc comment style, please consider
-contributing it --- send a note to @email{bug-cc-mode@@gnu.org}.
+contributing it - send a note to @email{bug-cc-mode@@gnu.org}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1746,12 +1755,11 @@ depending on the precise effect you want:
 Most simply, you can write @code{setq} and similar commands at the top
 level of the file.  These commands need to run @emph{before} @ccmode{}
 is first initialized@footnote{The first initialization of @ccmode{}
-makes many important variables buffer local.  If you set them later,
-the changes will affect only the buffer which is the current buffer at
-the time of the changes.} - In particular, they must be placed before
-any call to @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
-emacs, GNU Emacs Manual}).  For example, you might set c-basic-offset
-thus:
+makes many important variables buffer local.  If you set them later, the
+changes will affect only the buffer which is current at the time of the
+changes.} - in particular, they must be placed before any call to
+@code{desktop-read} (@pxref{Saving Emacs Sessions,,, emacs, GNU Emacs
+Manual}).  For example, you might set c-basic-offset thus:
 
 @example
 (setq c-basic-offset 4)
@@ -1760,11 +1768,12 @@ thus:
 You can instead use the more user friendly Customization interface,
 but this manual does not cover in detail how that works.  To do this,
 start by typing @kbd{M-x customize-group @key{RET} c @key{RET}}.
-@xref{Easy Customization,,,@emacsman{}, @emacsmantitle{}}.  Emacs
-normally writes the customizations at the end of your @file{.emacs}
-file.  If you use @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
-emacs, GNU Emacs Manual}), you should edit your @file{.emacs} to place
-the call to @code{desktop-read} @emph{after} the customizations.
+@xref{Easy Customization,,,@emacsman{}, @emacsmantitle{}}.
+@c The following note really belongs in the Emacs manual.
+Emacs normally writes the customizations at the end of your
+@file{.emacs} file.  If you use @code{desktop-read}, you should edit
+your @file{.emacs} to place the call to @code{desktop-read} @emph{after}
+the customizations.
 
 For basic use of Emacs, either of these ways of configuring is
 adequate.  However, the settings are then the same in all @ccmode{}
@@ -1777,7 +1786,7 @@ An Emacs @dfn{hook} is a place to put Lisp functions that you want
 Emacs to execute later in specific circumstances.
 @xref{Hooks,,,@lispref{}, @lispreftitle{}}.  @ccmode{} supplies an
 @dfn{initialization hook} for each language it supports - any
-functions you put into this hook get executed as the last part of a
+functions you put onto this hook get executed as the last part of a
 buffer's initialization.  Typically you use this flexibility to vary
 the customization settings between language modes.  (There is also a
 ``common'' hook for initializations to be shared by all these modes.)
@@ -1796,7 +1805,7 @@ in C Mode and Java Mode buffers, you could do it like this:
 @end group
 @end example
 
-See @ref{Hooks} for fuller details on the use of @ccmode{} hooks.
+See @ref{Hooks} for more details on the use of @ccmode{} hooks.
 
 @item Styles
 A @ccmode{} @dfn{style} is a coherent collection of customizations
@@ -1840,26 +1849,13 @@ could achieve this with code like this in your @file{.emacs}:
 @c therefore depend on the setting of @code{c-default-style}.  Note that if
 @c you use Customize, this means that the greyed-out default values
 @c presented there might not be the ones you actually get, since the actual
-@c values depend on the style, which may very well be different for
+@c values depend on the style, which might very well be different for
 @c different languages.
 
 @c If you want to make more advanced configurations, e.g. language-specific
 @c customization, setting global variables isn't enough.  For that you can
 @c use the language hooks, see @ref{Hooks}, and/or the style system, see
 @c @ref{Styles}.
-
-@c @defopt c-style-variables-are-local-p
-@c @vindex style-variables-are-local-p (c-)
-@c By default, all style variables are buffer local, so that different
-@c buffers can have different style settings.  If you only use one style
-@c in all the files you edit you might want to share them between buffers
-@c so that a change take effect in all buffers.  That's done by setting
-@c this variable to @code{nil}.  The value takes effect when @ccmode{} is
-@c activated in a buffer for the first time in the Emacs session, so you
-@c typically set it in your @file{.emacs} file and then restart Emacs.
-@c @end defopt
-
-
 
 
 @c Fill in this section:
@@ -1911,13 +1907,12 @@ them values before @ccmode{}'s code is loaded - indeed, this is the
 only way to use @code{c-initialization-hook}.  Their values aren't
 overwritten when @ccmode{} gets loaded.
 
-Note that all the language-specific mode setup that CC Mode does is
-done prior to both @code{c-mode-common-hook} and the language specific
-hook.  That includes installing the indentation style, which can be
-mode specific (and is so by default for Awk mode and Java mode).
-Thus, any style settings done in @code{c-mode-common-hook} will
-override whatever language-specific style is chosen by
-@code{c-default-style}.
+Note that all the language-specific mode setup that CC Mode does is done
+prior to both @code{c-mode-common-hook} and the language specific hook.
+That includes installing the indentation style, which can be mode
+specific (and is so by default for AWK and Java mode).  Thus, any style
+settings done in @code{c-mode-common-hook} will override whatever
+language-specific style is chosen by @code{c-default-style}.
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file to do things whenever any @ccmode{} language is edited.  See the
@@ -1959,15 +1954,9 @@ variables}.  They are handled specially in several ways:
 
 @itemize @bullet
 @item
-Style variables are by default buffer local variables.  However, they
-can instead be made global by setting
-@code{c-style-variables-are-local-p} to @code{nil} before @ccmode{} is
-initialized.
-
-@item
 @vindex c-old-style-variable-behavior
 @vindex old-style-variable-behavior (c-)
-The default value of any style variable (with two exceptions --- see
+The default value of any style variable (with two exceptions - see
 below) is the special symbol @code{set-from-style}.  Variables that are
 still set to that symbol when a @ccmode{} buffer is initialized will be
 set according to the current style, otherwise they will keep their
@@ -1991,7 +1980,7 @@ style system is initialized, any syntactic symbols already on it are
 kept --- only the missing ones are filled in from the chosen style.
 
 The style variable @code{c-special-indent-hook} is also handled in a
-special way.  Styles may only add more functions on this hook, so the
+special way.  Styles might only add more functions on this hook, so the
 global settings on it are always preserved@footnote{This did not change
 in version 5.26.}.
 
@@ -1999,6 +1988,12 @@ in version 5.26.}.
 The global settings of style variables get captured in the special
 @code{user} style, which is used as the base for all the other styles.
 @xref{Built-in Styles}, for details.
+
+@item
+Style variables are by default buffer local variables.  However, they
+can instead be made global by setting
+@code{c-style-variables-are-local-p} to @code{nil} before @ccmode{} is
+initialized.
 @end itemize
 
 The style variables are:
@@ -2195,7 +2190,7 @@ one @var{base-style} is allowed in a style definition.  If
 default values@footnote{This table is stored internally in the
 variable c-fallback-style.  It is computed during the initialization
 of @ccmode{} from the factory defaults of the style variables and any
-global values they may have been given since starting Emacs.} instead.
+global values they might have been given since starting Emacs.} instead.
 All styles eventually inherit from this internal table.  Style loops
 generate errors.  The list of pre-existing styles can be seen in
 @ref{Built-in Styles}.
@@ -3061,13 +3056,13 @@ Clean up commas following braces in array and aggregate initializers.
 Clean up occurs when the comma is typed.
 
 @item scope-operator
-Clean up double colons which may designate a C++ scope operator split
+Clean up double colons which might designate a C++ scope operator split
 across multiple lines@footnote{Certain C++ constructs introduce
-ambiguous situations, so @code{scope-operator} clean-ups may not always
-be correct.  This usually only occurs when scoped identifiers appear in
-switch label tags.}.  Clean up occurs when the second colon is typed.
-You will always want @code{scope-operator} in the @code{c-cleanup-list}
-when you are editing C++ code.
+ambiguous situations, so @code{scope-operator} clean-ups might not
+always be correct.  This usually only occurs when scoped identifiers
+appear in switch label tags.}.  Clean up occurs when the second colon is
+typed.  You will always want @code{scope-operator} in the
+@code{c-cleanup-list} when you are editing C++ code.
 
 @item one-liner-defun
 Clean up a single line of code enclosed by defun braces by removing
@@ -4039,7 +4034,7 @@ Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
 assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
 assigned @code{objc-method-call-cont} syntax.
 
-Java has a concept of anonymous classes, which may look something like
+Java has a concept of anonymous classes which can look something like
 this:
 
 @example
@@ -4059,9 +4054,9 @@ Lines 3 and 6 are assigned the @code{inexpr-class} syntax, besides the
 indented just like a normal class, with the added indentation given to
 @code{inexpr-class}.
 
-There are a few occasions where a statement block may be used inside an
-expression.  One is in C or C++ code using the gcc extension for this,
-e.g:
+There are a few occasions where a statement block might be used inside
+an expression.  One is in C or C++ code using the gcc extension for
+this, e.g:
 
 @example
  1: int res = (@{
@@ -4518,8 +4513,8 @@ should now look like:
 Notice how just changing the open brace offset on line 4 is all we
 needed to do.  Since the other affected lines are indented relative to
 line 4, they are automatically indented the way you'd expect.  For more
-complicated examples, this may not always work.  The general approach to
-take is to always start adjusting offsets for lines higher up in the
+complicated examples, this might not always work.  The general approach
+to take is to always start adjusting offsets for lines higher up in the
 file, then reindent and see if any following lines need further
 adjustments.
 
@@ -4544,7 +4539,7 @@ for that syntactic element.
 @cindex permanent customization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@comment The contents have been move to the node ``Configuration
+@comment The contents have been moved to the node ``Configuration
 @comment Strategies''  2004/8/10.
 
 @c These bits must stay in the indentation section.  2004/8/10
@@ -4559,7 +4554,7 @@ way get their value from the style system (@pxref{Styles}), and they
 therefore depend on the setting of @code{c-default-style}.  Note that if
 you use Customize, this means that the greyed-out default values
 presented there might not be the ones you actually get, since the actual
-values depend on the style, which may very well be different for
+values depend on the style, which might very well be different for
 different languages.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4582,7 +4577,7 @@ to start working from one of these predefined functions.  They can be
 found in the file @file{cc-align.el}.
 
 The line-up functions haven't been adapted for AWK buffers or tested
-with them.  Some of them may work serendipitously.  There shouldn't be
+with them.  Some of them might work serendipitously.  There shouldn't be
 any problems writing custom line-up functions for AWK mode.
 
 For every function below there is a ``works with'' list that indicates
@@ -5798,9 +5793,9 @@ anchoring position to indent the line in that case.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @example
-;; Here's a sample .emacs file that might help you along the way.
-;; Just copy this region and paste it into your .emacs file.  You may
-;; want to change some of the actual values.
+;; Here's a sample .emacs file that might help you along the way.  Just
+;; copy this region and paste it into your .emacs file.  You might want
+;; to change some of the actual values.
 
 (defconst my-c-style
   '((c-tab-always-indent        . t)
