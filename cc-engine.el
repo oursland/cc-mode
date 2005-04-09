@@ -6095,11 +6095,14 @@ comment at the start of cc-engine.el for more info."
        ;; Check that there's an arglist paren in the
        ;; declaration.
        (goto-char id-start)
-       (when (eq (char-after) ?\()
-	 ;; The declarator is a paren expression, so skip past
-	 ;; it so that we don't get stuck on that instead of the
-	 ;; function arglist.
-	 (c-forward-sexp))
+       (cond ((eq (char-after) ?\()
+	      ;; The declarator is a paren expression, so skip past it
+	      ;; so that we don't get stuck on that instead of the
+	      ;; function arglist.
+	      (c-forward-sexp))
+	     ((and c-overloadable-operators-regexp
+		   (looking-at "operator\\>[^_]"))
+	      (c-forward-token-2 2 t)))
        (and (< (point) beg)
 	    (c-syntactic-re-search-forward "(" beg t t)
 	    (1- (point)))))))
@@ -6200,6 +6203,22 @@ comment at the start of cc-engine.el for more info."
 	     (and (eq (char-after) ?\()
 		  (zerop (c-backward-token-2 1 t lim))
 		  (looking-at c-block-stmt-2-key)))
+	 (point))))
+
+(defun c-after-special-operator-id (&optional lim)
+  ;; If the point is after an operator identifier that isn't handled
+  ;; like an ordinary symbol (i.e. like "operator =" in C++) then the
+  ;; position of the start of that identifier is returned.  nil is
+  ;; returned otherwise.  The point may be anywhere in the syntactic
+  ;; whitespace after the last token of the operator identifier.
+  ;;
+  ;; This function might do hidden buffer changes.
+  (save-excursion
+    (and c-overloadable-operators-regexp
+	 (= (c-backward-token-2 1 nil lim) 0)
+	 (looking-at c-overloadable-operators-regexp)
+	 (= (c-backward-token-2 1 nil lim) 0)
+	 (looking-at "operator\\([^_]\\|$\\)")
 	 (point))))
 
 (defsubst c-backward-to-block-anchor (&optional lim)
@@ -7845,21 +7864,30 @@ comment at the start of cc-engine.el for more info."
 	      ;; Note: We use the fact that lim always is after any
 	      ;; preceding brace sexp.
 	      (if c-recognize-<>-arglists
-		  (while (and (progn
-			       (c-syntactic-skip-backward "^;,=<>" lim t)
-			       (> (point) lim))
-			      (cond ((eq (char-before) ?>)
-				     (or (c-backward-<>-arglist nil lim)
-					 (backward-char))
-				     t)
-				    ((eq (char-before) ?<)
-				     (backward-char)
-				     (if (save-excursion
-					   (c-forward-<>-arglist nil))
-					 (progn (forward-char)
-						nil)
-				       t))
-				    (t nil))))
+		  (while (and
+			  (progn
+			    (c-syntactic-skip-backward "^;,=<>" lim t)
+			    (> (point) lim))
+			  (or
+			   (when c-overloadable-operators-regexp
+			     (when (setq placeholder (c-after-special-operator-id lim))
+			       (goto-char placeholder)
+			       t))
+			   (cond
+			    ((eq (char-before) ?>)
+			     (or (c-backward-<>-arglist nil lim)
+				 (backward-char))
+			     t)
+			    ((eq (char-before) ?<)
+			     (backward-char)
+			     (if (save-excursion
+				   (c-forward-<>-arglist nil))
+				 (progn (forward-char)
+					nil)
+			       t))
+			    (t nil)))))
+		;; NB: No c-after-special-operator-id stuff in this
+		;; clause - we assume only C++ needs it.
 		(c-syntactic-skip-backward "^;,=" lim t))
 	      (memq (char-before) '(?, ?= ?<)))
 	    (cond
@@ -8089,7 +8117,10 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
-	   ((eq (char-before) ?<)
+	   ((and c-recognize-<>-arglists
+		 (eq (char-before) ?<)
+		 (not (and c-overloadable-operators-regexp
+			   (c-after-special-operator-id lim))))
 	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
 

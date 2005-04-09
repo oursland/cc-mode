@@ -83,7 +83,9 @@ Works with: topmost-intro-cont."
   (save-excursion
     (beginning-of-line)
     (c-backward-syntactic-ws (c-langelem-pos langelem))
-    (if (memq (char-before) '(?} ?,))
+    (if (and (memq (char-before) '(?} ?,))
+	     (not (and c-overloadable-operators-regexp
+		       (c-after-special-operator-id))))
 	c-basic-offset)))
 
 (defun c-block-in-arglist-dwim (arglist-start)
