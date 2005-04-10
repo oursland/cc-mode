@@ -4,7 +4,7 @@
 @comment FIXME: cc-subword docs.
 @comment
 
-@c $Id: cc-mode.texi,v 5.211 2005-04-09 14:30:28 mast Exp $
+@c $Id: cc-mode.texi,v 5.212 2005-04-10 16:16:17 mast Exp $
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -152,7 +152,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.211 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.212 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -3070,8 +3070,8 @@ the whitespace before and after the code.  The clean-up happens when
 the closing brace is typed.  If the variable
 @code{c-max-one-liner-length} is set, the cleanup is only done if the
 resulting line would be no longer than the value of that variable.
-This clean-up is intended mainly for short AWK pattern/action pairs.
-For example, this:
+
+For example, consider this AWK code:
 
 @example
 @group
