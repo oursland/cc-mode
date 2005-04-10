@@ -4550,7 +4550,7 @@ brace."
 		 ;; operator token preceded by "operator".
 		 (save-excursion
 		   (and (c-safe (c-backward-sexp) t)
-			(looking-at "operator\\([^_]\\|$\\)")))
+			(looking-at "operator\\>\\([^_]\\|$\\)")))
 		 (and (eq (char-before) ?<)
 		      (c-with-syntax-table c++-template-syntax-table
 			(if (c-safe (goto-char (c-up-list-forward (point))))
@@ -6105,7 +6105,10 @@ This function does not do any hidden buffer changes."
 		(while (and (zerop (c-backward-token-2 1 t lim))
 			    (or (not (looking-at "[;<,=]"))
 				(and c-overloadable-operators-regexp
-				     (looking-at c-overloadable-operators-regexp)))))
+				     (looking-at c-overloadable-operators-regexp)
+				     (save-excursion
+				       (zerop (c-backward-token-2 1 nil lim))
+				       (looking-at "operator\\>[^_]"))))))
 		(or (memq (char-after) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
 			 (zerop (c-backward-token-2 1 nil lim))
