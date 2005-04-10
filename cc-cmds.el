@@ -552,29 +552,40 @@ inside a literal or a macro, nothing special happens."
   ;; Point is just after a newly inserted }.  If the non-whitespace
   ;; content of the braces is a single line of code, compact the whole
   ;; construct to a single line, if this line isn't too long.  The Right
-  ;; Thing is done with comments.  This is primarily intended for
-  ;; one-line actions in AWK Mode.
+  ;; Thing is done with comments.
   ;;
   ;; Point will be left after the }, regardless of whether the clean-up is
   ;; done.  Return NON-NIL if the clean-up happened, NIL if it didn't.
+
   (let ((here (point))
 	(pos (- (point-max) (point)))
 	mbeg mend mbeg1 mend1 mbeg4 mend4
 	eol-col cmnt-pos cmnt-col cmnt-gap tmp)
+
     (when
 	(save-excursion
 	  (save-restriction
-	    (backward-list) (forward-char)
-	    (narrow-to-region (point) (1- here)) ; innards of {.}
-	    (and (looking-at
-		  (concat
-		   "\\("		; (match-beginning 1)
-		   "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
-		   "\\)"		; (match-end 1)
-		   "[^ \t\r\n]+\\([ \t]+[^ \t\r\n]+\\)*" ; non-WS
-		   "\\("		; (match-beginning 4)
-		   "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
-		   "\\)\\'")))))	; (match-end 4) at EOB.
+	    ;; Avoid backtracking over a very large block.  The one we
+	    ;; deal with here can never be more than three lines.
+	    (narrow-to-region (save-excursion
+				(forward-line -2)
+				(point))
+			      (point))
+	    (and (c-safe (c-backward-sexp))
+		 (progn
+		   (forward-char)
+		   (narrow-to-region (point) (1- here)) ; innards of {.}
+		   (looking-at
+		    (cc-eval-when-compile
+		      (concat
+		       "\\("		; (match-beginning 1)
+		       "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+		       "\\)"		; (match-end 1)
+		       "[^ \t\r\n]+\\([ \t]+[^ \t\r\n]+\\)*" ; non-WS
+		       "\\("		; (match-beginning 4)
+		       "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+		       "\\)\\'")))))))	; (match-end 4) at EOB.
+
       (if (c-tentative-buffer-changes
 	    (setq mbeg1 (match-beginning 1) mend1 (match-end 1)
 		  mbeg4 (match-beginning 4) mend4 (match-end 4))
@@ -585,6 +596,11 @@ inside a literal or a macro, nothing special happens."
 	    (delete-region mbeg4 mend4)
 	    (delete-region mbeg1 mend1)
 	    (setq eol-col (save-excursion (end-of-line) (current-column)))
+
+	    ;; Necessary to put the closing brace before any line
+	    ;; oriented comment to keep it syntactically significant.
+	    ;; This isn't necessary for block comments, but the result
+	    ;; looks nicer anyway.
 	    (when cmnt-pos
 	      (delete-char 1)		; the `}' has blundered into a comment
 	      (goto-char cmnt-pos)
@@ -665,7 +681,12 @@ settings of `c-cleanup-list' are done."
 	    ;; Insert the BEFORE newline, if wanted, and reindent the newline.
 	    (if (and (memq 'before newlines)
 		     (> (current-column) (current-indentation)))
-		(c-newline-and-indent))
+		(if c-syntactic-indentation
+		    ;; Only a plain newline for now - it's indented
+		    ;; after the cleanups when the line has its final
+		    ;; appearance.
+		    (newline)
+		  (c-newline-and-indent)))
 	    (forward-char)
 
 	    ;; `syntax' is the syntactic context of the line which ends up
@@ -693,7 +714,7 @@ settings of `c-cleanup-list' are done."
 		(setq here (- (point-max) pos)))
 	      (goto-char here)
 
-	      ;; `}': compact to a one-liner defun?  Mainly for AWK.
+	      ;; `}': compact to a one-liner defun?
 	      (save-match-data
 		(when
 		    (and (eq last-command-char ?\})
@@ -742,7 +763,14 @@ settings of `c-cleanup-list' are done."
 		  (goto-char mbeg)
 		  (insert ?\ ))))
 
-	      (goto-char (- (point-max) pos)))
+	      (goto-char (- (point-max) pos))
+
+	      ;; Indent the line after the cleanups since it might
+	      ;; very well indent differently due to them, e.g. if
+	      ;; c-indent-one-line-block is used together with the
+	      ;; one-liner-defun cleanup.
+	      (when c-syntactic-indentation
+		(c-indent-line)))
 
 	    ;; does a newline go after the brace?
 	    (if (memq 'after newlines)
