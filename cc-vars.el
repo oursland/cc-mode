@@ -614,11 +614,13 @@ mode name:
  empty-defun-braces  -- Clean up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
 			the defun closing brace is typed.
- one-liner-defun     -- Clean up AWK \"<pattern> { <line of code> }\"
-                        constructs by compacting it onto a single line.
-                        c-max-one-liner-length gives the maximum line
-                        length allowed.  Clean up occurs when the
-                        closing brace is typed.
+ one-liner-defun     -- If the code inside a function body is a single
+			line then remove any newlines between that
+			line and the defun braces so that the whole
+			body becomes a single line.
+			`c-max-one-liner-length' gives the maximum
+                        length allowed for the resulting line.  Clean
+                        up occurs when the closing brace is typed.
  defun-close-semi    -- Clean up the terminating semi-colon on defuns
 			by placing the semi-colon on the same line as
 			the closing brace.  Clean up occurs when the
@@ -657,7 +659,7 @@ involve auto-newline inserted newlines:
 		 brace-catch-brace)
 	  (const :tag "Put empty defun braces on one line (empty-defun-braces)"
 		 empty-defun-braces)
-	  (const :tag "Put short functions on one line (one-liner-defun)"
+	  (const :tag "Put short function bodies on one line (one-liner-defun)"
 		 one-liner-defun)
 	  (const :tag "Put \"};\" ending defuns on one line (defun-close-semi)"
 		 defun-close-semi)
