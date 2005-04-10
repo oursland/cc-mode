@@ -175,7 +175,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
       (let ((open-paren (elt c-syntactic-element 2))
 	    (paren-state (c-parse-state)))
 	(while (not (eq (car paren-state) open-paren))
-	  (goto-char (car paren-state))
+	  (unless (consp (car paren-state)) ;; ignore matched braces
+	    (goto-char (car paren-state)))
 	  (setq paren-state (cdr paren-state)))))
 
     (let ((start (point)) c)
