@@ -573,6 +573,24 @@ e.g. identifiers with template arguments such as \"A<X,Y>\" in C++."
   ;; matched.
   t nil)
 
+(c-lang-defconst c-string-escaped-newlines
+  "Set if the language support backslash escaped newlines inside string
+literals."
+  t nil
+  (c c++ objc pike) t)
+(c-lang-defvar c-string-escaped-newlines
+  (c-lang-const c-string-escaped-newlines))
+
+(c-lang-defconst c-multiline-string-start-char
+  "Set if the language supports multiline string literals without escaped
+newlines.  If t, all string literals are multiline.  If a character,
+only literals where the open quote is immediately preceded by that
+literal are multiline."
+  t    nil
+  pike ?#)
+(c-lang-defvar c-multiline-string-start-char
+  (c-lang-const c-multiline-string-start-char))
+
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
 normally use that macro preprocessor.  Tested at bol or at boi.
