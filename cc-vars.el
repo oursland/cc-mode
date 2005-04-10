@@ -613,28 +613,28 @@ mode name:
                         \"} catch (...) {\" constructs.
  empty-defun-braces  -- Clean up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
-			the defun closing brace is typed.
+                        the defun closing brace is typed.
  one-liner-defun     -- If the code inside a function body is a single
-			line then remove any newlines between that
-			line and the defun braces so that the whole
-			body becomes a single line.
-			`c-max-one-liner-length' gives the maximum
+                        line then remove any newlines between that
+                        line and the defun braces so that the whole
+                        body becomes a single line.
+                        `c-max-one-liner-length' gives the maximum
                         length allowed for the resulting line.  Clean
                         up occurs when the closing brace is typed.
  defun-close-semi    -- Clean up the terminating semi-colon on defuns
-			by placing the semi-colon on the same line as
-			the closing brace.  Clean up occurs when the
-			semi-colon is typed.
+                        by placing the semi-colon on the same line as
+                        the closing brace.  Clean up occurs when the
+                        semi-colon is typed.
  list-close-comma    -- Clean up commas following braces in array
                         and aggregate initializers.  Clean up occurs
-			when the comma is typed.
+                        when the comma is typed.
  scope-operator      -- Clean up double colons which may designate
-			a C++ scope operator split across multiple
-			lines.  Note that certain C++ constructs can
-			generate ambiguous situations.  This clean up
-			only takes place when there is nothing but
-			whitespace between colons.  Clean up occurs
-			when the second colon is typed.
+                        a C++ scope operator split across multiple
+                        lines.  Note that certain C++ constructs can
+                        generate ambiguous situations.  This clean up
+                        only takes place when there is nothing but
+                        whitespace between colons.  Clean up occurs
+                        when the second colon is typed.
 
 The following clean ups always take place when they are on this list,
 regardless of the auto-newline feature, since they typically don't
@@ -644,7 +644,7 @@ involve auto-newline inserted newlines:
                         parenthesis of a function call.  Clean up
                         occurs when the opening parenthesis is typed.
  compact-empty-funcall -- Clean up any space before the function call
-			opening parenthesis if and only if the
+                        opening parenthesis if and only if the
                         argument list is empty.  This is typically
                         useful together with `space-before-funcall' to
                         get the style \"foo (bar)\" and \"foo()\".
