@@ -203,7 +203,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
       (let ((open-paren (c-langelem-2nd-pos c-syntactic-element))
 	    (paren-state (c-parse-state)))
 	(while (not (eq (car paren-state) open-paren))
-	  (goto-char (car paren-state))
+	  (unless (consp (car paren-state)) ;; ignore matched braces
+	    (goto-char (car paren-state)))
 	  (setq paren-state (cdr paren-state)))))
 
     (let ((start (point)) c)
