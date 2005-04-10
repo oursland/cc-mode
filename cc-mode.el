@@ -199,12 +199,15 @@ control).  See \"cc-mode.el\" for more info."
 
 (defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
+    ;; Necessary to use `cc-bytecomp-fboundp' below since this
+    ;; function is called from top-level forms that are evaluated
+    ;; while cc-bytecomp is active when one does M-x eval-buffer.
     (cond
      ;; XEmacs
-     ((fboundp 'set-keymap-parents)
+     ((cc-bytecomp-fboundp 'set-keymap-parents)
       (set-keymap-parents map c-mode-base-map))
      ;; Emacs
-     ((fboundp 'set-keymap-parent)
+     ((cc-bytecomp-fboundp 'set-keymap-parent)
       (set-keymap-parent map c-mode-base-map))
      ;; incompatible
      (t (error "CC Mode is incompatible with this version of Emacs")))
