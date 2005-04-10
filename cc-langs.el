@@ -786,9 +786,9 @@ since CC Mode treats every identifier as an expression."
   t (c-filter-ops (c-lang-const c-operators) t t))
 
 (c-lang-defconst c-overloadable-operators
-  "List of the operators that are overloadable, in their \"identifier form\"."
+  "List of the operators that are overloadable, in their \"identifier
+form\".  See also `c-op-identitier-prefix'."
   t    nil
-  ;; The preceding "operator" keyword is treated separately in C++.
   c++  '("new" "delete" ;; Can be followed by "[]" but we ignore that.
 	 "+" "-" "*" "/" "%"
 	 "^" "??'" "xor" "&" "bitand" "|" "??!" "bitor" "~" "??-" "compl"
@@ -809,6 +809,20 @@ since CC Mode treats every identifier as an expression."
   c++ (c-make-keywords-re nil (c-lang-const c-overloadable-operators)))
 (c-lang-defvar c-overloadable-operators-regexp
   (c-lang-const c-overloadable-operators-regexp))
+
+(c-lang-defconst c-opt-op-identitier-prefix
+  "Regexp matching the token before the ones in
+`c-overloadable-operators' when operators are specified in their
+\"identifier form\".  This typically matches \"operator\" in C++ where
+operator functions are specified as e.g. \"operator +\".  It's nil in
+languages without operator functions or where the complete operator
+identifier is listed in `c-overloadable-operators'.
+
+This regexp is assumed to not match any non-operator identifier."
+  t   nil
+  c++ (c-make-keywords-re t '("operator")))
+(c-lang-defvar c-opt-op-identitier-prefix
+  (c-lang-const c-opt-op-identitier-prefix))
 
 (c-lang-defconst c-other-op-syntax-tokens
   "List of the tokens made up of characters in the punctuation or

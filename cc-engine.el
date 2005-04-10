@@ -6100,8 +6100,9 @@ comment at the start of cc-engine.el for more info."
 	      ;; so that we don't get stuck on that instead of the
 	      ;; function arglist.
 	      (c-forward-sexp))
-	     ((and c-overloadable-operators-regexp
-		   (looking-at "operator\\>[^_]"))
+	     ((and c-opt-op-identitier-prefix
+		   (looking-at c-opt-op-identitier-prefix))
+	      ;; Don't trip up on "operator ()".
 	      (c-forward-token-2 2 t)))
        (and (< (point) beg)
 	    (c-syntactic-re-search-forward "(" beg t t)
@@ -6215,10 +6216,12 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
   (save-excursion
     (and c-overloadable-operators-regexp
-	 (= (c-backward-token-2 1 nil lim) 0)
+	 (zerop (c-backward-token-2 1 nil lim))
 	 (looking-at c-overloadable-operators-regexp)
-	 (= (c-backward-token-2 1 nil lim) 0)
-	 (looking-at "operator\\([^_]\\|$\\)")
+	 (or (not c-opt-op-identitier-prefix)
+	     (and
+	      (zerop (c-backward-token-2 1 nil lim))
+	      (looking-at c-opt-op-identitier-prefix)))
 	 (point))))
 
 (defsubst c-backward-to-block-anchor (&optional lim)
@@ -6266,7 +6269,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; operator token preceded by "operator".
 		 (save-excursion
 		   (and (c-safe (c-backward-sexp) t)
-			(looking-at "operator\\([^_]\\|$\\)")))
+			(looking-at c-opt-op-identitier-prefix)))
 		 (and (eq (char-before) ?<)
 		      (c-with-syntax-table c++-template-syntax-table
 			(if (c-safe (goto-char (c-up-list-forward (point))))
@@ -6677,7 +6680,9 @@ comment at the start of cc-engine.el for more info."
 			(setq braceassignp
 			      (cond
 			       ;; Check for operator =
-			       ((looking-at "operator\\>[^_]") nil)
+			       ((and c-opt-op-identitier-prefix
+				     (looking-at c-opt-op-identitier-prefix))
+				nil)
 			       ;; Check for `<opchar>= in Pike.
 			       ((and (c-major-mode-is 'pike-mode)
 				     (or (eq (char-after) ?`)
