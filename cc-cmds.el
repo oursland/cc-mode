@@ -1092,9 +1092,8 @@ numeric argument is supplied, or the point is inside a literal."
 			      (c-beginning-of-current-token)
 			      (looking-at "<<\\|>>"))
 			    (= (match-end 0) final-pos)))
-	      (forward-char))
-	(indent-according-to-mode)
-	(setq final-pos (point))))
+	      (goto-char final-pos))
+	(indent-according-to-mode)))
 
     (when (and close-paren-inserted
 	       (not executing-kbd-macro)
