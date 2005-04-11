@@ -255,14 +255,13 @@ comment at the start of cc-engine.el for more info."
 (defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
   ;; directive, it's moved forward to the start of the definition body
-  ;; if it's a "#define".  Non-nil is returned in this case, in all
-  ;; other cases nil is returned and point isn't moved.
+  ;; if it's a "#define" (or whatever c-opt-cpp-macro-define
+  ;; specifies).  Non-nil is returned in this case, in all other cases
+  ;; nil is returned and point isn't moved.
   ;;
   ;; This function might do hidden buffer changes.
-  (when (and (looking-at
-	      (concat "#[ \t]*"
-		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
-		      "\\([ \t]\\|\\\\\n\\)*"))
+  (when (and c-opt-cpp-macro-define-start
+	     (looking-at c-opt-cpp-macro-define-start)
 	     (not (= (match-end 0) (c-point 'eol))))
     (goto-char (match-end 0))))
 

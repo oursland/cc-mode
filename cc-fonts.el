@@ -363,107 +363,118 @@ stuff.  Used on level 1 and higher."
   t `(,@(when (c-lang-const c-opt-cpp-prefix)
 	  (let* ((noncontinued-line-end "\\(\\=\\|\\(\\=\\|[^\\]\\)[\n\r]\\)")
 		 (ncle-depth (regexp-opt-depth noncontinued-line-end))
-		 (sws-depth (c-lang-const c-syntactic-ws-depth)))
+		 (sws-depth (c-lang-const c-syntactic-ws-depth))
+		 (nsws-depth (c-lang-const c-nonempty-syntactic-ws-depth)))
+
 	    `(;; The stuff after #error and #warning is a message, so
 	      ;; fontify it as a string.
-	      (,(concat noncontinued-line-end
-			(c-lang-const c-opt-cpp-prefix)
-			"\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
-	       ,(+ ncle-depth 2) font-lock-string-face)
+	      ,@(when (c-lang-const c-cpp-message-directives)
+		  (let* ((re (c-make-keywords-re nil
+			       (c-lang-const c-cpp-message-directives)))
+			 (re-depth (regexp-opt-depth re)))
+		    `((,(concat noncontinued-line-end
+				(c-lang-const c-opt-cpp-prefix)
+				re
+				"\\s +\\(.*\\)$")
+		       ,(+ ncle-depth re-depth 1) font-lock-string-face))))
 
 	      ;; Fontify filenames in #include <...> as strings.
-	      (,(concat noncontinued-line-end
-			(c-lang-const c-opt-cpp-prefix)
-			"\\(import\\|include\\)\\>"
-			(c-lang-const c-syntactic-ws)
-			"\\(<[^>\n\r]*>?\\)")
-	       (,(+ ncle-depth sws-depth 2)
-		font-lock-string-face)
+	      ,@(when (c-lang-const c-cpp-include-directives)
+		  (let* ((re (c-make-keywords-re nil
+			       (c-lang-const c-cpp-include-directives)))
+			 (re-depth (regexp-opt-depth re)))
+		    `((,(concat noncontinued-line-end
+				(c-lang-const c-opt-cpp-prefix)
+				re
+				(c-lang-const c-syntactic-ws)
+				"\\(<[^>\n\r]*>?\\)")
+		       (,(+ ncle-depth re-depth sws-depth 1)
+			font-lock-string-face)
 
-	       ;; Use an anchored matcher to put paren syntax on the brackets.
-	       (,(byte-compile
-		  `(lambda (limit)
-		     (let ((beg-pos
-			    (match-beginning ,(+ ncle-depth sws-depth 2)))
-			   (end-pos
-			    (1- (match-end ,(+ ncle-depth sws-depth 2)))))
-		       (if (eq (char-after end-pos) ?>)
-			   (progn
-			     (c-mark-<-as-paren beg-pos)
-			     (c-mark->-as-paren end-pos))
-			 (c-clear-char-property beg-pos 'syntax-table)))
-		     nil))))
+		       ;; Use an anchored matcher to put paren syntax on the brackets.
+		       (,(byte-compile
+			  `(lambda (limit)
+			     (let ((beg (match-beginning
+					 ,(+ ncle-depth re-depth sws-depth 1)))
+				   (end (1- (match-end
+					     ,(+ ncle-depth re-depth sws-depth 1)))))
+			       (if (eq (char-after end) ?>)
+				   (progn
+				     (c-mark-<-as-paren beg)
+				     (c-mark->-as-paren end))
+				 (c-clear-char-property beg 'syntax-table)))
+			     nil)))))))
 
 	      ;; #define.
-	      (,(c-make-font-lock-search-function
-		 (concat
-		  noncontinued-line-end
-		  (c-lang-const c-opt-cpp-prefix)
-		  "define\\>"
-		  (c-lang-const c-syntactic-ws)
-		  "\\(" (c-lang-const c-symbol-key) "\\)" ; 1 + ncle + sws
-		  (concat "\\("		; 2 + ncle + sws + c-sym-key
-			  ;; Macro with arguments - a "function".
-			  "\\(\(\\)"	; 3 + ncle + sws + c-sym-key
-			  "\\|"
-			  ;; Macro without arguments - a "variable".
-			  "\\([^\(]\\|$\\)"
-			  "\\)"))
-		 `((if (match-beginning ,(+ 3 ncle-depth sws-depth
-					    (c-lang-const c-symbol-key-depth)))
-		       ;; "Function".  Fontify the name and the arguments.
-		       (save-restriction
-			 (c-put-font-lock-face
-			  (match-beginning ,(+ 1 ncle-depth sws-depth))
-			  (match-end ,(+ 1 ncle-depth sws-depth))
-			  'font-lock-function-name-face)
-			 (goto-char (match-end
-				     ,(+ 3 ncle-depth sws-depth
-					 (c-lang-const c-symbol-key-depth))))
+	      ,@(when (c-lang-const c-opt-cpp-macro-define)
+		  `((,(c-make-font-lock-search-function
+		       (concat
+			noncontinued-line-end
+			(c-lang-const c-opt-cpp-prefix)
+			(c-lang-const c-opt-cpp-macro-define)
+			(c-lang-const c-nonempty-syntactic-ws)
+			"\\(" (c-lang-const c-symbol-key) "\\)" ; 1 + ncle + nsws
+			(concat "\\("	; 2 + ncle + nsws + c-sym-key
+				;; Macro with arguments - a "function".
+				"\\(\(\\)" ; 3 + ncle + nsws + c-sym-key
+				"\\|"
+				;; Macro without arguments - a "variable".
+				"\\([^\(]\\|$\\)"
+				"\\)"))
+		       `((if (match-beginning ,(+ 3 ncle-depth nsws-depth
+						  (c-lang-const c-symbol-key-depth)))
 
-			 (narrow-to-region (point-min) limit)
-			 (while (and
-				 (progn
-				   (c-forward-syntactic-ws)
-				   (looking-at c-symbol-key))
-				 (progn
-				   (c-put-font-lock-face
-				    (match-beginning 0) (match-end 0)
-				    'font-lock-variable-name-face)
-				   (goto-char (match-end 0))
-				   (c-forward-syntactic-ws)
-				   (eq (char-after) ?,)))
-			   (forward-char)))
+			     ;; "Function".  Fontify the name and the arguments.
+			     (save-restriction
+			       (c-put-font-lock-face
+				(match-beginning ,(+ 1 ncle-depth nsws-depth))
+				(match-end ,(+ 1 ncle-depth nsws-depth))
+				'font-lock-function-name-face)
+			       (goto-char (match-end
+					   ,(+ 3 ncle-depth nsws-depth
+					       (c-lang-const c-symbol-key-depth))))
 
-		     ;; "Variable".
-		     (c-put-font-lock-face
-		      (match-beginning ,(+ 1 ncle-depth sws-depth))
-		      (match-end ,(+ 1 ncle-depth sws-depth))
-		      'font-lock-variable-name-face)))))
+			       (narrow-to-region (point-min) limit)
+			       (while (and
+				       (progn
+					 (c-forward-syntactic-ws)
+					 (looking-at c-symbol-key))
+				       (progn
+					 (c-put-font-lock-face
+					  (match-beginning 0) (match-end 0)
+					  'font-lock-variable-name-face)
+					 (goto-char (match-end 0))
+					 (c-forward-syntactic-ws)
+					 (eq (char-after) ?,)))
+				 (forward-char)))
+
+			   ;; "Variable".
+			   (c-put-font-lock-face
+			    (match-beginning ,(+ 1 ncle-depth nsws-depth))
+			    (match-end ,(+ 1 ncle-depth nsws-depth))
+			    'font-lock-variable-name-face)))))))
 
 	      ;; Fontify cpp function names in preprocessor
 	      ;; expressions in #if and #elif.
-	      ,@(when (c-lang-const c-cpp-defined-fns)
-		  `((,(c-make-font-lock-search-function
-		       (concat noncontinued-line-end
-			       (c-lang-const c-opt-cpp-prefix)
-			       "\\(if\\|elif\\)\\>" ; 1 + ncle-depth
-			       ;; Match the whole logical line to look
-			       ;; for the functions in.
-			       "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
-		       `((let ((limit (match-end 0)))
-			   (while (re-search-forward
-				   ,(concat "\\<\\("
-					    (regexp-opt
-					     (c-lang-const c-cpp-defined-fns)
-					     nil)
-					    "\\)\\>"
-					    "\\s *\(?")
-				   limit 'move)
-			     (c-put-font-lock-face (match-beginning 1)
-						   (match-end 1)
-						   c-preprocessor-face-name)))
-			 (goto-char (match-end ,(1+ ncle-depth))))))))
+	      ,@(when (and (c-lang-const c-cpp-expr-directives)
+			   (c-lang-const c-cpp-expr-functions))
+		  (let ((ced-re (c-make-keywords-re t
+				  (c-lang-const c-cpp-expr-directives)))
+			(cef-re (c-make-keywords-re t
+				  (c-lang-const c-cpp-expr-functions))))
+		    `((,(c-make-font-lock-search-function
+			 (concat noncontinued-line-end
+				 (c-lang-const c-opt-cpp-prefix)
+				 ced-re ; 1 + ncle-depth
+				 ;; Match the whole logical line to look
+				 ;; for the functions in.
+				 "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
+			 `((let ((limit (match-end 0)))
+			     (while (re-search-forward ,cef-re limit 'move)
+			       (c-put-font-lock-face (match-beginning 1)
+						     (match-end 1)
+						     c-preprocessor-face-name)))
+			   (goto-char (match-end ,(1+ ncle-depth)))))))))
 
 	      ;; Fontify the directive names.
 	      (,(c-make-font-lock-search-function
@@ -476,6 +487,7 @@ stuff.  Used on level 1 and higher."
 	      )))
 
       ,@(when (c-major-mode-is 'pike-mode)
+	  ;; Recognize hashbangs in Pike.
 	  `((eval . (list "\\`#![^\n\r]*"
 			  0 c-preprocessor-face-name))))
 

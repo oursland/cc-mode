@@ -613,9 +613,46 @@ submatch surrounds the directive name."
 	       "\\([" c-alnum "]+\\|!\\)"))
 (c-lang-defvar c-opt-cpp-start (c-lang-const c-opt-cpp-start))
 
-(c-lang-defconst c-cpp-defined-fns
-  ;; Name of functions in cpp expressions that take an identifier as
-  ;; the argument.
+(c-lang-defconst c-cpp-message-directives
+  "List of cpp directives (without the prefix) that are followed by a
+string message."
+  t    (if (c-lang-const c-opt-cpp-prefix)
+	   '("error"))
+  pike '("error" "warning"))
+
+(c-lang-defconst c-cpp-include-directives
+  "List of cpp directives (without the prefix) that are followed by a
+file name in angle brackets or quotes."
+  t    (if (c-lang-const c-opt-cpp-prefix)
+	   '("include"))
+  objc '("include" "import"))
+
+(c-lang-defconst c-opt-cpp-macro-define
+  "Cpp directive (without the prefix) that is followed by a macro
+definition, or nil if the language doesn't have any."
+  t (if (c-lang-const c-opt-cpp-prefix)
+	"define"))
+
+(c-lang-defconst c-opt-cpp-macro-define-start
+  ;; Regexp matching everything up to the macro body of a cpp define,
+  ;; or the end of the logical line if there is none.  Set if
+  ;; c-opt-cpp-macro-define is.
+  t (if (c-lang-const c-opt-cpp-macro-define)
+	(concat (c-lang-const c-opt-cpp-prefix)
+		(c-lang-const c-opt-cpp-macro-define)
+		"[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
+		"\\([ \t]\\|\\\\\n\\)*")))
+(c-lang-defvar c-opt-cpp-macro-define-start
+  (c-lang-const c-opt-cpp-macro-define-start))
+
+(c-lang-defconst c-cpp-expr-directives
+  "List if cpp directives (without the prefix) that are followed by an
+expression."
+  t (if (c-lang-const c-opt-cpp-prefix)
+	'("if" "elif")))
+
+(c-lang-defconst c-cpp-expr-functions
+  "List of functions in cpp expressions."
   t    (if (c-lang-const c-opt-cpp-prefix)
 	   '("defined"))
   pike '("defined" "efun" "constant"))
