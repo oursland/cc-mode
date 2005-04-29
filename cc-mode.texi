@@ -1,10 +1,13 @@
 \input texinfo
+<<<<<<< cc-mode.texi
+=======
 
 @comment
 @comment FIXME: cc-subword docs.
 @comment
 
-@c $Id: cc-mode.texi,v 5.212 2005-04-10 16:16:17 mast Exp $
+@c $Id: cc-mode.texi,v 5.213 2005-04-29 21:34:54 acmacm Exp $
+>>>>>>> 5.212
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -152,7 +155,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.212 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.213 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1809,11 +1812,13 @@ See @ref{Hooks} for more details on the use of @ccmode{} hooks.
 
 @item Styles
 A @ccmode{} @dfn{style} is a coherent collection of customizations
-with a name.  @ccmode{} is delivered with several existing styles.
-Additionally, you can create your own styles, possibly based on these
-existing styles.  If you worked in a programming group called the
-``Free Group'', which had it's own coding standards, you might well
-have this in your @file{.emacs} file:
+with a name.  At any time, exactly one style is active in each
+@ccmode{} buffer, either the one you have selected or a default.
+@ccmode{} is delivered with several existing styles.  Additionally,
+you can create your own styles, possibly based on these existing
+styles.  If you worked in a programming group called the ``Free
+Group'', which had it's own coding standards, you might well have this
+in your @file{.emacs} file:
 
 @example
 (setq c-default-style "free-group-style")
@@ -2321,11 +2326,16 @@ according to the language syntax and the comment line prefix.
 @vindex comment-prefix-regexp (c-)
 This style variable contains the regexp used to recognize the
 @dfn{comment line prefix}, which is the line decoration that starts
-every line in a comment.  When a comment line gets divided by
-@kbd{M-j} or the like, @ccmode{} inserts the comment line prefix from
-a neighbouring line at the start of the new line.  The default value
-of c-comment-prefix-regexp is @samp{//+\\|\\**}, which matches C++
-style line comments like
+every line in a comment.  The variable is either the comment line
+prefix itself, or (more usually) an association list with different
+values for different languages.  The symbol for the major mode is
+looked up in the alist to get the regexp for the language, and if it
+isn't found then the special symbol @samp{other} is looked up instead.
+
+When a comment line gets divided by @kbd{M-j} or the like, @ccmode{}
+inserts the comment line prefix from a neighbouring line at the start
+of the new line.  The default value of c-comment-prefix-regexp is
+@samp{//+\\|\\**}, which matches C++ style line comments like
 
 @example
 // blah blah
