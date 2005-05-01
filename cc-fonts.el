@@ -550,18 +550,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
 	    (if (c-major-mode-is 'pike-mode)
 		;; No symbol is a keyword after "->" in Pike.
-		`((eval . (list ,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+		`((eval . (list ,(concat "\\(\\=.?\\|[^>]\\|[^-]>\\)"
 					 "\\<\\(" re "\\)\\>")
-				3 c-constant-face-name)))
+				2 c-constant-face-name)))
 	      `((eval . (list ,(concat "\\<\\(" re "\\)\\>")
 			      1 c-constant-face-name))))))
 
       ;; Fontify all keywords except the primitive types.
       ,(if (c-major-mode-is 'pike-mode)
 	   ;; No symbol is a keyword after "->" in Pike.
-	   `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+	   `(,(concat "\\(\\=.?\\|[^>]\\|[^-]>\\)"
 		      "\\<" (c-lang-const c-regular-keywords-regexp))
-	     3 font-lock-keyword-face)
+	     2 font-lock-keyword-face)
 	 `(,(concat "\\<" (c-lang-const c-regular-keywords-regexp))
 	   1 font-lock-keyword-face))
 
@@ -1260,9 +1260,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		   (c-lang-const c-primitive-type-kwds))))
 	 (if (c-major-mode-is 'pike-mode)
 	     ;; No symbol is a keyword after "->" in Pike.
-	     `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+	     `(,(concat "\\(\\=.?\\|[^>]\\|[^-]>\\)"
 			"\\<\\(" re "\\)\\>")
-	       3 font-lock-type-face)
+	       2 font-lock-type-face)
 	   `(,(concat "\\<\\(" re "\\)\\>")
 	     1 'font-lock-type-face)))
 
