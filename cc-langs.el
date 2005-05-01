@@ -887,9 +887,9 @@ operators."
   (c c++ pike) (append '("#" "##"	; Used by cpp.
 			 "::" "...")
 		       (c-lang-const c-other-op-syntax-tokens))
-  (c c++) (append '("<%" "%>" "<:" ":>" "%:" "%:%:" "*")
-		  (c-lang-const c-other-op-syntax-tokens))
-  c++  (append '("&") (c-lang-const c-other-op-syntax-tokens))
+  (c c++) (append '("*") (c-lang-const c-other-op-syntax-tokens))
+  c++  (append '("&" "<%" "%>" "<:" ":>" "%:" "%:%:")
+	       (c-lang-const c-other-op-syntax-tokens))
   objc (append '("#" "##"		; Used by cpp.
 		 "+" "-") (c-lang-const c-other-op-syntax-tokens))
   idl  (append '("#" "##")		; Used by cpp.
