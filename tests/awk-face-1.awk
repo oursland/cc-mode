@@ -180,3 +180,10 @@ END {
     print _"Hello"
     print _"Hello
 } 
+
+# A "character class" regular expression.
+/[^[:alpha:]/]/ {print}
+
+# Local Variables:
+# cc-test-skip: (no-syntax-properties)
+# End:
