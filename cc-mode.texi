@@ -98,7 +98,10 @@ CC Mode
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @comment Define an index for syntactic symbols.
+@ifnottex @c In texi2dvi, the @defindex would create an empty cc-mode.ss
+          @c For Info, unlike tex, @syncodeindex needs a matching @defindex.
 @defindex ss
+@end ifnottex
 
 @comment Combine key, syntactic symbol and concept indices into one.
 @syncodeindex ss cp
@@ -150,7 +153,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.214 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.215 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
