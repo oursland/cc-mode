@@ -789,6 +789,10 @@ settings of `c-cleanup-list' are done."
 (defun c-electric-slash (arg)
   "Insert a slash character.
 
+If the slash is inserted immediately after the comment prefix in a c-style
+comment, the comment might get closed by removing whitespace and possibly
+inserting a \"*\".  See the variable `c-cleanup-list'.
+
 Indent the line as a comment, if:
 
   1. The slash is second of a \"//\" line oriented comment introducing
@@ -801,19 +805,30 @@ If a numeric ARG is supplied, point is inside a literal, or
 `c-syntactic-indentation' is nil or `c-electric-flag' is nil, indentation
 is inhibited."
   (interactive "*P")
-  (let* ((ch (char-before))
-	 (literal (c-save-buffer-state () (c-in-literal)))
-	 (indentp (and c-syntactic-indentation
+  (let ((literal (c-save-buffer-state () (c-in-literal)))
+	indentp
+	;; shut this up
+	(c-echo-syntactic-information-p nil))
+
+    ;; comment-close-slash cleanup?  This DOESN'T need `c-electric-flag' or
+    ;; `c-syntactic-indentation' set.
+    (when (and (not arg)
+	       (eq literal 'c)
+	       (memq 'comment-close-slash c-cleanup-list)
+	       (eq last-command-char ?/)
+	; (eq c-block-comment-ender "*/") ; C-style comments ALWAYS end in */
+	       (save-excursion
+		 (back-to-indentation)
+		 (looking-at (concat c-current-comment-prefix "[ \t]*$"))))
+      (end-of-line)
+      (delete-horizontal-space)
+      (or (eq (char-before) ?*) (insert-char ?* 1))) ; Do I need a t (retain sticky properties) here?
+
+    (setq indentp (and (not arg)
+		       c-syntactic-indentation
 		       c-electric-flag
-		       (not arg)
 		       (eq last-command-char ?/)
-		       (or (and (eq ch ?/)
-				(not literal))
-			   (and (eq ch ?*)
-				literal))
-		       ))
-	 ;; shut this up
-	 (c-echo-syntactic-information-p nil))
+		       (eq (char-before) (if literal ?* ?/))))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
 	(indent-according-to-mode))))

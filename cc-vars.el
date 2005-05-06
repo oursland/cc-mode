@@ -596,8 +596,8 @@ contexts are:
 (defcustom-c-stylevar c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
 The following clean ups only take place when the auto-newline feature
-is turned on, as evidenced by the `/a' or `/ah' appearing next to the
-mode name:
+is turned on, as evidenced by the `/la' appearing next to the mode
+name:
 
  brace-else-brace    -- Clean up \"} else {\" constructs by placing
                         entire construct on a single line.  This clean
@@ -649,7 +649,11 @@ involve auto-newline inserted newlines:
                         useful together with `space-before-funcall' to
                         get the style \"foo (bar)\" and \"foo()\".
                         Clean up occurs when the closing parenthesis
-                        is typed."
+                        is typed.
+ comment-close-slash -- When a slash is typed after the comment prefix
+                        on a bare line in a c-style comment, the comment
+                        is closed by cleaning up preceding space and
+                        inserting a star if needed."
   :type '(set
 	  (const :tag "Put \"} else {\" on one line (brace-else-brace)"
 		 brace-else-brace)
@@ -670,7 +674,9 @@ involve auto-newline inserted newlines:
 	  (const :tag "Put a space before funcall parens, e.g. \"foo (bar)\" (space-before-funcall)"
 		 space-before-funcall)
 	  (const :tag "Remove space before empty funcalls, e.g. \"foo()\" (compact-empty-funcall)"
-		 compact-empty-funcall))
+		 compact-empty-funcall)
+	  (const :tag "Make / on a bare line of a C-style comment close it (comment-close-slash)"
+		 comment-close-slash))
   :group 'c)
 
 (defcustom-c-stylevar c-hanging-braces-alist '((brace-list-open)
