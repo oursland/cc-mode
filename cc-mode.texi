@@ -153,7 +153,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.215 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.216 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -2905,27 +2905,29 @@ newlines after semicolons inside one-line inline method definitions
 
 @dfn{Clean-ups} are mechanisms which remove (or exceptionally, add)
 whitespace in specific circumstances and are complementary to colon
-and brace hanging.  On the surface, it would seem that clean-ups
-overlap the functionality provided by the @code{c-hanging-*-alist}
-variables.  Clean-ups, however, are used to adjust code
-``after-the-fact'', i.e. to adjust the whitespace in constructs later
-than when they were typed.
+and brace hanging.  You enable a clean-up by adding its symbol into
+@code{c-cleanup-list}.
+
+On the surface, it would seem that clean-ups overlap the functionality
+provided by the @code{c-hanging-*-alist} variables.  Clean-ups,
+however, are used to adjust code ``after-the-fact'', i.e. to adjust
+the whitespace in constructs later than when they were typed.
 
 Most of the clean-ups remove automatically inserted newlines, and are
 only active whilst auto-newline minor mode is turned on.  Others will
-work all the time.
+work all the time.  Note that clean-ups are only performed when there
+is nothing but whitespace appearing between the individual components
+of the construct, and (apart from @code{comment-close-slash}) when the
+construct does not occur within a literal (@pxref{Auto-newlines}).
 
 @defopt c-cleanup-list
 @vindex cleanup-list (c-)
 @cindex literal
 
-You can configure @ccmode{}'s clean-ups by setting the style variable
+You configure @ccmode{}'s clean-ups by setting the style variable
 @code{c-cleanup-list}, which is a list of clean-up symbols.  By
 default, @ccmode{} cleans up only the @code{scope-operator} construct,
-which is necessary for proper C++ support.  Note that clean-ups are
-only performed when the construct does not occur within a literal
-(@pxref{Auto-newlines}), and when there is nothing but whitespace
-appearing between the individual components of the construct.
+which is necessary for proper C++ support.
 @end defopt
 
 These are the clean-ups that are only active in the auto-newline minor
@@ -2936,7 +2938,7 @@ mode:
 @table @code
 @item brace-else-brace
 Clean up @samp{@} else @{} constructs by placing the entire construct on
-a single line.  Clean-up occurs when the open brace after the
+a single line.  Clean up occurs when the open brace after the
 @samp{else} is typed.  So for example, this:
 
 @example
@@ -3090,7 +3092,7 @@ BEGIN @{
 @end example
 
 @noindent
-gets compacted to the following when the closing brace is typed:
+It gets compacted to the following when the closing brace is typed:
 
 @example
 @group
@@ -3130,6 +3132,12 @@ call style for functions with arguments but think it looks ugly when
 it's only an empty parenthesis pair.  I.e. you will get @samp{signal
 (SIGINT, SIG_IGN)}, but @samp{abort()}.  Clean up occurs when the
 closing parenthesis is typed.
+
+@item comment-close-slash
+When inside a block comment, terminate the comment when you type a
+slash at the beginning of a line (i.e. immediately after the comment
+prefix).  This clean-up removes whitespace preceding the slash and if
+needed, inserts a star to complete the token @samp{*/}.
 @end table
 
 
