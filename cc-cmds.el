@@ -297,11 +297,14 @@ Optional numeric ARG, if supplied, turns on auto-newline when
 positive, turns it off when negative, and just toggles it when zero or
 left out.
 
-When the auto-newline feature is enabled (indicated by \"/a\" on the
+Turning on auto-newline automatically enables electric indentation.
+
+When the auto-newline feature is enabled (indicated by \"/la\" on the
 modeline after the mode name) newlines are automatically inserted
 after special characters such as brace, comma, semi-colon, and colon."
   (interactive "P")
   (setq c-auto-newline (c-calculate-state arg c-auto-newline))
+  (if c-auto-newline (setq c-electric-flag t))
   (c-update-modeline)
   (c-keep-region-active))
 
