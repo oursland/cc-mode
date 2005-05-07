@@ -303,7 +303,8 @@ When the auto-newline feature is enabled (indicated by \"/la\" on the
 modeline after the mode name) newlines are automatically inserted
 after special characters such as brace, comma, semi-colon, and colon."
   (interactive "P")
-  (setq c-auto-newline (c-calculate-state arg c-auto-newline))
+  (setq c-auto-newline
+	(c-calculate-state arg (and c-auto-newline c-electric-flag)))
   (if c-auto-newline (setq c-electric-flag t))
   (c-update-modeline)
   (c-keep-region-active))
