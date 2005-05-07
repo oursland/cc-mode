@@ -36,6 +36,10 @@ problems writing custom indentation functions for AWK mode.
 *** AWK Font Locking hasn't been fully integrated into CC Mode.
 There is just a single level of font locking in AWK mode.
 
+** New clean-up `comment-close-slash'.
+With this clean-up, a block (c-style) comment can be terminated by typing a
+slash at the start of a line.
+
 * Changes in 5.30
 
 There is a lot of change in this version, so it's considered experimental.  It is however fairly well tested already since the developers have an extensive test suite to ensure correct syntactic analysis and font locking.
