@@ -153,7 +153,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.216 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.217 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -189,6 +189,7 @@ functions, classes etc - there are other packages for that.
 * Config Strategies::           
 * Custom Filling and Breaking::  
 * Custom Auto-newlines::        
+* Clean-ups::                   
 * Indentation Engine Basics::   
 * Customizing Indentation::     
 * Custom Macros::               
@@ -212,14 +213,11 @@ Commands
 * Indentation Commands::        
 * Movement Commands::           
 * Filling and Breaking::        
-* Electric Keys::               
 * Minor Modes::                 
-* Other Commands::              
-
-Minor Modes
-
+* Electric Keys::               
 * Auto-newlines::               
 * Hungry WS Deletion::          
+* Other Commands::              
 
 Font Locking
 
@@ -245,7 +243,6 @@ Customizing Auto-newlines
 * Hanging Braces::              
 * Hanging Colons::              
 * Hanging Semicolons and Commas::  
-* Clean-ups::                   
 
 Hanging Braces
 
@@ -477,8 +474,10 @@ structures.
 * Indentation Commands::        
 * Movement Commands::           
 * Filling and Breaking::        
-* Electric Keys::               
 * Minor Modes::                 
+* Electric Keys::               
+* Auto-newlines::               
+* Hungry WS Deletion::          
 * Other Commands::              
 @end menu
 
@@ -531,6 +530,12 @@ variables, described below.  See @code{c-tab-always-indent},
 @code{c-insert-tab-function}, and @code{indent-tabs-mode}.  With a
 numeric argument, this command rigidly indents the region, preserving
 the relative indentation among the lines.
+
+@item @kbd{C-j} (@code{newline-and-indent})
+@kindex C-j
+@findex newline-and-indent
+Inserts a linefeed and indents the new blank line, ready to start
+typing.  This is a standard (X)Emacs command.
 
 @item @kbd{C-M-q} (@code{c-indent-exp})
 @kindex C-M-q
@@ -792,7 +797,7 @@ If @var{n} is negative, move in the opposite direction.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Filling and Breaking, Electric Keys, Movement Commands, Commands
+@node    Filling and Breaking, Minor Modes, Movement Commands, Commands
 @comment  node-name,  next,  previous,  up
 @section Filling and Line Breaking Commands
 @cindex text filling
@@ -886,15 +891,90 @@ line break.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Electric Keys, Minor Modes, Filling and Breaking, Commands
+@node    Minor Modes, Electric Keys, Filling and Breaking, Commands
+@comment node-name, next, previous, up
+@section Minor Modes
+@cindex Minor Modes
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@ccmode{} contains several minor-mode-like features that you might
+find useful while writing new code or editing old code:
+
+@table @asis
+@item electric mode
+When this is enabled, certain visible characters cause reformatting as
+they are typed.  This is normally helpful, but can be a nuisance when
+editing chaotically formatted code.  It can also be disconcerting,
+especially for users who are new to @ccmode{}.
+@item auto-newline mode
+This automatically inserts newlines where you'd probably want to type
+them yourself, e.g. after typing @samp{@}}s.  Its action is suppressed
+when electric mode is disabled.
+@item hungry-delete mode
+This lets you delete a contiguous block of whitespace in a single
+operation - for example, the newline and indentation just inserted by
+auto-newline when you want to back up and write a comment after the
+last statement.
+@end table
+
+Full details on how these minor modes work are at @ref{Electric Keys},
+@ref{Auto-newlines}, and @ref{Hungry WS Deletion}.
+
+You can toggle each of these minor modes on and off, and you can
+configure @ccmode{} so that it starts up with your favourite
+combination of them (@pxref{Sample .emacs File}).  By default, when
+you initialise a buffer, electric mode is enabled but the other two
+modes are disabled.
+
+@ccmode{} displays the current state of these minor modes on the
+modeline by appending letters to the major mode's name, one letter for
+each enabled minor mode - @samp{l} for electric mode, @samp{a} for
+auto-newline mode, and @samp{h} for hungry delete mode.  If all these
+modes were enabled, you'd see @samp{C/lah}@footnote{The @samp{C} would
+be replaced with the name of the language in question for the other
+languages @ccmode{} supports.}.
+
+Here are the commands to toggle these modes:
+
+@table @asis
+@item @kbd{C-c C-l} (@code{c-toggle-electric-state})
+@kindex C-c C-l
+@findex c-toggle-electric-state
+@findex toggle-electric-state (c-)
+Toggle electric minor mode.  When the command turns the mode off, it
+also suppresses auto-newline mode.  Programmatically, if the function
+is given a numeric @var{arg}, a positive value will turn on
+auto-newline minor mode and a negative value will turn it off.
+
+@item @kbd{C-c C-a} (@code{c-toggle-auto-newline})
+@kindex C-c C-a
+@findex c-toggle-auto-newline
+@findex toggle-auto-newline (c-)
+Toggle auto-newline minor mode.  When the command turns the mode on,
+it also enables electric minor mode.  Programmatically, if the
+function is given a numeric @var{arg}, a positive value will turn on
+auto-newline minor mode and a negative value will turn it off.
+
+@item @kbd{C-c C-d} (@code{c-toggle-hungry-state})
+@kindex C-c C-d
+@findex c-toggle-hungry-state
+@findex toggle-hungry-state (c-)
+Toggle hungry-delete minor mode.  Programmatically, if the function is
+given a numeric @var{arg}, a positive value will turn on hungry-delete
+minor mode and a negative value will turn it off.
+@end table
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Electric Keys, Auto-newlines, Minor Modes, Commands
 @comment node-name, next, previous, up
 @section Electric Keys and Keywords
 @cindex electric characters
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Most punctuation keys provide @dfn{electric} behavior - as well as
-inserting themselves they can perform some other action, such as
-reindenting the line.  A few keywords, such as @code{else}, can also
+inserting themselves they perform some other action, such as
+reindenting the line.  A few keywords, such as @code{else}, also
 trigger electric action.
 
 Common to all of them is that they only behave electrically when used
@@ -902,6 +982,9 @@ in normal code (as contrasted with getting typed in a string literal
 or comment).  Those which cause re-indentation do so only when
 @code{c-syntactic-indentation} has a non-@code{nil} value (which it
 does by default).
+
+You can inhibit the electric behaviour described here by disabling
+electric minor mode (@pxref{Minor Modes}.)
 
 These keys and keywords are:
 @c ACM, 2004/8/24:  c-electric-pound doesn't check c-s-i: this is more
@@ -943,6 +1026,11 @@ block comment opener (@samp{/*}) or a C++ line comment opener
 (@samp{//}) respectively, but only if the comment opener is the first
 thing on the line (i.e. there's only whitespace before it).
 
+Additionally, you can configure @ccmode{} so that typing a slash at
+the start of a line within a block comment will terminate the
+comment.  You don't need to have electric minor mode enabled to get
+this behaviour.  @xref{Clean-ups}.
+
 In AWK mode, @samp{*} and @samp{/} do not delimit comments and are not
 electric.
 
@@ -969,10 +1057,13 @@ electric.
 The normal parenthesis characters @samp{(} and @samp{)} (bound to
 c-electric-paren) reindent the current line.  This is useful for
 getting the closing parenthesis of an argument list aligned
-automatically.  You can also configure @ccmode{} to insert a space
-automatically between a function name and the @samp{(} you've just
-typed, and to remove it automatically after typing @samp{)}, should
-the argument list be empty.  @xref{Clean-ups}.
+automatically.
+
+You can also configure @ccmode{} to insert a space automatically
+between a function name and the @samp{(} you've just typed, and to
+remove it automatically after typing @samp{)}, should the argument
+list be empty.  You don't need to have electric minor mode enabled to
+get these actions.  @xref{Clean-ups}.
 
 @item @{
 @kindex @{
@@ -1052,74 +1143,9 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Minor Modes, Other Commands, Electric Keys, Commands
+@node    Auto-newlines, Hungry WS Deletion, Electric Keys, Commands
 @comment node-name, next, previous, up
-@section Minor Modes
-@cindex Minor Modes
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@ccmode{} contains two minor-mode-like features that you might find
-useful while writing new code.  The first is called @dfn{auto-newline}
-mode, and automatically inserts newlines where you'd probably want to
-type them yourself.  The second is called @dfn{hungry-delete} mode, and
-lets you delete a contiguous block of whitespace in a single operation -
-for example, the newline and indentation just inserted by auto-newline
-when you want to back up and write a comment after the last statement.
-
-Full details on how these minor modes work are at @ref{Auto-newlines}
-and @ref{Hungry WS Deletion}.
-
-These minor modes can be toggled on and off independently, and
-@ccmode{} can be configured so that it starts up with any combination
-of these minor modes.  By default, both of these minor modes are
-turned off.
-
-The state of these minor modes is reflected in the minor mode list on
-the modeline of the @ccmode{} buffer.  When auto-newline mode is
-enabled, you will see @samp{C/a} on the mode line@footnote{The
-@samp{C} would be replaced with the name of the language in question
-for the other languages @ccmode{} supports.}.  When hungry delete mode
-is enabled you will see @samp{C/h} and if both modes were enabled,
-you'd see @samp{C/ah}.
-
-Here are commands to toggle these modes:
-
-@table @asis
-@item @kbd{C-c C-a} (@code{c-toggle-auto-state})
-@kindex C-c C-a
-@findex c-toggle-auto-state
-@findex toggle-auto-state (c-)
-Toggle auto-newline minor mode.  Programmatically, if the function is
-given a numeric @var{arg}, a positive value will turn on auto-newline
-minor mode and a negative value will turn it off.
-
-@item @kbd{C-c C-d} (@code{c-toggle-hungry-state})
-@kindex C-c C-d
-@findex c-toggle-auto-hungry-state
-@findex toggle-hungry-state (c-)
-Toggle hungry-delete minor mode.  Programmatically, if the function is
-given a numeric @var{arg}, a positive value will turn on hungry-delete
-minor mode and a negative value will turn it off.
-
-@item @kbd{C-c C-t} (@code{c-toggle-auto-hungry-state})
-@kindex C-c C-t
-@findex c-toggle-hungry-state
-@findex toggle-auto-hungry-state (c-)
-Toggle both of the minor modes.  Programmatically, if the function is
-given a numeric @var{arg}, a positive value will turn on both the
-modes and a negative value will turn them off.
-@end table
-
-@menu
-* Auto-newlines::               
-* Hungry WS Deletion::          
-@end menu
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Auto-newlines, Hungry WS Deletion, Minor Modes, Minor Modes
-@comment node-name, next, previous, up
-@subsection Auto-newline Insertion
+@section Auto-newline Insertion
 @cindex auto-newline
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1171,9 +1197,9 @@ full description.  See also @ref{Electric Keys} for a summary of
 clean-ups listed by key.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hungry WS Deletion,  , Auto-newlines, Minor Modes
+@node    Hungry WS Deletion, Other Commands, Auto-newlines, Commands
 @comment node-name, next, previous, up
-@subsection Hungry Deletion of Whitespace
+@section Hungry Deletion of Whitespace
 @cindex hungry-deletion
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1306,7 +1332,7 @@ Delete,,,emacs}, might be helpful if you're having trouble with this
 in GNU Emacs.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Commands,  , Minor Modes, Commands
+@node    Other Commands,  , Hungry WS Deletion, Commands
 @comment node-name, next, previous, up
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1815,7 +1841,7 @@ with a name.  At any time, exactly one style is active in each
 @ccmode{} is delivered with several existing styles.  Additionally,
 you can create your own styles, possibly based on these existing
 styles.  If you worked in a programming group called the ``Free
-Group'', which had it's own coding standards, you might well have this
+Group'', which had its own coding standards, you might well have this
 in your @file{.emacs} file:
 
 @example
@@ -2504,7 +2530,7 @@ as one comment, and the rest of the paragraph handling code
 inconsistent behavior.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Auto-newlines, Indentation Engine Basics, Custom Filling and Breaking, Top
+@node    Custom Auto-newlines, Clean-ups, Custom Filling and Breaking, Top
 @comment node-name, next, previous, up
 @chapter Customizing Auto-newlines
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2548,15 +2574,14 @@ A character @dfn{hangs on the left} when it appears at the start of
 the line after the construct it closes off, like the above closing
 brace.
 
-The final section of this chapter, ``Clean-ups'', describes how to
-configure @ccmode{} to remove these automatically added newlines in
-certain specific circumstances.  @xref{Clean-ups}.
+The next chapter, ``Clean-ups'', describes how to configure @ccmode{}
+to remove these automatically added newlines in certain specific
+circumstances.  @xref{Clean-ups}.
 
 @menu
 * Hanging Braces::              
 * Hanging Colons::              
 * Hanging Semicolons and Commas::  
-* Clean-ups::                   
 @end menu
 
 
@@ -2821,7 +2846,7 @@ been found for this feature, it isn't currently implemented!
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Custom Auto-newlines
+@node    Hanging Semicolons and Commas,  , Hanging Colons, Custom Auto-newlines
 @comment node-name, next, previous, up
 @section Hanging Semicolons and Commas
 @cindex hanging semicolons
@@ -2897,9 +2922,9 @@ newlines after semicolons inside one-line inline method definitions
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Clean-ups,  , Hanging Semicolons and Commas, Custom Auto-newlines
+@node    Clean-ups, Indentation Engine Basics, Custom Auto-newlines, Top
 @comment node-name, next, previous, up
-@section Clean-ups
+@chapter Clean-ups
 @cindex clean-ups
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3111,8 +3136,8 @@ applies.
 @end table
 
 The following clean-ups are always active when they occur on
-@code{c-cleanup-list}, and are thus not affected by the auto-newline
-minor mode:
+@code{c-cleanup-list}, and are not affected by Electric minor mode or
+Auto-newline minor mode:
 
 @table @code
 @item space-before-funcall
@@ -3142,7 +3167,7 @@ needed, inserts a star to complete the token @samp{*/}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Engine Basics, Customizing Indentation, Custom Auto-newlines, Top
+@node    Indentation Engine Basics, Customizing Indentation, Clean-ups, Top
 @comment node-name, next, previous, up
 @chapter Indentation Engine Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5846,7 +5871,8 @@ anchoring position to indent the line in that case.
         ;; this will make sure spaces are used instead of tabs
         indent-tabs-mode nil)
   ;; we like auto-newline and hungry-delete
-  (c-toggle-auto-hungry-state 1)
+  (c-toggle-auto-newline 1)
+  (c-toggle-hungry-state 1)
   ;; key bindings for all supported languages.  We can put these in
   ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
   ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
@@ -6080,6 +6106,12 @@ This heuristic is built into the core syntax analysis routines in
 it has become possible to turn it off@footnote{Using the variable
 @code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
 there since it got its own system to keep track of blocks.
+
+@item
+@emph{How do I stop my code jumping all over the place when I type?}
+
+Deactivate ``electric minor mode'' with @kbd{C-c C-l}.  @ref{Minor
+Modes}.
 
 @end itemize
 
