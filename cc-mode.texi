@@ -124,8 +124,8 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License, the
 file @file{COPYING}, along with @ccmode{}.  If not, see
 @url{http://www.gnu.org/licenses/gpl} or write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
-USA.
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
 @end copying
 
 @comment Info directory entry for use by install-info. The indentation
@@ -153,7 +153,7 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.217 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.218 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
