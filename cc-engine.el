@@ -396,7 +396,10 @@ comment at the start of cc-engine.el for more info."
 ;; locking is in use.  This variable is extended with the face in
 ;; `c-doc-face-name' when fontification is activated in cc-fonts.el.
 (defvar c-literal-faces
-  '(font-lock-comment-face font-lock-string-face))
+  (append '(font-lock-comment-face font-lock-string-face)
+	  (when (facep 'font-lock-comment-delimiter-face)
+	    ;; New in Emacs 22.
+	    '(font-lock-comment-delimiter-face))))
 
 (defsubst c-put-c-type-property (pos value)
   ;; Put a c-type property with the given value at POS.
