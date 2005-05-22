@@ -391,13 +391,14 @@ stuff.  Used on level 1 and higher."
 		       (,(+ ncle-depth re-depth sws-depth 1)
 			font-lock-string-face)
 
-		       ;; Use an anchored matcher to put paren syntax on the brackets.
+		       ;; Use an anchored matcher to put paren syntax
+		       ;; on the brackets.
 		       (,(byte-compile
 			  `(lambda (limit)
 			     (let ((beg (match-beginning
 					 ,(+ ncle-depth re-depth sws-depth 1)))
-				   (end (1- (match-end
-					     ,(+ ncle-depth re-depth sws-depth 1)))))
+				   (end (1- (match-end ,(+ ncle-depth re-depth
+							   sws-depth 1)))))
 			       (if (eq (char-after end) ?>)
 				   (progn
 				     (c-mark-<-as-paren beg)
@@ -413,7 +414,8 @@ stuff.  Used on level 1 and higher."
 			(c-lang-const c-opt-cpp-prefix)
 			(c-lang-const c-opt-cpp-macro-define)
 			(c-lang-const c-nonempty-syntactic-ws)
-			"\\(" (c-lang-const c-symbol-key) "\\)" ; 1 + ncle + nsws
+			"\\(" (c-lang-const ; 1 + ncle + nsws
+			       c-symbol-key) "\\)"
 			(concat "\\("	; 2 + ncle + nsws + c-sym-key
 				;; Macro with arguments - a "function".
 				"\\(\(\\)" ; 3 + ncle + nsws + c-sym-key
@@ -421,8 +423,9 @@ stuff.  Used on level 1 and higher."
 				;; Macro without arguments - a "variable".
 				"\\([^\(]\\|$\\)"
 				"\\)"))
-		       `((if (match-beginning ,(+ 3 ncle-depth nsws-depth
-						  (c-lang-const c-symbol-key-depth)))
+		       `((if (match-beginning
+			      ,(+ 3 ncle-depth nsws-depth
+				  (c-lang-const c-symbol-key-depth)))
 
 			     ;; "Function".  Fontify the name and the arguments.
 			     (save-restriction
@@ -430,9 +433,10 @@ stuff.  Used on level 1 and higher."
 				(match-beginning ,(+ 1 ncle-depth nsws-depth))
 				(match-end ,(+ 1 ncle-depth nsws-depth))
 				'font-lock-function-name-face)
-			       (goto-char (match-end
-					   ,(+ 3 ncle-depth nsws-depth
-					       (c-lang-const c-symbol-key-depth))))
+			       (goto-char
+				(match-end
+				 ,(+ 3 ncle-depth nsws-depth
+				     (c-lang-const c-symbol-key-depth))))
 
 			       (narrow-to-region (point-min) limit)
 			       (while (and
@@ -484,6 +488,14 @@ stuff.  Used on level 1 and higher."
 			 "[" (c-lang-const c-symbol-chars) "]+"
 			 "\\)")
 		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
+
+	      ,@(when (c-face-name-p 'font-lock-negation-char-face)
+		  ;; Fontify the "n" in "#ifndef" in Emacs 22 which has a
+		  ;; special face for negation chars.
+		  `((,(concat noncontinued-line-end
+			      (c-lang-const c-opt-cpp-prefix)
+			      "if\\(n\\)def\\>")
+		     ,(+ ncle-depth 1) font-lock-negation-char-face prepend)))
 	      )))
 
       ,@(when (c-major-mode-is 'pike-mode)
@@ -582,7 +594,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (concat (c-lang-const c-opt-identifier-concat-key)
 			  (c-lang-const c-simple-ws) "*"
 			  (concat "\\("
-				  "[" c-upper "][" (c-lang-const c-symbol-chars) "]*"
+				  "[" c-upper "]"
+				  "[" (c-lang-const c-symbol-chars) "]*"
 				  "\\|"
 				  "\\*"
 				  "\\)"))
@@ -596,7 +609,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				    (< (skip-chars-backward
 					,(c-lang-const c-symbol-chars)) 0))
 				  (not (get-text-property (point) 'face)))
-			(c-put-font-lock-face (point) id-end c-reference-face-name)
+			(c-put-font-lock-face (point) id-end
+					      c-reference-face-name)
 			(c-backward-syntactic-ws)))
 		    nil
 		    (goto-char (match-end 0)))))
@@ -660,6 +674,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (c-forward-objc-directive)
 		  nil)
 		(goto-char (match-beginning 0))))))
+
+      ,@(when (c-face-name-p 'font-lock-negation-char-face)
+	  ;; Emacs 22 has a special face to fontify negation chars.
+	  '(("\\(!\\)[^=]" 1 font-lock-negation-char-face)))
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
