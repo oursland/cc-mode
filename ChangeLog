@@ -2,6 +2,12 @@
 
 	* Patch release 5.30.10.
 
+2005-05-23  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el (c-invalid-face-name): Use "red1" instead of "red"
+	since it stands out better in xterms and DOS terminals.  Original
+	change by Dan Nicolaescu <dann@ics.uci.edu>.
+
 2005-05-22  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-fonts.el (c-font-lock-declarators): Fixed bug where the point
