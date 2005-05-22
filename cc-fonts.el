@@ -2920,4 +2920,5 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 
 (cc-provide 'cc-fonts)
 
+;;; arch-tag: 2f65f405-735f-4da5-8d4b-b957844c5203
 ;;; cc-fonts.el ends here
