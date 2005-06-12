@@ -35,4 +35,9 @@ int main()
     /* This is also a test
        The second line works, but
        Does the third? */
+
+    /* What about this one, which
+
+       has a blank line?
+    */
 }
