@@ -557,14 +557,21 @@ Works with: The `c' syntactic symbol."
 	  ;; a nonempty comment prefix.  Treat it as free form text
 	  ;; and don't change the indentation.
 	  (vector (current-column))
-	(forward-line -1)
-	(back-to-indentation)
+	;; Go back to the previous non-blank line, if any.
+	(while
+	    (progn
+	      (forward-line -1)
+	      (back-to-indentation)
+	      (and (> (point) (cdr langelem))
+		   (looking-at "[ \t]*$"))))
+
 	(if (>= (cdr langelem) (point))
-	    ;; On the second line in the comment.
+	    ;; Is the starting line the first non-blank continuation line?
 	    (if (zerop prefixlen)
 		;; No nonempty comment prefix. Align after comment
 		;; starter.
 		(progn
+		  (looking-at comment-start-skip)
 		  (goto-char (match-end 0))
 		  ;; The following should not be necessary, since
 		  ;; comment-start-skip should match everything (i.e.
@@ -584,10 +591,10 @@ Works with: The `c' syntactic symbol."
 		    (vector (1+ (current-column))))
 		(goto-char (+ (cdr langelem) starterlen 1))
 		(vector (- (current-column) prefixlen))))
-	  ;; Not on the second line in the comment.  If the previous
-	  ;; line has a nonempty comment prefix, align with it.
-	  ;; Otherwise, align with the previous nonempty line, but
-	  ;; align the comment ender with the starter.
+	  ;; We didn't start on the first non-blank continuation line.  If the
+	  ;; previous line has a nonempty comment prefix, align with it.
+	  ;; Otherwise, align with the previous nonempty line, but align the
+	  ;; comment ender with the starter.
 	  (when (or (not (looking-at c-current-comment-prefix))
 		    (eq (match-beginning 0) (match-end 0)))
 	    (goto-char here)
@@ -1198,5 +1205,4 @@ For other semicolon contexts, no determination is made."
 
 (cc-provide 'cc-align)
 
-;;; arch-tag: 4d71ed28-bf51-4509-a148-f39669669a2e
 ;;; cc-align.el ends here
