@@ -365,6 +365,8 @@ when used elsewhere."
 	   (completing-read prompt c-style-alist nil t nil
 			    'c-set-style-history
 			    c-indentation-style))))
+  (or c-buffer-is-cc-mode
+      (error "Buffer %s is not a CC Mode buffer (c-set-style)" (buffer-name)))
   (or (stringp stylename)
       (error "Argument to c-set-style was not a string"))
   (c-initialize-builtin-style)
@@ -494,7 +496,9 @@ strings by incorporating the values of `c-comment-prefix-regexp',
 variables."
 
   (interactive)
-
+  (or c-buffer-is-cc-mode
+      (error "Buffer %s is not a CC Mode buffer (c-setup-paragraph-variables)"
+	     (buffer-name)))
   ;; Set up the values for use in comments.
   (setq c-current-comment-prefix
 	(if (listp c-comment-prefix-regexp)
