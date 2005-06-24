@@ -356,6 +356,8 @@ when used elsewhere."
 	      (completing-read prompt c-style-alist nil t
 			       (cons c-indentation-style 0)
 			       'c-set-style-history))))))
+  (or c-buffer-is-cc-mode
+      (error "Buffer %s is not a CC Mode buffer (c-set-style)" (buffer-name)))
   (or (stringp stylename)
       (error "Argument to c-set-style was not a string"))
   (c-initialize-builtin-style)
@@ -488,7 +490,9 @@ variables."
   ;; This function does not do any hidden buffer changes.
 
   (interactive)
-
+  (or c-buffer-is-cc-mode
+      (error "Buffer %s is not a CC Mode buffer (c-setup-paragraph-variables)"
+	     (buffer-name)))
   (setq c-current-comment-prefix
 	(if (listp c-comment-prefix-regexp)
 	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
