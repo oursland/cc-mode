@@ -3584,6 +3584,10 @@ command to conveniently insert and align the necessary backslashes."
 	;; hanging.  In that case it's set to the number of spaces
 	;; that should be between the text and the ender.
 	hang-ender-stuck
+	;; auto-fill-spaces is the exact sequence of whitespace between a
+	;; comment's last word and the comment ender, temporarily replaced
+	;; with 'x's before calling FUN when FILL-PARAGRAPH is nil.  
+	auto-fill-spaces
 	(here (point))
 	(c-lit-limits c-lit-limits)
 	(c-lit-type c-lit-type))
@@ -3658,18 +3662,21 @@ command to conveniently insert and align the necessary backslashes."
 			     ;; own.  Keep it that way.
 			     (set-marker end (point))))
 
-		(if fill-paragraph
-		    ;; The comment ender should hang.  Replace all
-		    ;; cruft between it and the last word with one or
-		    ;; two 'x' and include it in the region.  We'll
-		    ;; change them back to spaces afterwards.  This
-		    ;; isn't done when auto filling, since that'd
-		    ;; effectively make it impossible to insert extra
-		    ;; spaces before the comment ender.
+		;; The comment ender should hang.  Replace all space between
+		;; it and the last word either by one or two 'x's (when
+		;; FILL-PARAGRAPH is non-nil), or a row of x's the same width
+		;; as the whitespace (when auto filling), and include it in
+		;; the region.  We'll change them back to whitespace
+		;; afterwards.  The effect of this is to glue the comment
+		;; ender to the last word in the comment during filling.
+		(if t	    ; purely for indentation, to make the diff smaller
 		    (let* ((ender-start (save-excursion
 					  (goto-char (cdr c-lit-limits))
 					  (skip-syntax-backward "^w ")
 					  (point)))
+			   (ender-column (save-excursion
+					   (goto-char ender-start)
+					   (current-column)))
 			   (point-rel (- ender-start here))
 			   spaces)
 
@@ -3678,7 +3685,7 @@ command to conveniently insert and align the necessary backslashes."
 			(setq tmp-post (point-marker))
 			(insert ?\n)
 			(set-marker end (point))
-			(forward-line -1)
+			(forward-line -1) ; last line of the comment
 			(if (and (looking-at (concat "[ \t]*\\(\\("
 						     c-current-comment-prefix
 						     "\\)[ \t]*\\)"))
@@ -3688,7 +3695,8 @@ command to conveniently insert and align the necessary backslashes."
 			    ;; along with surrounding ws.
 			    (setq spaces (- (match-end 1) (match-end 2)))
 			  (goto-char ender-start))
-			(skip-chars-backward " \t\r\n")
+			(skip-chars-backward " \t\r\n")	; Surely this can be
+			; " \t"? "*/" is NOT alone on the line (ACM, 2005/8/18)
 
 			(if (/= (point) ender-start)
 			    (progn
@@ -3700,15 +3708,19 @@ command to conveniently insert and align the necessary backslashes."
 			      ;; text and the ender, depending on how
 			      ;; many there are now.
 			      (unless spaces
-				(setq spaces (- ender-start (point))))
-			      (setq spaces
-				    (max
-				     (min spaces
-					  (if sentence-end-double-space 2 1))
-				     1))
+				(setq spaces (- ender-column (current-column))))
+			      (setq auto-fill-spaces (c-delete-and-extract-region
+						  (point) ender-start))
+			      ;; paragraph filling condenses multiple spaces to
+			      ;; single or double spaces.  auto-fill doesn't.
+			      (if fill-paragraph
+				  (setq spaces
+					(max
+					 (min spaces
+					      (if sentence-end-double-space 2 1))
+					 1)))
 			      ;; Insert the filler first to keep marks right.
 			      (insert-char ?x spaces t)
-			      (delete-region (point) (+ ender-start spaces))
 			      (setq hang-ender-stuck spaces)
 			      (setq point-rel
 				    (and (>= point-rel 0)
@@ -3720,11 +3732,8 @@ command to conveniently insert and align the necessary backslashes."
 			  ;; replaced above, so put it back in the same
 			  ;; relative position, counting from the end.
 			  (goto-char point-rel)))
-
-		  ;; We're doing auto filling.  Just move the marker
-		  ;; to the comment end to ignore any code after the
-		  ;; comment.
-		  (move-marker end (cdr c-lit-limits)))))
+		  )
+		))
 
 	    (when (<= beg (car c-lit-limits))
 	      ;; The region includes the comment starter.
@@ -3886,7 +3895,10 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 	  (goto-char tmp-post)
 	  (skip-syntax-backward "^w ")
 	  (forward-char (- hang-ender-stuck))
-	  (insert-char ?\  hang-ender-stuck t)
+	  (if (or fill-paragraph (not auto-fill-spaces))
+	      (insert-char ?\  hang-ender-stuck t)
+	    (insert auto-fill-spaces)
+	    (setq here (- here (- hang-ender-stuck (length auto-fill-spaces)))))
 	  (delete-char hang-ender-stuck)
 	  (goto-char here))
 	(set-marker tmp-post nil))

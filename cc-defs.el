@@ -346,6 +346,16 @@ to it is returned.  This function does not modify the point or the mark."
     ;; Emacs.
     `(setq mark-active ,activate)))
 
+(defmacro c-delete-and-extract-region (start end)
+  "Delete the text between START and END and return it."
+  (if (cc-bytecomp-fboundp 'delete-and-extract-region)
+      ;; Emacs 21.1 and later
+      `(delete-and-extract-region ,start ,end)
+    ;; XEmacs and Emacs 20.x
+    `(prog1
+       (buffer-substring ,start ,end)
+       (delete-region ,start ,end))))
+
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
   `(condition-case nil
