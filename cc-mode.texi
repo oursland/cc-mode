@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.219 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.220 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -996,7 +996,6 @@ These keys and keywords are:
 @findex electric-pound (c-)
 @vindex c-electric-pound-behavior
 @vindex electric-pound-behavior (c-)
-@c OLD STOUGH, 2005/8/ 
 Pound (bound to @code{c-electric-pound}) is electric when typed as the
 first non-whitespace character on a line and not within a macro
 definition.  In this case, the variable @code{c-electric-pound-behavior}
@@ -1790,9 +1789,9 @@ perhaps writing) Lisp functions, which is usually done by adding code
 to your @file{.emacs} file.
 
 There are several ways you can write this code, depending on the
-precise effect you want.  If you make conflicting settings in several
-of these ways, the way that takes precedence is the latest in this
-list:
+precise effect you want---they are described lower down on this page.
+If you make conflicting settings in several of these ways, the way
+that takes precedence is the one that appears latest in this list:
 @itemize @w
 @item
 @table @asis
@@ -1952,7 +1951,10 @@ mode for your coding style.  The main hook is
 customizations here.  In addition, each language mode has its own
 hook, allowing you to fine tune your settings individually for the
 different @ccmode{} languages, and there is a package initialization
-hook: All these hooks adhere to the standard Emacs conventions.
+hook.  Finally, there is @code{c-special-indent-hook}, which enables
+you to solve anomalous indentation problems.  It is described in
+@ref{Other Indentation}, not here.  All these hooks adhere to the
+standard Emacs conventions.
 
 When you open a buffer, @ccmode{} first initializes it with the
 currently active style (@pxref{Styles}).  Then it calls
@@ -3266,23 +3268,25 @@ needed, inserts a star to complete the token @samp{*/}.
 mechanism for customizing indentation. It separates indentation
 calculation into two steps: first, @ccmode{} analyzes the line of code
 being indented to determine the kind of language construct it's looking
-at, then it applies user defined offsets to the current line based on
-this analysis.
+at and its ``anchor position'' (@pxref{Syntactic Analysis}); then it
+looks up the ``offsets'' in the configuration and indents the line
+based on these offsets and the anchor position.
 
-This section will briefly cover how indentation is calculated in
-@ccmode{}. It is important to understand the indentation model being
-used so that you will know how to customize @ccmode{} for your personal
-coding style.  All the details are in @ref{Customizing Indentation}, and
-later chapters.
+This chapter will briefly cover how indentation is calculated in
+@ccmode{}. It is helpful to understand the indentation model being
+used so that you will know how to customize @ccmode{} for your
+personal coding style.  All the details are in @ref{Customizing
+Indentation}.
 
 @defopt c-syntactic-indentation
 @vindex syntactic-indentation (c-)
-Syntactic analysis for indentation is done when this is non-@code{nil}
-(which is the default).  When it's @code{nil} every line is just
-indented to the same level as the previous one, and @kbd{TAB}
-(@code{c-indent-command}) adjusts the indentation in steps of
-@code{c-basic-offset}.  The indentation style has no effect, nor any of
-the indentation associated variables, e.g. @code{c-special-indent-hook}.
+When this is non-@code{nil} (which it is by default), the indentation
+of code is done according to its syntactic structure.  When it's
+@code{nil}, every line is just indented to the same level as the
+previous one, and @kbd{TAB} (@code{c-indent-command}) adjusts the
+indentation in steps of @code{c-basic-offset}.  The indentation style
+then has no effect, nor do any of the variables associated with
+indentation, not even @code{c-special-indent-hook}.
 @end defopt
 
 @menu
@@ -6149,41 +6153,44 @@ reindent that expression with @kbd{C-M-q}.
 
 Emacs' convention is that @kbd{RET} just adds a newline, and that
 @kbd{C-j} adds a newline and indents it.  You can make @kbd{RET} do this
-too by adding this to your @code{c-mode-common-hook}:
+too by adding this to your @code{c-initialization-hook}:
 
 @example
 (define-key c-mode-base-map "\C-m" 'c-context-line-break)
 @end example
 
 This is a very common question.  If you want this to be the default
-behavior, don't lobby me, lobby RMS!  @t{:-)}
+behavior, don't lobby us, lobby RMS!  @t{:-)}
 
 @item
 @emph{I put @code{(c-set-offset 'substatement-open 0)} in my
 @file{.emacs} file but I get an error saying that @code{c-set-offset}'s
 function definition is void.  What's wrong?}
 
-This means that @ccmode{} wasn't loaded into your Emacs session by the
-time the @code{c-set-offset} call was reached, most likely because
-@ccmode{} is being autoloaded.  Instead of putting the
-@code{c-set-offset} line in your top-level @file{.emacs} file, put it in
-your @code{c-mode-common-hook}, or simply modify @code{c-offsets-alist}
-directly:
+This means that @ccmode{} hasn't yet been loaded into your Emacs
+session by the time the @code{c-set-offset} call is reached, most
+likely because @ccmode{} is being autoloaded.  Instead of putting the
+@code{c-set-offset} line in your top-level @file{.emacs} file, put it
+in your @code{c-initialization-hook}, or simply modify
+@code{c-offsets-alist} directly:
 
 @example
 (setq c-offsets-alist '((substatement-open . 0)))
 @end example
 
-@item
-@kindex M-a
-@kindex M-e
-@emph{@kbd{M-a} and @kbd{M-e} used to move over entire balanced brace
-lists, but now they move into blocks.  How do I get the old behavior
-back?}
-
-Use @kbd{C-M-f} and @kbd{C-M-b} to move over balanced brace blocks.  Use
-@kbd{M-a} and @kbd{M-e} to move by statements, which will also move into
-blocks.
+@c The next was commented out tentatively by ACM, 2005/8/29, since
+@c it's a long, long time ago (1998) since M-[ae] moved over entire
+@c brace blocks.
+@c @item
+@c @kindex M-a
+@c @kindex M-e
+@c @emph{@kbd{M-a} and @kbd{M-e} used to move over entire balanced brace
+@c lists, but now they move into blocks.  How do I get the old behavior
+@c back?}
+@c 
+@c Use @kbd{C-M-f} and @kbd{C-M-b} to move over balanced brace blocks.  Use
+@c @kbd{M-a} and @kbd{M-e} to move by statements, which will also move into
+@c blocks.
 
 @item
 @cindex open paren in column zero
@@ -6203,10 +6210,10 @@ other top-level block constructs in the @ccmode{} languages).
 @end ifclear
 
 This heuristic is built into the core syntax analysis routines in
-(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.1
-it has become possible to turn it off@footnote{Using the variable
+(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs
+21.1 it became possible to turn it off@footnote{Using the variable
 @code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
-there since it got its own system to keep track of blocks.
+there since it's got its own system to keep track of blocks.
 
 @item
 @emph{How do I stop my code jumping all over the place when I type?}
@@ -6263,18 +6270,22 @@ configuration.  In that case, we'd appreciate if you isolate the Emacs
 Lisp code that triggers the bug and include it in your report.
 
 @cindex bug report mailing list
-Bug reports are sent to @email{bug-cc-mode@@gnu.org}.  You can also send
-other questions and suggestions (kudos? @t{;-)} to that address.  It's a
-mailing list which you can join or browse an archive of; see the web
-site at @uref{http://cc-mode.sourceforge.net/} for further details.
+Bug reports should be sent to @email{bug-cc-mode@@gnu.org}.  You can
+also send other questions and suggestions (kudos? @t{;-)} to that
+address.  It's a mailing list which you can join or browse an archive
+of; see the web site at @uref{http://cc-mode.sourceforge.net/} for
+further details.
 
 @cindex announcement mailing list
 If you want to get announcements of new @ccmode{} releases, send the
 word @emph{subscribe} in the body of a message to
 @email{cc-mode-announce-request@@lists.sourceforge.net}.  It's possible
 to subscribe from the web site too.  Announcements will also be posted
-to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
-@code{comp.emacs.xemacs}.
+to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs},
+@code{comp.emacs.xemacs}, @code{comp.lang.c}, @code{comp.lang.c++},
+@code{comp.lang.objective-c}, @code{comp.lang.java.softwaretools},
+@code{comp.lang.idl}, and @code{comp.lang.awk}.
+@c There is no newsgroup for Pike.  :-( 
 
 @c Removed the tentative node "Mode Initialization" from here, 2005/8/27. 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
