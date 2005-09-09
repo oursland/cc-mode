@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.220 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.221 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -253,6 +253,22 @@ Indentation Engine Basics
 * Syntactic Analysis::          
 * Syntactic Symbols::           
 * Indentation Calculation::     
+
+Syntactic Symbols
+
+* Function Symbols::            
+* Class Symbols::               
+* Conditional Construct Symbols::  
+* Switch Statement Symbols::    
+* Brace List Symbols::          
+* External Scope Symbols::      
+* Paren List Symbols::          
+* Literal Symbols::             
+* Multiline Macro Symbols::     
+* Objective-C Method Symbols::  
+* Anonymous Class Symbol::      
+* Statement Block Symbols::     
+* K&R Symbols::                 
 
 Customizing Indentation
 
@@ -3307,17 +3323,24 @@ indentation, not even @code{c-special-indent-hook}.
 @cindex syntactic context
 The first thing @ccmode{} does when indenting a line of code, is to
 analyze the line, determining the @dfn{syntactic context} of the
-construct on that line.  It's a list of @dfn{syntactic elements}, where
-each syntactic element in turn is a list.
+(first) construct on that line.  It's a list of @dfn{syntactic
+elements}, where each syntactic element in turn is a list@footnote{In
+@ccmode 5.28 and earlier, a syntactic element was a dotted pair; the
+cons was the syntactic symbol and the cdr was the anchor position.}.
+Here is a brief and typical example:
+
+@example
+((defun-block-intro 1959))
+@end example
 
 @cindex syntactic symbol
-The first entry inside a syntactic element is always a @dfn{syntactic
-symbol}.  It describes the kind of construct that was recognized,
-e.g. @code{statement}, @code{substatement}, @code{class-open},
-@code{class-close}, etc.  @xref{Syntactic Symbols}, for a complete list
-of currently recognized syntactic symbols and their semantics.  The
-remaining entries are various data associated with the recognized
-construct - there might be zero or more.
+The first entry inside a syntactic element list is always a
+@dfn{syntactic symbol}.  It describes the kind of construct that was
+recognized, e.g. @code{statement}, @code{substatement},
+@code{class-open}, @code{class-close}, etc.  @xref{Syntactic Symbols},
+for a complete list of currently recognized syntactic symbols and
+their semantics.  The remaining entries are various data associated
+with the recognized construct - there might be zero or more.
 
 @cindex anchor position
 Conceptually, a line of code is always indented relative to some
@@ -3433,185 +3456,239 @@ anchor position.
 @cindex syntactic symbols, brief list
 @vindex c-offsets-alist
 @vindex offsets-alist (c-)
-Here is a complete list of the recognized syntactic symbols as described
-in the @code{c-offsets-alist} style variable, along with a brief
-description.  More detailed descriptions follow.
+This section is a complete list of the syntactic symbols which appear
+in the @code{c-offsets-alist} style variable, along with brief
+descriptions.  The previous section (@pxref{Syntactic Analysis})
+states what syntactic symbols are and how the indentation engine uses
+them.  More detailed descriptions of these symbols, together with
+snippets of source code to which they apply, appear in the examples in
+the subsections below.
+
+@ssindex -open symbols
+@ssindex -close symbols
+@ssindex -block-intro symbols
+The syntactic symbols which indicate brace constructs follow a general
+naming convention.  When a line begins with an open or close brace,
+its syntactic symbol will contain the suffix @code{-open} or
+@code{-close} respectively.  The first line within the brace block
+construct will contain the suffix @code{-block-intro}.
+
+@ssindex -intro symbols
+@ssindex -cont symbols
+In constructs which can span several lines, a distinction is usually
+made between the first line that introduces the construct and the
+lines that continue it.  The syntactic symbols that indicate these
+lines will contain the suffixes @code{-intro} or @code{-cont}
+respectively.
+
+The best way to understand how all this works is by looking at some
+examples.  Remember that you can see the syntax of any source code
+line by using @kbd{C-c C-s}.
 
 @table @code
 @item string
-Inside a multiline string.
+Inside a multiline string.  @ref{Literal Symbols}.
 @item c
-Inside a multiline C style block comment.
+Inside a multiline C style block comment.  @ref{Literal Symbols}.
 @item defun-open
-Brace that opens a top-level function definition.
+Brace that opens a top-level function definition.  @ref{Function
+Symbols}.
 @item defun-close
-Brace that closes a top-level function definition.
+Brace that closes a top-level function definition.  @ref{Function
+Symbols}.
 @item defun-block-intro
-The first line in a top-level defun.
+The first line in a top-level defun.  @ref{Function Symbols}.
 @item class-open
-Brace that opens a class definition.
+Brace that opens a class definition.  @ref{Class Symbols}.
 @item class-close
-Brace that closes a class definition.
+Brace that closes a class definition.  @ref{Class Symbols}.
 @item inline-open
-Brace that opens an in-class inline method.
+Brace that opens an in-class inline method.  @ref{Class Symbols}.
 @item inline-close
-Brace that closes an in-class inline method.
+Brace that closes an in-class inline method.  @ref{Class Symbols}.
 @item func-decl-cont
 The region between a function definition's argument list and the
-function opening brace (excluding K&R argument declarations).  In C, you
-cannot put anything but whitespace and comments in this region, however
-in C++ and Java, @code{throws} declarations and other things can appear
-here.
+function opening brace (excluding K&R argument declarations).  In C,
+you cannot put anything but whitespace and comments in this region,
+however in C++ and Java, @code{throws} declarations and other things
+can appear here.  @ref{Literal Symbols}.  @emph{FIXME!!!  Can it not
+go somewhere better?}
 @item knr-argdecl-intro
-First line of a K&R C argument declaration.
+First line of a K&R C argument declaration.  @ref{K&R Symbols}.
 @item knr-argdecl
-Subsequent lines in a K&R C argument declaration.
+Subsequent lines in a K&R C argument declaration.  @ref{K&R Symbols}.
 @item topmost-intro
-The first line in a ``topmost'' definition.
+The first line in a ``topmost'' definition.  @ref{Function Symbols}.
 @item topmost-intro-cont
 Topmost definition continuation lines.  This is only used in the parts
 that aren't covered by other symbols such as @code{func-decl-cont} and
-@code{knr-argdecl}.
+@code{knr-argdecl}.  @ref{Function Symbols}.
 @item member-init-intro
-First line in a member initialization list.
+First line in a member initialization list.  @ref{Class Symbols}.
 @item member-init-cont
-Subsequent member initialization list lines.
+Subsequent member initialization list lines.  @ref{Class Symbols}.
 @item inher-intro
-First line of a multiple inheritance list.
+First line of a multiple inheritance list.  @ref{Class Symbols}.
 @item inher-cont
-Subsequent multiple inheritance lines.
+Subsequent multiple inheritance lines.  @ref{Class Symbols}.
 @item block-open
-Statement block open brace.
+Statement block open brace.  @ref{Literal Symbols}.
 @item block-close
-Statement block close brace.
+Statement block close brace.  @ref{Conditional Construct Symbols}.
 @item brace-list-open
-Open brace of an enum or static array list.
+Open brace of an enum or static array list.  @ref{Brace List Symbols}.
 @item brace-list-close
-Close brace of an enum or static array list.
+Close brace of an enum or static array list.  @ref{Brace List Symbols}.
 @item brace-list-intro
-First line in an enum or static array list.
+First line in an enum or static array list.  @ref{Brace List Symbols}.
 @item brace-list-entry
-Subsequent lines in an enum or static array list.
+Subsequent lines in an enum or static array list.  @ref{Brace List
+Symbols}.
 @item brace-entry-open
 Subsequent lines in an enum or static array list where the line begins
-with an open brace.
+with an open brace.  @ref{Brace List Symbols}.
 @item statement
-A statement.
+A statement.  @ref{Function Symbols}.
 @item statement-cont
-A continuation of a statement.
+A continuation of a statement.  @ref{Function Symbols}.
 @item statement-block-intro
-The first line in a new statement block.
+The first line in a new statement block.  @ref{Conditional Construct
+Symbols}.
 @item statement-case-intro
-The first line in a case block.
+The first line in a case block.  @ref{Switch Statement Symbols}.
 @item statement-case-open
-The first line in a case block that starts with a brace.
+The first line in a case block that starts with a brace.  @ref{Switch
+Statement Symbols}.
 @item substatement
 The first line after a conditional or loop construct.
+@ref{Conditional Construct Symbols}.
 @item substatement-open
-The brace that opens a substatement block.
+The brace that opens a substatement block.  @ref{Conditional Construct
+Symbols}.
 @item substatement-label
 The first line after a conditional or loop construct if it's a label.
+@ref{Conditional Construct Symbols}.
 @item case-label
-A label in a @code{switch} block.
+A label in a @code{switch} block.  @ref{Switch Statement Symbols}.
 @item access-label
-C++ access control label.
+C++ access control label.  @ref{Class Symbols}.
 @item label
-Any other label.
+Any other label.  @ref{Literal Symbols}.
 @item do-while-closure
 The @code{while} line that ends a @code{do}-@code{while} construct.
+@ref{Conditional Construct Symbols}.
 @item else-clause
 The @code{else} line of an @code{if}-@code{else} construct.
+@ref{Conditional Construct Symbols}.
 @item catch-clause
 The @code{catch} or @code{finally} (in Java) line of a
-@code{try}-@code{catch} construct.
+@code{try}-@code{catch} construct.  @ref{Conditional Construct
+Symbols}.
 @item comment-intro
-A line containing only a comment introduction.
+A line containing only a comment introduction.  @ref{Literal Symbols}.
 @item arglist-intro
-The first line in an argument list.
+The first line in an argument list.  @ref{Paren List Symbols}.
 @item arglist-cont
-Subsequent argument list lines when no arguments follow on the same line
-as the arglist opening paren.
+Subsequent argument list lines when no arguments follow on the same
+line as the arglist opening paren.  @ref{Paren List Symbols}.
 @item arglist-cont-nonempty
-Subsequent argument list lines when at least one argument follows on the
-same line as the arglist opening paren.
+Subsequent argument list lines when at least one argument follows on
+the same line as the arglist opening paren.  @ref{Paren List Symbols}.
 @item arglist-close
-The solo close paren of an argument list.
+The solo close paren of an argument list.  @ref{Paren List Symbols}.
 @item stream-op
-Lines continuing a stream operator (C++ only).
+Lines continuing a stream operator (C++ only).  @ref{Literal
+Symbols}.  @emph{FIXME!!!  Can this not be moved somewhere better?}
 @item inclass
-The line is nested inside a class definition.
+The line is nested inside a class definition.  @ref{Class Symbols}.
 @item cpp-macro
-The start of a preprocessor macro definition.
+The start of a preprocessor macro definition.  @ref{Literal Symbols}.
 @item cpp-define-intro
 The first line inside a multiline preproprocessor macro if
-@code{c-syntactic-indentation-in-macros} is set.
+@code{c-syntactic-indentation-in-macros} is set.  @ref{Multiline Macro
+Symbols}.
 @item cpp-macro-cont
 All lines inside multiline preprocessor macros if
 @code{c-syntactic-indentation-in-macros} is @code{nil}.
+@ref{Multiline Macro Symbols}.
 @item friend
-A C++ friend declaration.
+A C++ friend declaration.  @ref{Class Symbols}.
 @item objc-method-intro
-The first line of an Objective-C method definition.
+The first line of an Objective-C method definition.  @ref{Objective-C
+Method Symbols}.
 @item objc-method-args-cont
-Lines continuing an Objective-C method definition.
+Lines continuing an Objective-C method definition.  @ref{Objective-C
+Method Symbols}.
 @item objc-method-call-cont
-Lines continuing an Objective-C method call.
+Lines continuing an Objective-C method call.  @ref{Objective-C Method
+Symbols}.
 @item extern-lang-open
-Brace that opens an @code{extern} block (e.g. @code{extern "C" @{...@}}).
+Brace that opens an @code{extern} block (e.g. @code{extern "C"
+@{...@}}).  @ref{External Scope Symbols}.
 @item extern-lang-close
-Brace that closes an @code{extern} block.
+Brace that closes an @code{extern} block.  @ref{External Scope
+Symbols}.
 @item inextern-lang
 Analogous to @code{inclass} syntactic symbol, but used inside
-@code{extern} blocks.
+@code{extern} blocks.  @ref{External Scope Symbols}.
 @item namespace-open
 @itemx namespace-close
 @itemx innamespace
 These are analogous to the three @code{extern-lang} symbols above, but
-are returned for C++ namespace blocks.
+are returned for C++ namespace blocks.  @ref{External Scope Symbols}.
 @item module-open
 @itemx module-close
 @itemx inmodule
 Analogous to the above, but for CORBA IDL @code{module} blocks.
+@ref{External Scope Symbols}.
 @item composition-open
 @itemx composition-close
 @itemx incomposition
 Analogous to the above, but for CORBA CIDL @code{composition} blocks.
+@ref{External Scope Symbols}.
 @item template-args-cont
-C++ template argument list continuations.
+C++ template argument list continuations.  @ref{Class Symbols}.
 @item inlambda
 Analogous to @code{inclass} syntactic symbol, but used inside lambda
-(i.e. anonymous) functions.  Only used in Pike mode.
+(i.e. anonymous) functions.  Only used in Pike mode.  @ref{Statement
+Block Symbols}.
 @item lambda-intro-cont
 Lines continuing the header of a lambda function, i.e. between the
 @code{lambda} keyword and the function body.  Only used in Pike mode.
+@ref{Statement Block Symbols}.
 @item inexpr-statement
-A statement block inside an expression.  The gcc C and C++ extension for
-this is recognized.  It's also used for the special functions that take
-a statement block as an argument in Pike.
+A statement block inside an expression.  The gcc C and C++ extension
+for this is recognized.  It's also used for the special functions that
+take a statement block as an argument in Pike.  @ref{Statement Block
+Symbols}.
 @item inexpr-class
 A class definition inside an expression.  This is used for anonymous
 classes in Java.  It's also used for anonymous array initializers in
-Java.
+Java.  @ref{Anonymous Class Symbol}.
 @end table
 
-@ssindex -open symbols
-@ssindex -close symbols
-Most syntactic symbol names follow a general naming convention.  When a
-line begins with an open or close brace, the syntactic symbol will
-contain the suffix @code{-open} or @code{-close} respectively.
+@menu
+* Function Symbols::            
+* Class Symbols::               
+* Conditional Construct Symbols::  
+* Switch Statement Symbols::    
+* Brace List Symbols::          
+* External Scope Symbols::      
+* Paren List Symbols::          
+* Literal Symbols::             
+* Multiline Macro Symbols::     
+* Objective-C Method Symbols::  
+* Anonymous Class Symbol::      
+* Statement Block Symbols::     
+* K&R Symbols::                 
+@end menu
 
-@ssindex -intro symbols
-@ssindex -cont symbols
-@ssindex -block-intro symbols
-Usually, a distinction is made between the first line that introduces a
-construct and lines that continue a construct, and the syntactic symbols
-that represent these lines will contain the suffix @code{-intro} or
-@code{-cont} respectively.  As a sub-classification of this scheme, a
-line which is the first of a particular brace block construct will
-contain the suffix @code{-block-intro}.
-
-Let's look at some examples to understand how this works.  Remember that
-you can check the syntax of any line by using @kbd{C-c C-s}.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Function Symbols, Class Symbols, Syntactic Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Function Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+This example shows a typical function declaration.
 
 @example
  1: void
@@ -3648,8 +3725,12 @@ isn't much special about them.  Note however that line 8 is given
 @code{statement-cont} syntax since it continues the statement begun
 on the previous line.
 
-Here's another example, which illustrates some C++ class syntactic
-symbols:
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Class Symbols, Conditional Construct Symbols, Function Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Class related Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Here's an example which illustrates some C++ class syntactic symbols:
 
 @example
  1: class Bass
@@ -3778,6 +3859,7 @@ elements:
 The @code{friend} syntactic symbol is a modifier that typically does not
 have an anchor position.
 
+@ssindex template-args-cont
 Template definitions introduce yet another syntactic symbol:
 
 @example
@@ -3789,8 +3871,13 @@ Template definitions introduce yet another syntactic symbol:
 Here, line 1 is analyzed as a @code{topmost-intro}, but lines 2 and 3
 are both analyzed as @code{template-args-cont} lines.
 
-Here is another (totally contrived) example which illustrates how syntax
-is assigned to various conditional constructs:
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Conditional Construct Symbols, Switch Statement Symbols, Class Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Conditional Construct Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Here is a (totally contrived) example which illustrates how syntax is
+assigned to various conditional constructs:
 
 @example
  1: void spam( int index )
@@ -3813,14 +3900,16 @@ is assigned to various conditional constructs:
 Only the lines that illustrate new syntactic symbols will be discussed.
 
 @ssindex substatement-open
-@ssindex substatement-block-intro
+@ssindex statement-block-intro
 @ssindex block-close
 Line 4 has a brace which opens a conditional's substatement block.  It
 is thus assigned @code{substatement-open} syntax, and since line 5 is
 the first line in the substatement block, it is assigned
-@code{substatement-block-intro} syntax.  Line 10 contains the brace that
-closes the inner substatement block, and is therefore given the syntax
-@code{block-close}.  Line 13 is treated the same way.
+@code{statement-block-intro} syntax.  Line 10 contains the brace
+that closes the inner substatement block, and is therefore given the
+syntax @code{block-close}@footnote{@code{block-open} is used only for
+``free-standing'' blocks, and is somewhat rare (@pxref{Literal
+Symbols} for an example.)}.  Line 13 is treated the same way.
 
 @ssindex substatement
 Lines 6 and 9 are also substatements of conditionals, but since they
@@ -3849,6 +3938,11 @@ appears on a line by itself.  Note that if the @code{while} appeared on
 the same line as the preceding close brace, that line would still have
 @code{block-close} syntax.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Switch Statement Symbols, Brace List Symbols, Conditional Construct Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Switch Statement Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Switch statements have their own set of syntactic symbols.  Here's an
 example:
 
@@ -3879,6 +3973,11 @@ while lines 5 and 8 are assigned @code{statement-case-intro}.  Line 11
 is treated slightly differently since it contains a brace that opens a
 block --- it is given @code{statement-case-open} syntax.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Brace List Symbols, External Scope Symbols, Switch Statement Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Brace List Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @cindex brace lists
 There are a set of syntactic symbols that are used to recognize
 constructs inside of brace lists.  A brace list is defined as an
@@ -3933,6 +4032,11 @@ pretty standard, and line 7 is a @code{brace-list-close} as you'd
 expect.  Once again, line 8 is assigned as @code{brace-entry-open} as is
 line 10.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    External Scope Symbols, Paren List Symbols, Brace List Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection External Scope Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 External language definition blocks also have their own syntactic
 symbols.  In this example:
 
@@ -3991,6 +4095,11 @@ that isn't the case for historical reasons.}
 @code{composition} blocks in CORBA CIDL.
 @end table
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Paren List Symbols, Literal Symbols, External Scope Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Parenthesis (Argument) List Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
 calls.  This example illustrates these:
@@ -4038,6 +4147,11 @@ Note that there is no @code{arglist-open} syntax.  This is because any
 parenthesis that opens an argument list, appearing on a separate line,
 is assigned the @code{statement-cont} syntax instead.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Literal Symbols, Multiline Macro Symbols, Paren List Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Comment String Label and Macro Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 A few miscellaneous syntactic symbols that haven't been previously
 covered are illustrated by this C++ example:
 
@@ -4115,9 +4229,15 @@ of the code.
 Line 17 is assigned @code{stream-op} syntax.
 @end itemize
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Multiline Macro Symbols, Objective-C Method Symbols, Literal Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Multiline Macro Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @cindex multiline macros
 @cindex syntactic whitespace
 @ssindex cpp-define-intro
+@ssindex cpp-macro-cont
 Multiline preprocessor macro definitions are normally handled just like
 other code, i.e. the lines inside them are indented according to the
 syntactic analysis of the preceding lines inside the macro.  The first
@@ -4141,13 +4261,19 @@ code, i.e. @code{substatement} on lines 3 and 4, and @code{else-clause}
 on line 5.
 
 The syntactic analysis inside macros can be turned off with
-@code{c-syntactic-indentation-in-macros}.  In that case, lines 2 through
-5 would all be given @code{cpp-macro-cont} with an anchor position
-pointing to the @code{#} which starts the cpp directive@footnote{This is
-how @ccmode{} 5.28 and earlier analyzed macros.}.
+@code{c-syntactic-indentation-in-macros} (@pxref{Custom Macros}).  In
+that case, lines 2 through 5 would all be given @code{cpp-macro-cont}
+with an anchor position pointing to the @code{#} which starts the cpp
+directive@footnote{This is how @ccmode{} 5.28 and earlier analyzed
+macros.}.
 
 @xref{Custom Macros}, for more info about the treatment of macros.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Objective-C Method Symbols, Anonymous Class Symbol, Multiline Macro Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Objective-C Method Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 In Objective-C buffers, there are three additional syntactic symbols
 assigned to various message calling constructs.  Here's an example
 illustrating these:
@@ -4169,6 +4295,11 @@ Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
 assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
 assigned @code{objc-method-call-cont} syntax.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Anonymous Class Symbol, Statement Block Symbols, Objective-C Method Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Anonymous Class Symbol (Java)
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Java has a concept of anonymous classes which can look something like
 this:
 
@@ -4189,6 +4320,11 @@ Lines 3 and 6 are assigned the @code{inexpr-class} syntax, besides the
 indented just like a normal class, with the added indentation given to
 @code{inexpr-class}.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Statement Block Symbols, K&R Symbols, Anonymous Class Symbol, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection Statement Block Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 There are a few occasions where a statement block might be used inside
 an expression.  One is in C or C++ code using the gcc extension for
 this, e.g:
@@ -4246,6 +4382,11 @@ with the @code{inexpr-statement} syntax, just like the gcc extended C
 example above.  The other similar special function, @code{gauge}, is
 handled like this too.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    K&R Symbols,  , Statement Block Symbols, Syntactic Symbols
+@comment node-name, next, previous, up
+@subsection K&R Symbols
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @ssindex knr-argdecl-intro
 @ssindex knr-argdecl
 Two other syntactic symbols can appear in old style, non-prototyped C
