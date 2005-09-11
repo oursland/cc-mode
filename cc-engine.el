@@ -2399,22 +2399,43 @@ Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
 
   (save-excursion
-    (if (zerop (skip-syntax-backward "w_"))
+    (or
 
-	(when (c-major-mode-is 'pike-mode)
-	  ;; Handle the `<operator> syntax in Pike.
-	  (let ((pos (point)))
-	    (skip-chars-backward "-!%&*+/<=>^|~[]()")
-	    (and (if (< (skip-chars-backward "`") 0)
-		     t
-		   (goto-char pos)
-		   (eq (char-after) ?\`))
-		 (looking-at c-symbol-key)
-		 (>= (match-end 0) pos)
-		 (point))))
+     (if (zerop (skip-syntax-backward "w_"))
 
-      (and (not (looking-at c-keywords-regexp))
-	   (point)))))
+	 (when (c-major-mode-is 'pike-mode)
+	   ;; Handle the `<operator> syntax in Pike.
+	   (let ((pos (point)))
+	     (skip-chars-backward "-!%&*+/<=>^|~[]()")
+	     (and (if (< (skip-chars-backward "`") 0)
+		      t
+		    (goto-char pos)
+		    (eq (char-after) ?\`))
+		  (looking-at c-symbol-key)
+		  (>= (match-end 0) pos)
+		  (point))))
+
+       (and (not (looking-at c-keywords-regexp))
+	    (point)))
+
+     ;; Handle the "operator +" syntax in C++.
+     (when (and c-overloadable-operators-regexp
+		(= (c-backward-token-2 0) 0))
+
+       (cond ((and (looking-at c-overloadable-operators-regexp)
+		   (or (not c-opt-op-identitier-prefix)
+		       (and (= (c-backward-token-2 1) 0)
+			    (looking-at c-opt-op-identitier-prefix))))
+	      (point))
+
+	     ((save-excursion
+		(and c-opt-op-identitier-prefix
+		     (looking-at c-opt-op-identitier-prefix)
+		     (= (c-forward-token-2 1) 0)
+		     (looking-at c-overloadable-operators-regexp)))
+	      (point))))
+
+     )))
 
 (defsubst c-simple-skip-symbol-backward ()
   ;; If the point is at the end of a symbol then skip backward to the
