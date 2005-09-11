@@ -2398,25 +2398,29 @@ happen in Pike) then the point for the preceding one is returned.
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
 
+  ;; FIXME: Shouldn't this function handle "operator" in C++?
+
   (save-excursion
+    (skip-syntax-backward "w_")
+
     (or
 
-     (if (zerop (skip-syntax-backward "w_"))
+     ;; Check for a normal (non-keyword) identifier.
+     (and (looking-at c-symbol-start)
+	  (not (looking-at c-keywords-regexp))
+	  (point))
 
-	 (when (c-major-mode-is 'pike-mode)
-	   ;; Handle the `<operator> syntax in Pike.
-	   (let ((pos (point)))
-	     (skip-chars-backward "-!%&*+/<=>^|~[]()")
-	     (and (if (< (skip-chars-backward "`") 0)
-		      t
-		    (goto-char pos)
-		    (eq (char-after) ?\`))
-		  (looking-at c-symbol-key)
-		  (>= (match-end 0) pos)
-		  (point))))
-
-       (and (not (looking-at c-keywords-regexp))
-	    (point)))
+     (when (c-major-mode-is 'pike-mode)
+       ;; Handle the `<operator> syntax in Pike.
+       (let ((pos (point)))
+	 (skip-chars-backward "-!%&*+/<=>^|~[]()")
+	 (and (if (< (skip-chars-backward "`") 0)
+		  t
+		(goto-char pos)
+		(eq (char-after) ?\`))
+	      (looking-at c-symbol-key)
+	      (>= (match-end 0) pos)
+	      (point))))
 
      ;; Handle the "operator +" syntax in C++.
      (when (and c-overloadable-operators-regexp
