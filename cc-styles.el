@@ -333,31 +333,27 @@ the existing style.")
 
 ;;;###autoload
 (defun c-set-style (stylename &optional dont-override)
-  "Set CC Mode variables to use one of several different indentation styles.
-STYLENAME is a string representing the desired style from the list of
-styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles.
+  "Set the current buffer to use the style STYLENAME.
+STYLENAME, a string, must be an existing CC Mode style - These are contained
+in the variable `c-style-alist'.
 
-The variable `c-indentation-style' always contains the buffer's current
-style name.
+The variable `c-indentation-style' will get set to STYLENAME.
 
-If the optional argument DONT-OVERRIDE is t, no style variables that
-already have values will be overridden.  I.e. in the case of
-`c-offsets-alist', syntactic symbols will only be added, and in the
-case of all other style variables, only those set to `set-from-style'
-will be reassigned.
+\"Setting the style\" is done by setting CC Mode's \"style variables\" to the
+values indicated by the pertinent entry in `c-style-alist'.  Other variables
+might get set too.
 
-If DONT-OVERRIDE is neither nil nor t, only those style variables that
-have default (i.e. non-buffer local) values will keep their settings
-while the rest will be overridden.  This is useful to avoid overriding
-global settings done in ~/.emacs when setting a style from a mode hook
-\(providing the style variables are buffer local, which is the
-default).
+If DONT-OVERRIDE is neither nil nor t, style variables whose default values
+have been set (more precisely, whose default values are not the symbol
+`set-from-style') will not be changed.  This avoids overriding global settings
+done in ~/.emacs.  It is useful to call c-set-style from a mode hook in this
+way.
 
-Obviously, setting DONT-OVERRIDE to t is useful mainly when the
-initial style is chosen for a CC Mode buffer by a major mode.  Since
-that is done internally by CC Mode, it typically won't have any effect
-when used elsewhere."
+If DONT-OVERRIDE is t, style variables that already have values (i.e., whose
+values are not the symbol `set-from-style') will not be overridden.  CC Mode
+calls c-set-style internally in this way whilst initializing a buffer; if
+cc-set-style is called like this from anywhere else, it will usually behave as
+a null operation."
   (interactive
    (list (let ((completion-ignore-case t)
 	       (prompt (format "Which %s indentation style? "
