@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.221 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.222 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -277,6 +277,14 @@ Customizing Indentation
 * Line-Up Functions::           
 * Custom Line-Up::              
 * Other Indentation::           
+
+Line-Up Functions
+
+* Brace/Paren Line-Up::         
+* List Line-Up::                
+* Operator Line-Up::            
+* Comment Line-Up::             
+* Misc Line-Up::                
 
 @end detailmenu
 @end menu
@@ -4841,24 +4849,33 @@ different languages.
 
 @cindex line-up function
 @cindex indentation function
-Often there are cases when a simple offset setting on a syntactic symbol
-isn't enough to get the desired indentation.  Therefore, it's also
-possible to use a @dfn{line-up function} (a.k.a. @dfn{indentation
-function}) for a syntactic symbol.
+Often there are cases when a simple offset setting on a syntactic
+symbol isn't enough to get the desired indentation---for example, you
+might want to line up a closing parenthesis with the matching opening
+one rather than indenting relative to its ``anchor point''.  @ccmode{}
+provides this flexibility with @dfn{line-up functions}.
 
-@ccmode{} comes with many predefined line-up functions for common
-situations.  If none of these does what you want, you can write your
-own, see @ref{Custom Line-Up}.  If you do, it's probably a good idea
-to start working from one of these predefined functions.  They can be
-found in the file @file{cc-align.el}.
+The way you associate a line-up function with a syntactic symbol is
+described in @ref{Customizing Indentation}.  @ccmode{} comes with many
+predefined line-up functions for common situations.  If none of these
+does what you want, you can write your own.  @c If you do, it's probably
+@c a good idea to start working from one of these predefined functions.
+@c They can be found in the file @file{cc-align.el}.  [Put this
+@c sentence into "Custom Lineup".  FIXME!!! 2005/9/18].
+@xref{Custom Line-Up}.  Sometimes, it is easier to tweak the standard
+indentation by adding a function to @code{c-special-indent-hook}
+(@pxref{Other Indentation}).
 
 The line-up functions haven't been adapted for AWK buffers or tested
 with them.  Some of them might work serendipitously.  There shouldn't be
 any problems writing custom line-up functions for AWK mode.
 
-For every function below there is a ``works with'' list that indicates
+The subsections below describe all the standard line-up functions,
+categorized by the sort of token the lining-up centres around.  For
+each of these functions there is a ``works with'' list that indicates
 which syntactic symbols the function is intended to be used with.
 
+@c Move these macro definition to the end of the node.  FIXME!!! 2005/9/18 
 @macro workswith
 @emph{Works with:@ }
 @end macro
@@ -4888,6 +4905,76 @@ Works with:
 <-@i{\func\}@c
 @end macro
 @end iftex
+
+@menu
+* Brace/Paren Line-Up::         
+* List Line-Up::                
+* Operator Line-Up::            
+* Comment Line-Up::             
+* Misc Line-Up::                
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Brace/Paren Line-Up, List Line-Up, Line-Up Functions, Line-Up Functions
+@comment node-name, next, previous, up
+@subsection Brace and Parenthesis Line-Up Functions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The line-up functions here calculate the indentation for braces,
+parentheses and statements within brace blocks.
+
+@defun c-lineup-close-paren
+@findex lineup-close-paren (c-)
+Line up the closing paren under its corresponding open paren if the
+open paren is followed by code.  If the open paren ends its line, no
+indentation is added.  E.g:
+
+@example
+@group
+main (int,
+      char **           
+     )                @hereFn{c-lineup-close-paren}
+@end group
+@end example
+
+@noindent
+and
+
+@example
+@group
+main (
+    int, char **
+)                     @hereFn{c-lineup-close-paren}
+@end group
+@end example
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} instead of the open paren column.  See
+@code{c-lineup-arglist} for further discussion of this ``DWIM'' measure.
+
+@workswith All @code{*-close} symbols.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@anchor{c-lineup-arglist-close-under-paren}
+@defun c-lineup-arglist-close-under-paren
+@findex lineup-arglist-close-under-paren (c-)
+Set your @code{arglist-close} syntactic symbol to this line-up function
+so that parentheses that close argument lists will line up under the
+parenthesis that opened the argument list.  It can also be used with
+@code{arglist-cont} and @code{arglist-cont-nonempty} to line up all
+lines inside a parenthesis under the open paren.
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} only.  See @code{c-lineup-arglist} for further
+discussion of this ``DWIM'' measure.
+
+@workswith Almost all symbols, but are typically most useful on
+@code{arglist-close}, @code{brace-list-close}, @code{arglist-cont} and
+@code{arglist-cont-nonempty}.
+@end defun
 
 @comment ------------------------------------------------------------
 
@@ -4961,6 +5048,46 @@ block, which makes the function usable in list expressions.
 
 @comment ------------------------------------------------------------
 
+@defun c-lineup-runin-statements
+@findex lineup-runin-statements (c-)
+Line up statements for coding standards which place the first statement
+in a block on the same line as the block opening brace@footnote{Run-in
+style doesn't really work too well.  You might need to write your own
+custom line-up functions to better support this style.}.  E.g:
+
+@example
+@group
+int main()
+@{ puts ("Hello!");
+  return 0;           @hereFn{c-lineup-runin-statements}
+@}
+@end group
+@end example
+
+If there is no statement after the opening brace to align with,
+@code{nil} is returned.  This makes the function usable in list
+expressions.
+
+@workswith The @code{statement} syntactic symbol.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-inexpr-block
+@findex lineup-inexpr-block (c-)
+This can be used with the in-expression block symbols to indent the
+whole block to the column where the construct is started.  E.g. for Java
+anonymous classes, this lines up the class under the @samp{new} keyword,
+and in Pike it lines up the lambda function body under the @samp{lambda}
+keyword.  Returns @code{nil} if the block isn't part of such a
+construct.
+
+@workswith @code{inlambda}, @code{inexpr-statement},
+@code{inexpr-class}.
+@end defun
+
+@comment ------------------------------------------------------------
+
 @defun c-lineup-after-whitesmith-blocks
 @findex lineup-after-whitesmith-blocks (c-)
 Compensate for Whitesmith style indentation of blocks.  Due to the way
@@ -5006,28 +5133,54 @@ indents relative to the surrounding block just like
 
 @comment ------------------------------------------------------------
 
-@defun c-lineup-argcont
-@findex lineup-argcont (c-)
-Line up a continued argument.  E.g:
+@defun c-lineup-whitesmith-in-block
+@findex lineup-whitesmith-in-block (c-)
+Line up lines inside a block in Whitesmith style.  It's done in a way
+that works both when the opening brace hangs and when it doesn't.  E.g:
 
 @example
 @group
-foo (xyz, aaa + bbb + ccc
-          + ddd + eee + fff);  @hereFn{c-lineup-argcont}
+something
+    @{
+    foo;              @hereFn{c-lineup-whitesmith-in-block}
+    @}
 @end group
 @end example
 
-Only continuation lines like this are touched, @code{nil} is returned on
-lines which are the start of an argument.
+@noindent
+and
 
-Within a gcc @code{asm} block, @code{:} is recognised as an argument
-separator, but of course only between operand specifications, not in the
-expressions for the operands.
+@example
+@group
+something @{
+    foo;              @hereFn{c-lineup-whitesmith-in-block}
+    @}
+@sssTBasicOffset{}
+@end group
+@end example
 
-@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
+In the first case the indentation is kept unchanged, in the second
+@code{c-basic-offset} is added.
+
+@workswith @code{defun-close}, @code{defun-block-intro},
+@code{inline-close}, @code{block-close}, @code{brace-list-close},
+@code{brace-list-intro}, @code{statement-block-intro},
+@code{arglist-intro}, @code{arglist-cont-nonempty},
+@code{arglist-close}, and all @code{in*} symbols, e.g. @code{inclass}
+and @code{inextern-lang}.
 @end defun
 
-@comment ------------------------------------------------------------
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    List Line-Up, Operator Line-Up, Brace/Paren Line-Up, Line-Up Functions
+@comment node-name, next, previous, up
+@subsection List Line-Up Functions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The line-up functions here calculate the indentation for lines which
+form lists of items, usually separated by commas.
+
+The function @ref{c-lineup-arglist-close-under-paren}, which is mainly
+for indenting a close parenthesis, is also useful for the lines
+contained within parentheses.
 
 @defun c-lineup-arglist
 @findex lineup-arglist (c-)
@@ -5036,7 +5189,7 @@ Line up the current argument line under the first argument.
 As a special case, if an argument on the same line as the open
 parenthesis starts with a brace block opener, the indentation is
 @code{c-basic-offset} only.  This is intended as a ``DWIM'' measure in
-cases like macros that contains statement blocks, e.g:
+cases like macros that contain statement blocks, e.g:
 
 @example
 @group
@@ -5069,22 +5222,187 @@ brace block.
 
 @comment ------------------------------------------------------------
 
-@defun c-lineup-arglist-close-under-paren
-@findex lineup-arglist-close-under-paren (c-)
-Set your @code{arglist-close} syntactic symbol to this line-up function
-so that parentheses that close argument lists will line up under the
-parenthesis that opened the argument list.  It can also be used with
-@code{arglist-cont} and @code{arglist-cont-nonempty} to line up all
-lines inside a parenthesis under the open paren.
+@defun c-lineup-multi-inher
+@findex lineup-multi-inher (c-)
+Line up the classes in C++ multiple inheritance clauses and member
+initializers under each other.  E.g:
 
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
-@code{c-basic-offset} only.  See @code{c-lineup-arglist} for further
-discussion of this ``DWIM'' measure.
+@example
+@group
+Foo::Foo (int a, int b):
+    Cyphr (a),
+    Bar (b)           @hereFn{c-lineup-multi-inher}
+@end group
+@end example
 
-@workswith Almost all symbols, but are typically most useful on
-@code{arglist-close}, @code{brace-list-close}, @code{arglist-cont} and
-@code{arglist-cont-nonempty}.
+@noindent
+and
+
+@example
+@group
+class Foo
+    : public Cyphr,
+      public Bar      @hereFn{c-lineup-multi-inher}
+@end group
+@end example
+
+@noindent
+and
+
+@example
+@group
+Foo::Foo (int a, int b)
+    : Cyphr (a)
+    , Bar (b)         @hereFn{c-lineup-multi-inher}
+@end group
+@end example
+
+@workswith @code{inher-cont}, @code{member-init-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-java-inher
+@findex lineup-java-inher (c-)
+Line up Java implements and extends declarations.  If class names
+follow on the same line as the @samp{implements}/@samp{extends}
+keyword, they are lined up under each other.  Otherwise, they are
+indented by adding @code{c-basic-offset} to the column of the keyword.
+E.g:
+
+@example
+@group
+class Foo
+    extends           
+        Bar           @hereFn{c-lineup-java-inher}
+    @sssTBasicOffset{}
+@end group
+@end example
+
+@noindent
+and
+
+@example
+@group
+class Foo
+    extends Cyphr,
+            Bar       @hereFn{c-lineup-java-inher}
+@end group
+@end example
+
+@workswith @code{inher-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-java-throws
+@findex lineup-java-throws (c-)
+Line up Java throws declarations.  If exception names follow on the
+same line as the throws keyword, they are lined up under each other.
+Otherwise, they are indented by adding @code{c-basic-offset} to the
+column of the @samp{throws} keyword.  The @samp{throws} keyword itself
+is also indented by @code{c-basic-offset} from the function declaration
+start if it doesn't hang.  E.g:
+
+@example
+@group
+int foo()
+    throws            @hereFn{c-lineup-java-throws}
+        Bar           @hereFn{c-lineup-java-throws}
+@sssTsssTBasicOffset{}
+@end group
+@end example
+
+@noindent
+and
+
+@example
+@group
+int foo() throws Cyphr,
+                 Bar,    @hereFn{c-lineup-java-throws}
+                 Vlod    @hereFn{c-lineup-java-throws}
+@end group
+@end example
+
+@workswith @code{func-decl-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-template-args
+@findex lineup-template-args (c-)
+Line up the arguments of a template argument list under each other, but
+only in the case where the first argument is on the same line as the
+opening @samp{<}.
+
+To allow this function to be used in a list expression, @code{nil} is
+returned if there's no template argument on the first line.
+
+@workswith @code{template-args-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-ObjC-method-call
+@findex lineup-ObjC-method-call (c-)
+For Objective-C code, line up selector args as Emacs Lisp mode does
+with function args: go to the position right after the message receiver,
+and if you are at the end of the line, indent the current line
+c-basic-offset columns from the opening bracket; otherwise you are
+looking at the first character of the first method call argument, so
+lineup the current line with it.
+
+@workswith @code{objc-method-call-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-ObjC-method-args
+@findex lineup-ObjC-method-args (c-)
+For Objective-C code, line up the colons that separate args.  The colon
+on the current line is aligned with the one on the first line.
+
+@workswith @code{objc-method-args-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-ObjC-method-args-2
+@findex lineup-ObjC-method-args-2 (c-)
+Similar to @code{c-lineup-ObjC-method-args} but lines up the colon on
+the current line with the colon on the previous line.
+
+@workswith @code{objc-method-args-cont}.
+@end defun
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Operator Line-Up, Comment Line-Up, List Line-Up, Line-Up Functions
+@comment node-name, next, previous, up
+@subsection Operator Line-Up Functions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The line-up functions here calculate the indentation for lines which
+start with an operator, by lining it up with something on the previous
+line.
+
+@defun c-lineup-argcont
+@findex lineup-argcont (c-)
+Line up a continued argument.  E.g:
+
+@example
+@group
+foo (xyz, aaa + bbb + ccc
+          + ddd + eee + fff);  @hereFn{c-lineup-argcont}
+@end group
+@end example
+
+Only continuation lines like this are touched, @code{nil} is returned on
+lines which are the start of an argument.
+
+Within a gcc @code{asm} block, @code{:} is recognised as an argument
+separator, but of course only between operand specifications, not in the
+expressions for the operands.
+
+@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
 @end defun
 
 @comment ------------------------------------------------------------
@@ -5136,6 +5454,81 @@ operator too, try to align it with the first one.
 @end defun
 
 @comment ------------------------------------------------------------
+
+@defun c-lineup-math
+@findex lineup-math (c-)
+Like @code{c-lineup-assignments} but indent with @code{c-basic-offset}
+if no assignment operator was found on the first line.  I.e. this
+function is the same as specifying a list @code{(c-lineup-assignments
++)}.  It's provided for compatibility with old configurations.
+
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-cascaded-calls
+@findex lineup-cascaded-calls (c-)
+Line up ``cascaded calls'' under each other.  If the line begins with
+@code{->} or @code{.} and the preceding line ends with one or more
+function calls preceded by the same token, then the arrow is lined up
+with the first of those tokens.  E.g:
+
+@example
+@group
+r = proc->add(17)->add(18)
+        ->add(19) +         @hereFn{c-lineup-cascaded-calls}
+  offset;                   @hereFn{c-lineup-cascaded-calls@r{ (inactive)}}
+@end group
+@end example
+
+In any other situation @code{nil} is returned to allow use in list
+expressions.
+
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-streamop
+@findex lineup-streamop (c-)
+Line up C++ stream operators (i.e. @samp{<<} and @samp{>>}).
+
+@workswith @code{stream-op}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-string-cont
+@findex lineup-string-cont (c-)
+Line up a continued string under the one it continues.  A continued
+string in this sense is where a string literal follows directly after
+another one.  E.g:
+
+@example
+@group
+result = prefix + "A message "
+                  "string.";    @hereFn{c-lineup-string-cont}
+@end group
+@end example
+
+@code{nil} is returned in other situations, to allow stacking with other
+lineup functions.
+
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
+@end defun
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Comment Line-Up, Misc Line-Up, Operator Line-Up, Line-Up Functions
+@comment node-name, next, previous, up
+@subsection Comment Line-Up Functions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The lineup functions here calculate the indentation for several types
+of comment structure.
 
 @defun c-lineup-C-comments
 @findex lineup-C-comments (c-)
@@ -5189,65 +5582,6 @@ line inside a comment.
 
 @comment ------------------------------------------------------------
 
-@defun c-lineup-cascaded-calls
-@findex lineup-cascaded-calls (c-)
-Line up ``cascaded calls'' under each other.  If the line begins with
-@code{->} or @code{.} and the preceding line ends with one or more
-function calls preceded by the same token, then the arrow is lined up
-with the first of those tokens.  E.g:
-
-@example
-@group
-r = proc->add(17)->add(18)
-        ->add(19) +         @hereFn{c-lineup-cascaded-calls}
-  offset;                   @hereFn{c-lineup-cascaded-calls@r{ (inactive)}}
-@end group
-@end example
-
-In any other situation @code{nil} is returned to allow use in list
-expressions.
-
-@workswith @code{topmost-intro-cont}, @code{statement-cont},
-@code{arglist-cont}, @code{arglist-cont-nonempty}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-close-paren
-@findex lineup-close-paren (c-)
-Line up the closing paren under its corresponding open paren if the
-open paren is followed by code.  If the open paren ends its line, no
-indentation is added.  E.g:
-
-@example
-@group
-main (int,
-      char **           
-     )                @hereFn{c-lineup-close-paren}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-main (
-    int, char **
-)                     @hereFn{c-lineup-close-paren}
-@end group
-@end example
-
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
-@code{c-basic-offset} instead of the open paren column.  See
-@code{c-lineup-arglist} for further discussion of this ``DWIM'' measure.
-
-@workswith All @code{*-close} symbols.
-@end defun
-
-@comment ------------------------------------------------------------
-
 @defun c-lineup-comment
 @findex lineup-comment (c-)
 Line up a comment-only line according to the style variable
@@ -5271,6 +5605,46 @@ is equivalent to @code{(@r{@var{value}} . -1000)}.
 @end defopt
 
 @workswith @code{comment-intro}.
+@end defun
+
+@comment ------------------------------------------------------------
+
+@defun c-lineup-knr-region-comment
+@findex lineup-knr-region-comment (c-)
+Line up a comment in the ``K&R region'' with the declaration.  That is
+the region between the function or class header and the beginning of the
+block.  E.g:
+
+@example
+@group
+int main()
+/* Called at startup. */  @hereFn{c-lineup-knr-region-comment}
+@{
+  return 0;
+@}
+@end group
+@end example
+
+Return @code{nil} if called in any other situation, to be useful in list
+expressions.
+
+@workswith @code{comment-intro}.
+@end defun
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Misc Line-Up,  , Comment Line-Up, Line-Up Functions
+@comment node-name, next, previous, up
+@subsection Miscellaneous Line-Up Functions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The line-up functions here are the odds and ends which didn't fit into
+any earlier category.
+
+@defun c-lineup-dont-change
+@findex lineup-dont-change (c-)
+This lineup function makes the line stay at whatever indentation it
+already has; think of it as an identity function for lineups.
+
+@workswith Any syntactic symbol.
 @end defun
 
 @comment ------------------------------------------------------------
@@ -5364,16 +5738,6 @@ described above.
 
 @comment ------------------------------------------------------------
 
-@defun c-lineup-dont-change
-@findex lineup-dont-change (c-)
-This lineup function makes the line stay at whatever indentation it
-already has; think of it as an identity function for lineups.
-
-@workswith Any syntactic symbol.
-@end defun
-
-@comment ------------------------------------------------------------
-
 @defun c-lineup-gcc-asm-reg
 @findex lineup-gcc-asm-reg (c-)
 Line up a gcc asm register under one on a previous line.
@@ -5402,269 +5766,6 @@ arglist lineups, e.g.
 @end example
 
 @workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-inexpr-block
-@findex lineup-inexpr-block (c-)
-This can be used with the in-expression block symbols to indent the
-whole block to the column where the construct is started.  E.g. for Java
-anonymous classes, this lines up the class under the @samp{new} keyword,
-and in Pike it lines up the lambda function body under the @samp{lambda}
-keyword.  Returns @code{nil} if the block isn't part of such a
-construct.
-
-@workswith @code{inlambda}, @code{inexpr-statement},
-@code{inexpr-class}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-java-inher
-@findex lineup-java-inher (c-)
-Line up Java implements and extends declarations.  If class names
-follow on the same line as the @samp{implements}/@samp{extends}
-keyword, they are lined up under each other.  Otherwise, they are
-indented by adding @code{c-basic-offset} to the column of the keyword.
-E.g:
-
-@example
-@group
-class Foo
-    extends           
-        Bar           @hereFn{c-lineup-java-inher}
-    @sssTBasicOffset{}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-class Foo
-    extends Cyphr,
-            Bar       @hereFn{c-lineup-java-inher}
-@end group
-@end example
-
-@workswith @code{inher-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-java-throws
-@findex lineup-java-throws (c-)
-Line up Java throws declarations.  If exception names follow on the
-same line as the throws keyword, they are lined up under each other.
-Otherwise, they are indented by adding @code{c-basic-offset} to the
-column of the @samp{throws} keyword.  The @samp{throws} keyword itself
-is also indented by @code{c-basic-offset} from the function declaration
-start if it doesn't hang.  E.g:
-
-@example
-@group
-int foo()
-    throws            @hereFn{c-lineup-java-throws}
-        Bar           @hereFn{c-lineup-java-throws}
-@sssTsssTBasicOffset{}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-int foo() throws Cyphr,
-                 Bar,    @hereFn{c-lineup-java-throws}
-                 Vlod    @hereFn{c-lineup-java-throws}
-@end group
-@end example
-
-@workswith @code{func-decl-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-knr-region-comment
-@findex lineup-knr-region-comment (c-)
-Line up a comment in the ``K&R region'' with the declaration.  That is
-the region between the function or class header and the beginning of the
-block.  E.g:
-
-@example
-@group
-int main()
-/* Called at startup. */  @hereFn{c-lineup-knr-region-comment}
-@{
-  return 0;
-@}
-@end group
-@end example
-
-Return @code{nil} if called in any other situation, to be useful in list
-expressions.
-
-@workswith @code{comment-intro}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-math
-@findex lineup-math (c-)
-Like @code{c-lineup-assignments} but indent with @code{c-basic-offset}
-if no assignment operator was found on the first line.  I.e. this
-function is the same as specifying a list @code{(c-lineup-assignments
-+)}.  It's provided for compatibility with old configurations.
-
-@workswith @code{topmost-intro-cont}, @code{statement-cont},
-@code{arglist-cont}, @code{arglist-cont-nonempty}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-multi-inher
-@findex lineup-multi-inher (c-)
-Line up the classes in C++ multiple inheritance clauses and member
-initializers under each other.  E.g:
-
-@example
-@group
-Foo::Foo (int a, int b):
-    Cyphr (a),
-    Bar (b)           @hereFn{c-lineup-multi-inher}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-class Foo
-    : public Cyphr,
-      public Bar      @hereFn{c-lineup-multi-inher}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-Foo::Foo (int a, int b)
-    : Cyphr (a)
-    , Bar (b)         @hereFn{c-lineup-multi-inher}
-@end group
-@end example
-
-@workswith @code{inher-cont}, @code{member-init-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-ObjC-method-call
-@findex lineup-ObjC-method-call (c-)
-For Objective-C code, line up selector args as Emacs Lisp mode does
-with function args: go to the position right after the message receiver,
-and if you are at the end of the line, indent the current line
-c-basic-offset columns from the opening bracket; otherwise you are
-looking at the first character of the first method call argument, so
-lineup the current line with it.
-
-@workswith @code{objc-method-call-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-ObjC-method-args
-@findex lineup-ObjC-method-args (c-)
-For Objective-C code, line up the colons that separate args.  The colon
-on the current line is aligned with the one on the first line.
-
-@workswith @code{objc-method-args-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-ObjC-method-args-2
-@findex lineup-ObjC-method-args-2 (c-)
-Similar to @code{c-lineup-ObjC-method-args} but lines up the colon on
-the current line with the colon on the previous line.
-
-@workswith @code{objc-method-args-cont}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-runin-statements
-@findex lineup-runin-statements (c-)
-Line up statements for coding standards which place the first statement
-in a block on the same line as the block opening brace@footnote{Run-in
-style doesn't really work too well.  You might need to write your own
-custom line-up functions to better support this style.}.  E.g:
-
-@example
-@group
-int main()
-@{ puts ("Hello!");
-  return 0;           @hereFn{c-lineup-runin-statements}
-@}
-@end group
-@end example
-
-If there is no statement after the opening brace to align with,
-@code{nil} is returned.  This makes the function usable in list
-expressions.
-
-@workswith The @code{statement} syntactic symbol.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-streamop
-@findex lineup-streamop (c-)
-Line up C++ stream operators (i.e. @samp{<<} and @samp{>>}).
-
-@workswith @code{stream-op}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-string-cont
-@findex lineup-string-cont (c-)
-Line up a continued string under the one it continues.  A continued
-string in this sense is where a string literal follows directly after
-another one.  E.g:
-
-@example
-@group
-result = prefix + "A message "
-                  "string.";    @hereFn{c-lineup-string-cont}
-@end group
-@end example
-
-@code{nil} is returned in other situations, to allow stacking with other
-lineup functions.
-
-@workswith @code{topmost-intro-cont}, @code{statement-cont},
-@code{arglist-cont}, @code{arglist-cont-nonempty}.
-@end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-template-args
-@findex lineup-template-args (c-)
-Line up the arguments of a template argument list under each other, but
-only in the case where the first argument is on the same line as the
-opening @samp{<}.
-
-To allow this function to be used in a list expression, @code{nil} is
-returned if there's no template argument on the first line.
-
-@workswith @code{template-args-cont}.
 @end defun
 
 @comment ------------------------------------------------------------
@@ -5719,46 +5820,6 @@ the_larch,            @hereFn{c-lineup-topmost-intro-cont}
 
 @workswith @code{topmost-intro-cont}.
 @end defun
-
-@comment ------------------------------------------------------------
-
-@defun c-lineup-whitesmith-in-block
-@findex lineup-whitesmith-in-block (c-)
-Line up lines inside a block in Whitesmith style.  It's done in a way
-that works both when the opening brace hangs and when it doesn't.  E.g:
-
-@example
-@group
-something
-    @{
-    foo;              @hereFn{c-lineup-whitesmith-in-block}
-    @}
-@end group
-@end example
-
-@noindent
-and
-
-@example
-@group
-something @{
-    foo;              @hereFn{c-lineup-whitesmith-in-block}
-    @}
-@sssTBasicOffset{}
-@end group
-@end example
-
-In the first case the indentation is kept unchanged, in the second
-@code{c-basic-offset} is added.
-
-@workswith @code{defun-close}, @code{defun-block-intro},
-@code{inline-close}, @code{block-close}, @code{brace-list-close},
-@code{brace-list-intro}, @code{statement-block-intro},
-@code{arglist-intro}, @code{arglist-cont-nonempty},
-@code{arglist-close}, and all @code{in*} symbols, e.g. @code{inclass}
-and @code{inextern-lang}.
-@end defun
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Custom Line-Up, Other Indentation, Line-Up Functions, Customizing Indentation
@@ -5942,12 +6003,25 @@ work.
 @defopt c-special-indent-hook
 @vindex special-indent-hook (c-)
 This style variable is a standard hook variable that is called after
-every line is indented by @ccmode{}.  You can use it to do any special
-indentation or line adjustments your style dictates, such as adding
-extra indentation to constructors or destructor declarations in a
-class definition, etc.  Note that you should not change point or mark
-inside your @code{c-special-indent-hook} functions, i.e. you'll
-probably want to wrap your function in a @code{save-excursion}.
+every line is indented by @ccmode{}.  It is called only if
+@code{c-syntactic-indentation} is non-@code{nil} (which it is by
+default (@pxref{Indentation Engine Basics})).  You can put a function
+on this hook to do any special indentation or ad hoc line adjustments
+your style dictates, such as adding extra indentation to constructors
+or destructor declarations in a class definition, etc.  Sometimes it
+is better to write a custom Line-up Function instead (@pxref{Custom
+Line-Up}).
+
+When the indentation engine calls this hook, the variable
+@code{c-syntactic-context} is bound to the current syntactic context
+(i.e. what you would get by typing @kbd{C-c C-s} on the source line.
+FIXME!!!  Add an @@xref here, 2005/9/9).  Note that you should not
+change point or mark inside a @code{c-special-indent-hook} function,
+i.e. you'll probably want to wrap your function in a
+@code{save-excursion}@footnote{The numerical value returned by
+@code{point} will change if you change the indentation of the line
+within a @code{save-excursion} form, but point itself will still be
+over the same piece of text.}.
 
 Setting @code{c-special-indent-hook} in your style definition is
 handled slightly differently than other variables.  In your style
