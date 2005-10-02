@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.222 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.223 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -3326,7 +3326,6 @@ indentation, not even @code{c-special-indent-hook}.
 @section Syntactic Analysis
 @cindex syntactic analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 @cindex syntactic element
 @cindex syntactic context
 The first thing @ccmode{} does when indenting a line of code, is to
@@ -3334,8 +3333,10 @@ analyze the line, determining the @dfn{syntactic context} of the
 (first) construct on that line.  It's a list of @dfn{syntactic
 elements}, where each syntactic element in turn is a list@footnote{In
 @ccmode 5.28 and earlier, a syntactic element was a dotted pair; the
-cons was the syntactic symbol and the cdr was the anchor position.}.
-Here is a brief and typical example:
+cons was the syntactic symbol and the cdr was the anchor position.
+For compatibility's sake, the parameter passed to a line-up function
+still has this dotted pair form (@pxref{Custom Line-Up}).}  Here is a
+brief and typical example:
 
 @example
 ((defun-block-intro 1959))
@@ -4858,13 +4859,9 @@ provides this flexibility with @dfn{line-up functions}.
 The way you associate a line-up function with a syntactic symbol is
 described in @ref{Customizing Indentation}.  @ccmode{} comes with many
 predefined line-up functions for common situations.  If none of these
-does what you want, you can write your own.  @c If you do, it's probably
-@c a good idea to start working from one of these predefined functions.
-@c They can be found in the file @file{cc-align.el}.  [Put this
-@c sentence into "Custom Lineup".  FIXME!!! 2005/9/18].
-@xref{Custom Line-Up}.  Sometimes, it is easier to tweak the standard
-indentation by adding a function to @code{c-special-indent-hook}
-(@pxref{Other Indentation}).
+does what you want, you can write your own.  @xref{Custom Line-Up}.
+Sometimes, it is easier to tweak the standard indentation by adding a
+function to @code{c-special-indent-hook} (@pxref{Other Indentation}).
 
 The line-up functions haven't been adapted for AWK buffers or tested
 with them.  Some of them might work serendipitously.  There shouldn't be
@@ -5828,53 +5825,92 @@ the_larch,            @hereFn{c-lineup-topmost-intro-cont}
 @cindex customization, indentation functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-The most flexible way to customize @ccmode{} is by writing custom
-line-up functions, and associating them with specific syntactic symbols
-(@pxref{Syntactic Symbols}).  @ccmode{} itself uses line-up functions to
-provide more sophisticated indentation, for example when lining up C++
-stream operator blocks:
+The most flexible way to customize indentation is by writing custom
+line-up functions, and associating them with specific syntactic
+symbols (@pxref{Customizing Indentation}).  Depending on the effect
+you want, it might be better to write a @code{c-special-indent-hook}
+function rather than a line-up function (@pxref{Other Indentation}).
 
-@example
-@group
- 1: void main(int argc, char**)
- 2: @{
- 3:   cout << "There were "
- 4:     << argc
- 5:     << "arguments passed to the program"
- 6:     << endl;
- 7: @}
-@end group
-@end example
+@c FIXME!!!  This example was commented out by ACM on 2005/10/2.
+@c Maybe it should be deleted.  Maybe it (together with the rest of it
+@c lower down) should be moved into a @subsection "Example Line-Up
+@c Function".
+@c 
+@c @example
+@c @group
+@c  1: void main(int argc, char**)
+@c  2: @{
+@c  3:   cout << "There were "
+@c  4:     << argc
+@c  5:     << "arguments passed to the program"
+@c  6:     << endl;
+@c  7: @}
+@c @end group
+@c @end example
 
-In this example, lines 4 through 6 are assigned the @code{stream-op}
-syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
-with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
-are simply indented two spaces to the right of line 3.  But perhaps we'd
-like @ccmode{} to be a little more intelligent so that it aligns all the
-@samp{<<} symbols in lines 3 through 6.  To do this, we have to write a
-custom line-up function which finds the column of the first stream
-operator on the first line of the statement.  Here is sample lisp code
-implementing this:
+@c In this example, lines 4 through 6 are assigned the @code{stream-op}
+@c syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
+@c with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
+@c are simply indented two spaces to the right of line 3.  But perhaps we'd
+@c like @ccmode{} to be a little more intelligent so that it aligns all the
+@c @samp{<<} symbols in lines 3 through 6.  To do this, we have to write a
+@c custom line-up function which finds the column of the first stream
+@c operator on the first line of the statement.  Here is sample lisp code
+@c implementing this:
 
-@example
-(defun c-lineup-streamop (langelem)
-  (save-excursion
-    (goto-char (cdr langelem))
-    (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
-    (goto-char (match-beginning 0))
-    (vector (current-column))))
-@end example
+@c @example
+@c (defun c-lineup-streamop (langelem)
+@c   (save-excursion
+@c     (goto-char (cdr langelem))
+@c     (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
+@c     (goto-char (match-beginning 0))
+@c     (vector (current-column))))
+@c @end example
 
-Line-up functions are passed a single argument - a cons cell of the form
+@ccmode{} comes with an extensive set of predefined line-up functions,
+not all of which are used by the default styles.  So there's a good
+chance the function you want already exists.  @xref{Line-Up
+Functions}, for a list of them.  If you write your own line-up
+function, it's probably a good idea to start working from one of these
+predefined functions, which can be found in the file
+@file{cc-align.el}.  If you have written a line-up function that you
+think is generally useful, you're very welcome to contribute it;
+please contact @email{bug-cc-mode@@gnu.org}.
+
+   Line-up functions are passed a single argument, the syntactic
+element (see below).  The return value is a @code{c-offsets-alist}
+offset specification: for example, an integer, a symbol such as
+@code{+}, a vector, @code{nil}@footnote{Returning @code{nil} is useful
+when the offset specification for a syntactic element is a list
+containing the line-up function (@pxref{Customizing Indentation}).},
+or even another line-up function.  Full details of these are in @ref{
+Customizing Indentation}.
+
+Line-up functions must not move point or change the content of the
+buffer (except temporarily).  They are however allowed to do
+@dfn{hidden buffer changes}, i.e. setting text properties for caching
+purposes etc.  Buffer undo recording is disabled while they run.
+
+The syntactic element passed as the parameter to a line-up function is
+a cons cell of the form
 
 @example
 (@r{@var{syntactic-symbol}} . @r{@var{anchor-position}})
 @end example
 
-where @var{syntactic-symbol} is the symbol that the function was called
-for, and @var{anchor-position} is the anchor position (if any) for the
-construct that trigged the syntactic symbol (@pxref{Syntactic
-Analysis}).
+@noindent
+@c FIXME!!! The following sentence might be better omitted, since the
+@c information is in the cross reference "Syntactic Analysis".  2005/10/2.
+where @var{syntactic-symbol} is the symbol that the function was
+called for, and @var{anchor-position} is the anchor position (if any)
+for the construct that triggered the syntactic symbol
+(@pxref{Syntactic Analysis}).  This cons cell is how the syntactic
+element of a line used to be represented in @ccmode{} 5.28 and
+earlier.  Line-up functions are still passed this cons cell, so as to
+preserve compatibility with older configurations.  In the future, we
+may decide to convert to using the full list format---you can prepare
+your setup for this by using the access functions
+(@code{c-langelem-sym}, etc.)  described below.
 
 @vindex c-syntactic-element
 @vindex syntactic-element (c-)
@@ -5883,17 +5919,18 @@ Analysis}).
 Some syntactic symbols, e.g. @code{arglist-cont-nonempty}, have more
 info in the syntactic element - typically other positions that can be
 interesting besides the anchor position.  That info can't be accessed
-through the passed argument, which is a cons cell for compatibility
-reasons.  Instead, you can get it from the dynamically bound
-@code{c-syntactic-element} variable.  The variable
-@code{c-syntactic-context} might also be interesting - it holds the
-complete syntactic context.
+through the passed argument, which is a cons cell.  Instead, you can
+get this information from the variable @code{c-syntactic-element},
+which is dynamically bound to the complete syntactic element.  The
+variable @code{c-syntactic-context} might also be useful - it gets
+dynamically bound to the complete syntactic context.  @xref{Syntactic
+Analysis}.
 
-A few functions are provided to access parts of syntactic elements in a
-more abstract way.  Besides making the code easier to read, they also
-hide the difference between the old cons cell form used in the line-up
-function argument and the new form used in @code{c-syntactic-element}
-and everywhere else.  The functions are:
+@ccmode{} provides a few functions to access parts of syntactic
+elements in a more abstract way.  Besides making the code easier to
+read, they also hide the difference between the old cons cell form
+used in the line-up function argument and the new list form used in
+@code{c-syntactic-element} and everywhere else.  The functions are:
 
 @defun c-langelem-sym langelem
 @findex langelem-sym (c-)
@@ -5917,67 +5954,44 @@ non-@code{nil}.
 Return the secondary position in @var{langelem}, or @code{nil} if there
 is none.
 
-Note that the return value always is @code{nil} if @var{langelem} is on
-the old cons cell form.  Thus this function is only meaningful to use on
-syntactic elements taken from @code{c-syntactic-element} or
-@code{c-syntactic-context}.
+Note that the return value of this function is always @code{nil} if
+@var{langelem} is in the old cons cell form.  Thus this function is
+only meaningful when used on syntactic elements taken from
+@code{c-syntactic-element} or @code{c-syntactic-context}.
 @end defun
 
-The return value from a line-up function is in turn evaluated as an
-@code{c-offsets-alist} offset specification (@pxref{Customizing
-Indentation}).  The most interesting types of values to return are: An
-integer which is added to the relative indentation for the line, a
-vector containing an integer which is an absolute column to align to
-(usually an absolute column is wanted when aligning to existing text, as
-in the example above), and @code{nil}.
+@c FIXME!!!  This bit has been commented out together with the first
+@c part of the example above.
+@c 
+@c Now, to return to the example, we want to associate the function
+@c @code{c-lineup-streamop} with the @code{stream-op} syntactic symbol.  We
+@c can do that by adding something like the following to our
+@c @code{c++-mode-hook}@footnote{It probably makes more sense to add this
+@c to @code{c++-mode-hook} than @code{c-mode-common-hook} since stream
+@c operators are only relevant for C++.}:
 
-A line-up function should return @code{nil} if it's used in a context
-where it doesn't want to make a decision.  When the function is used in
-a list expression, that will cause @ccmode{} to go on and check the next
-entry in the list.
+@c @example
+@c (c-set-offset 'stream-op 'c-lineup-streamop)
+@c @end example
 
-Line-up functions must not change the content of the buffer unless it's
-completely reversed again.  They are however allowed to do hidden buffer
-changes, i.e. setting text properties for caching purposes etc.  Buffer
-undo recording is disabled while they run.
+@c Now the function looks like this after reindenting (using @kbd{C-c
+@c C-q}):
 
-Now, to return to the example, we want to associate the function
-@code{c-lineup-streamop} with the @code{stream-op} syntactic symbol.  We
-can do that by adding something like the following to our
-@code{c++-mode-hook}@footnote{It probably makes more sense to add this
-to @code{c++-mode-hook} than @code{c-mode-common-hook} since stream
-operators are only relevant for C++.}:
-
-@example
-(c-set-offset 'stream-op 'c-lineup-streamop)
-@end example
-
-Now the function looks like this after reindenting (using @kbd{C-c
-C-q}):
-
-@example
-@group
- 1: void main(int argc, char**)
- 2: @{
- 3:   cout << "There were "
- 4:        << argc
- 5:        << " arguments passed to the program"
- 6:        << endl;
- 7: @}
-@end group
-@end example
+@c @example
+@c @group
+@c  1: void main(int argc, char**)
+@c  2: @{
+@c  3:   cout << "There were "
+@c  4:        << argc
+@c  5:        << " arguments passed to the program"
+@c  6:        << endl;
+@c  7: @}
+@c @end group
+@c @end example
 
 Custom line-up functions can be as simple or as complex as you like, and
 any syntactic symbol that appears in @code{c-offsets-alist} can have a
 custom line-up function associated with it.
-
-@ccmode{} comes with an extensive set of predefined line-up functions,
-not all of which are used by the default styles.  So there's a good
-chance the function you want already exists.  @xref{Line-Up Functions},
-for a list of them.  If you have written a line-up function that you
-think is generally useful, you're very welcome to contribute it; please
-contact @email{bug-cc-mode@@gnu.org}.
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Indentation,  , Custom Line-Up, Customizing Indentation
