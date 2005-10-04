@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.224 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.225 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -937,24 +937,31 @@ This lets you delete a contiguous block of whitespace in a single
 operation - for example, the newline and indentation just inserted by
 auto-newline when you want to back up and write a comment after the
 last statement.
+@item syntactic-indentation mode
+When this is enabled (which it normally is), indentation commands such
+as @kbd{C-j} indent lines of code according to their syntactic
+structure.  Otherwise, a line is simply indented to the same level as
+the previous one and @kbd{@key{TAB}} adjusts the indentation in steps
+of `c-basic-offset'.
 @end table
 
 Full details on how these minor modes work are at @ref{Electric Keys},
-@ref{Auto-newlines}, and @ref{Hungry WS Deletion}.
+@ref{Auto-newlines}, @ref{Hungry WS Deletion}, and @ref{Indentation
+Engine Basics}.
 
 You can toggle each of these minor modes on and off, and you can
 configure @ccmode{} so that it starts up with your favourite
 combination of them (@pxref{Sample .emacs File}).  By default, when
-you initialize a buffer, electric mode is enabled but the other two
-modes are disabled.
+you initialize a buffer, electric mode and syntactic-indentation mode
+are enabled but the other two modes are disabled.
 
-@ccmode{} displays the current state of these minor modes on the
-modeline by appending letters to the major mode's name, one letter for
-each enabled minor mode - @samp{l} for electric mode, @samp{a} for
-auto-newline mode, and @samp{h} for hungry delete mode.  If all these
-modes were enabled, you'd see @samp{C/lah}@footnote{The @samp{C} would
-be replaced with the name of the language in question for the other
-languages @ccmode{} supports.}.
+@ccmode{} displays the current state of the first three of these minor
+modes on the modeline by appending letters to the major mode's name,
+one letter for each enabled minor mode - @samp{l} for electric mode,
+@samp{a} for auto-newline mode, and @samp{h} for hungry delete mode.
+If all these modes were enabled, you'd see @samp{C/lah}@footnote{The
+@samp{C} would be replaced with the name of the language in question
+for the other languages @ccmode{} supports.}.
 
 Here are the commands to toggle these modes:
 
@@ -984,6 +991,14 @@ auto-newline minor mode and a negative value will turn it off.
 Toggle hungry-delete minor mode.  Programmatically, if the function is
 given a numeric @var{arg}, a positive value will turn on hungry-delete
 minor mode and a negative value will turn it off.
+
+@item @kbd{M-x c-toggle-syntactic-indentation}
+@findex c-toggle-syntactic-indentation
+@findex toggle-syntactic-indentation (c-)
+Toggle syntactic-indentation-mode.  Programmatically, if the function
+is given a numeric @var{arg}, a positive value will turn on
+syntactic-indentation minor mode and a negative value will turn it
+off.
 @end table
 
 
@@ -1969,6 +1984,7 @@ could achieve this with code like this in your @file{.emacs}:
 @c Hooks" from the beginning of the page.  If this node were instead
 @c named "Hooks", that search would spuriously find "*Note:
 @c Hooks(elisp)" and go to the wrong node.
+
 @ccmode{} provides several hooks that you can use to customize the
 mode for your coding style.  The main hook is
 @code{c-mode-common-hook}; typically, you'll put the bulk of your
@@ -3287,6 +3303,7 @@ needed, inserts a star to complete the token @samp{*/}.
 @comment node-name, next, previous, up
 @chapter Indentation Engine Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 This chapter will briefly cover how @ccmode{} indents lines of code.
 It is helpful to understand the indentation model being used so that
 you will know how to customize @ccmode{} for your personal coding
@@ -3347,6 +3364,7 @@ any of the variables associated with indentation, not even
 @section Syntactic Analysis
 @cindex syntactic analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @cindex syntactic element
 @cindex syntactic context
 The first thing @ccmode{} does when indenting a line of code, is to
@@ -3364,6 +3382,7 @@ brief and typical example:
 @end example
 
 @cindex syntactic symbol
+@noindent
 The first entry inside a syntactic element list is always a
 @dfn{syntactic symbol}.  It describes the kind of construct that was
 recognized, e.g. @code{statement}, @code{substatement},
@@ -3392,29 +3411,40 @@ don't actually appear in the buffer, of course!}:
  6: @}
 @end example
 
+@noindent
+We can use @kbd{C-c C-s} (@code{c-show-syntactic-information}) to
+simply report what the syntactic analysis is for the current line:
+
+@table @asis
+@item @kbd{C-c C-s} (@code{c-show-syntactic-information})
 @kindex C-c C-s
 @findex c-show-syntactic-information
 @findex show-syntactic-information (c-)
-We can use the command @kbd{C-c C-s} (bound to
-@code{c-show-syntactic-information}) to simply report what the
-syntactic analysis is for the current line.  Running this command on
-line 4 of this example, we'd see in the echo area@footnote{With a
-universal argument (i.e. @kbd{C-u C-c C-s}) the analysis is inserted
-into the buffer as a comment on the current line.}:
+This command calculates the syntactic analysis of the current line and
+displays it in the minibuffer.  The command also highlights the anchor
+position(s).
+@end table
+
+  Running this command on line 4 of this example, we'd see in the echo
+area@footnote{With a universal argument (i.e. @kbd{C-u C-c C-s}) the
+analysis is inserted into the buffer as a comment on the current
+line.}:
 
 @example
 ((statement 35))
 @end example
 
-This tells us that the line is a statement and it is indented relative
-to buffer position 35, which happens to be the @samp{i} in @code{int} on
-line 3.  If you were to move point to line 3 and hit @kbd{C-c C-s}, you
-would see:
+@noindent
+and the @samp{i} of @code{int} on line 3 would be highlighted.  This
+tells us that the line is a statement and it is indented relative to
+buffer position 35, the highlighted position.  If you were to move
+point to line 3 and hit @kbd{C-c C-s}, you would see:
 
 @example
 ((defun-block-intro 29))
 @end example
 
+@noindent
 This indicates that the @samp{int} line is the first statement in a top
 level function block, and is indented relative to buffer position 29,
 which is the brace just after the function header.
@@ -3490,9 +3520,14 @@ This section is a complete list of the syntactic symbols which appear
 in the @code{c-offsets-alist} style variable, along with brief
 descriptions.  The previous section (@pxref{Syntactic Analysis})
 states what syntactic symbols are and how the indentation engine uses
-them.  More detailed descriptions of these symbols, together with
-snippets of source code to which they apply, appear in the examples in
-the subsections below.
+them.
+
+More detailed descriptions of these symbols, together with snippets of
+source code to which they apply, appear in the examples in the
+subsections below.  Note that, in the interests of brevity, the anchor
+position associated with each syntactic symbol is @emph{not}
+specified.  In cases of doubt, type @kbd{C-c C-s} on a pertinent
+line---this highlights the anchor position.
 
 @ssindex -open symbols
 @ssindex -close symbols
@@ -3718,6 +3753,7 @@ Java.  @ref{Anonymous Class Symbol}.
 @comment node-name, next, previous, up
 @subsection Function Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 This example shows a typical function declaration.
 
 @example
@@ -3760,6 +3796,7 @@ on the previous line.
 @comment node-name, next, previous, up
 @subsection Class related Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Here's an example which illustrates some C++ class syntactic symbols:
 
 @example
@@ -3906,6 +3943,7 @@ are both analyzed as @code{template-args-cont} lines.
 @comment node-name, next, previous, up
 @subsection Conditional Construct Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Here is a (totally contrived) example which illustrates how syntax is
 assigned to various conditional constructs:
 
@@ -3973,6 +4011,7 @@ the same line as the preceding close brace, that line would still have
 @comment node-name, next, previous, up
 @subsection Switch Statement Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Switch statements have their own set of syntactic symbols.  Here's an
 example:
 
@@ -4008,6 +4047,7 @@ block --- it is given @code{statement-case-open} syntax.
 @comment node-name, next, previous, up
 @subsection Brace List Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @cindex brace lists
 There are a set of syntactic symbols that are used to recognize
 constructs inside of brace lists.  A brace list is defined as an
@@ -4067,6 +4107,7 @@ line 10.
 @comment node-name, next, previous, up
 @subsection External Scope Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 External language definition blocks also have their own syntactic
 symbols.  In this example:
 
@@ -4130,6 +4171,7 @@ that isn't the case for historical reasons.}
 @comment node-name, next, previous, up
 @subsection Parenthesis (Argument) List Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
 calls.  This example illustrates these:
@@ -4182,6 +4224,7 @@ is assigned the @code{statement-cont} syntax instead.
 @comment node-name, next, previous, up
 @subsection Comment String Label and Macro Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 A few miscellaneous syntactic symbols that haven't been previously
 covered are illustrated by this C++ example:
 
@@ -4264,6 +4307,7 @@ Line 17 is assigned @code{stream-op} syntax.
 @comment node-name, next, previous, up
 @subsection Multiline Macro Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @cindex multiline macros
 @cindex syntactic whitespace
 @ssindex cpp-define-intro
@@ -4304,6 +4348,7 @@ macros.}.
 @comment node-name, next, previous, up
 @subsection Objective-C Method Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 In Objective-C buffers, there are three additional syntactic symbols
 assigned to various message calling constructs.  Here's an example
 illustrating these:
@@ -4330,6 +4375,7 @@ assigned @code{objc-method-call-cont} syntax.
 @comment node-name, next, previous, up
 @subsection Anonymous Class Symbol (Java)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Java has a concept of anonymous classes which can look something like
 this:
 
@@ -4355,6 +4401,7 @@ indented just like a normal class, with the added indentation given to
 @comment node-name, next, previous, up
 @subsection Statement Block Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 There are a few occasions where a statement block might be used inside
 an expression.  One is in C or C++ code using the gcc extension for
 this, e.g:
@@ -4417,6 +4464,7 @@ handled like this too.
 @comment node-name, next, previous, up
 @subsection K&R Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @ssindex knr-argdecl-intro
 @ssindex knr-argdecl
 Two other syntactic symbols can appear in old style, non-prototyped C
@@ -4937,6 +4985,7 @@ Works with:
 @comment node-name, next, previous, up
 @subsection Brace and Parenthesis Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The line-up functions here calculate the indentation for braces,
 parentheses and statements within brace blocks.
 
@@ -5193,6 +5242,7 @@ and @code{inextern-lang}.
 @comment node-name, next, previous, up
 @subsection List Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The line-up functions here calculate the indentation for lines which
 form lists of items, usually separated by commas.
 
@@ -5398,6 +5448,7 @@ the current line with the colon on the previous line.
 @comment node-name, next, previous, up
 @subsection Operator Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The line-up functions here calculate the indentation for lines which
 start with an operator, by lining it up with something on the previous
 line.
@@ -5545,6 +5596,7 @@ lineup functions.
 @comment node-name, next, previous, up
 @subsection Comment Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The lineup functions here calculate the indentation for several types
 of comment structure.
 
@@ -5654,6 +5706,7 @@ expressions.
 @comment node-name, next, previous, up
 @subsection Miscellaneous Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The line-up functions here are the odds and ends which didn't fit into
 any earlier category.
 
