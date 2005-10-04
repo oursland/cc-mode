@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.223 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.224 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -3287,20 +3287,40 @@ needed, inserts a star to complete the token @samp{*/}.
 @comment node-name, next, previous, up
 @chapter Indentation Engine Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+This chapter will briefly cover how @ccmode{} indents lines of code.
+It is helpful to understand the indentation model being used so that
+you will know how to customize @ccmode{} for your personal coding
+style.  All the details are in @ref{Customizing Indentation}.
 
-@ccmode{} has an indentation engine that provides a flexible and general
-mechanism for customizing indentation. It separates indentation
-calculation into two steps: first, @ccmode{} analyzes the line of code
-being indented to determine the kind of language construct it's looking
-at and its ``anchor position'' (@pxref{Syntactic Analysis}); then it
-looks up the ``offsets'' in the configuration and indents the line
-based on these offsets and the anchor position.
+@ccmode{} has an indentation engine that provides a flexible and
+general mechanism for customizing indentation.  When @ccmode{} indents
+a line of code, it separates its calculations into two steps:
 
-This chapter will briefly cover how indentation is calculated in
-@ccmode{}. It is helpful to understand the indentation model being
-used so that you will know how to customize @ccmode{} for your
-personal coding style.  All the details are in @ref{Customizing
-Indentation}.
+@enumerate
+@item
+@cindex syntactic symbol
+@cindex anchor position
+It analyzes the line to determine its @dfn{syntactic symbol} (the kind
+of language construct it's looking at) and its @dfn{anchor position}
+(the position earlier in the file that @ccmode{} will indent the line
+relative to).  The anchor position might be the location of an opening
+brace in the previous line, for example.  @xref{Syntactic Analysis}.
+@item
+@cindex offsets
+@cindex indentation offset specifications
+It looks up the syntactic symbol in the configuration to get the
+@dfn{offset(s)} for that syntactic symbol.  The symbol @code{+}, which
+means ``indent this line one more level'' is a typical offset.
+@ccmode{} then applies these offsets to the anchor position, giving
+the indentation for the line.  The different sorts of offsets are
+described in @ref{Customizing Indentation}.
+@end enumerate
+
+In exceptional circumstances, the syntax directed indentation
+described here may be a nuisance rather than a help.  You can disable
+it by setting @code{c-syntactic-indentation}.  (To set the variable
+interactively, @ref{Minor Modes}).  @c FIXME!!! document
+@c c-toggle-syntactic-indentation in "Minor Modes".  2005/10/4.
 
 @defopt c-syntactic-indentation
 @vindex syntactic-indentation (c-)
@@ -3308,9 +3328,10 @@ When this is non-@code{nil} (which it is by default), the indentation
 of code is done according to its syntactic structure.  When it's
 @code{nil}, every line is just indented to the same level as the
 previous one, and @kbd{TAB} (@code{c-indent-command}) adjusts the
-indentation in steps of @code{c-basic-offset}.  The indentation style
-then has no effect, nor do any of the variables associated with
-indentation, not even @code{c-special-indent-hook}.
+indentation in steps of @code{c-basic-offset}.  The current style
+(@pxref{Config Strategies}) then has no effect on indentation, nor do
+any of the variables associated with indentation, not even
+@code{c-special-indent-hook}.
 @end defopt
 
 @menu
