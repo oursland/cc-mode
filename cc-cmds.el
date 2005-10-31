@@ -1994,15 +1994,15 @@ prefix argument is equivalent to -1.
   just inserts a tab character, or the equivalent number of spaces,
   depending on the variable `indent-tabs-mode'."
 
-  (interactive "p")
+  (interactive "P")
   (let ((indent-function
 	 (if c-syntactic-indentation
 	     (symbol-function 'indent-according-to-mode)
 	   (lambda ()
 	     (let ((c-macro-start c-macro-start)
-		   (steps (cond ((not current-prefix-arg) 1)
-				((equal current-prefix-arg '(4)) -1)
-				(t arg))))
+		   (steps (if (equal arg '(4))
+			      -1
+			    (prefix-numeric-value arg))))
 	       (c-shift-line-indentation (* steps c-basic-offset))
 	       (when (and c-auto-align-backslashes
 			  (save-excursion
@@ -2012,7 +2012,7 @@ prefix argument is equivalent to -1.
 		 ;; Realign the line continuation backslash if inside a macro.
 		 (c-backslash-region (point) (point) nil t)))
 	     ))))
-    (if (and c-syntactic-indentation current-prefix-arg)
+    (if (and c-syntactic-indentation arg)
 	;; If c-syntactic-indentation and got arg, always indent this
 	;; line as C and shift remaining lines of expression the same
 	;; amount.
@@ -2038,7 +2038,7 @@ prefix argument is equivalent to -1.
 	      (indent-code-rigidly beg end shift-amt "#")))
       ;; Else use c-tab-always-indent to determine behavior.
       (cond
-       ;; CASE 1: indent when at column zero or in lines indentation,
+       ;; CASE 1: indent when at column zero or in line's indentation,
        ;; otherwise insert a tab
        ((not c-tab-always-indent)
 	(if (save-excursion
