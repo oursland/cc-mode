@@ -884,7 +884,7 @@ reindented unless `c-syntactic-indentation' is nil.
 semicolon following a defun might be cleaned up, depending on the
 settings of `c-cleanup-list'."
   (interactive "*P")
-  (let* (lim literal
+  (let* (lim literal c-syntactic-context
 	 (here (point))
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
@@ -900,7 +900,7 @@ settings of `c-cleanup-list'."
 	(if (or (not c-auto-newline)
 		(not (looking-at "[ \t]*\\\\?$")))
 	    (if c-syntactic-indentation
-		(indent-according-to-mode))
+		(c-indent-line))
 	  ;; clean ups: list-close-comma or defun-close-semi
 	  (let ((pos (- (point-max) (point))))
 	    (if (c-save-buffer-state ()
@@ -919,8 +919,9 @@ settings of `c-cleanup-list'."
 		(delete-region (point) here))
 	    (goto-char (- (point-max) pos)))
 	  ;; reindent line
-	  (if c-syntactic-indentation
-	      (indent-according-to-mode))
+	  (when c-syntactic-indentation
+	    (setq c-syntactic-context (c-guess-basic-syntax))
+	    (c-indent-line c-syntactic-context))
 	  ;; check to see if a newline should be added
 	  (let ((criteria c-hanging-semi&comma-criteria)
 		answer add-newline-p)
