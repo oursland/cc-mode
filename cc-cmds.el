@@ -3797,70 +3797,68 @@ command to conveniently insert and align the necessary backslashes."
 		;; the region.  We'll change them back to whitespace
 		;; afterwards.  The effect of this is to glue the comment
 		;; ender to the last word in the comment during filling.
-		(if t	    ; purely for indentation, to make the diff smaller
-		    (let* ((ender-start (save-excursion
-					  (goto-char (cdr c-lit-limits))
-					  (skip-syntax-backward "^w ")
-					  (point)))
-			   (ender-column (save-excursion
-					   (goto-char ender-start)
-					   (current-column)))
-			   (point-rel (- ender-start here))
-			   spaces)
+		(let* ((ender-start (save-excursion
+				      (goto-char (cdr c-lit-limits))
+				      (skip-syntax-backward "^w ")
+				      (point)))
+		       (ender-column (save-excursion
+				       (goto-char ender-start)
+				       (current-column)))
+		       (point-rel (- ender-start here))
+		       spaces)
 
-		      (save-excursion
-			(goto-char (cdr c-lit-limits))
-			(setq tmp-post (point-marker))
-			(insert ?\n)
-			(set-marker end (point))
-			(forward-line -1) ; last line of the comment
-			(if (and (looking-at (concat "[ \t]*\\(\\("
-						     c-current-comment-prefix
-						     "\\)[ \t]*\\)"))
-				 (eq ender-start (match-end 0)))
-			    ;; The comment ender is prefixed by nothing
-			    ;; but a comment line prefix.  Remove it
-			    ;; along with surrounding ws.
-			    (setq spaces (- (match-end 1) (match-end 2)))
-			  (goto-char ender-start))
-			(skip-chars-backward " \t\r\n")	; Surely this can be
-			; " \t"? "*/" is NOT alone on the line (ACM, 2005/8/18)
+		  (save-excursion
+		    (goto-char (cdr c-lit-limits))
+		    (setq tmp-post (point-marker))
+		    (insert ?\n)
+		    (set-marker end (point))
+		    (forward-line -1)	; last line of the comment
+		    (if (and (looking-at (concat "[ \t]*\\(\\("
+						 c-current-comment-prefix
+						 "\\)[ \t]*\\)"))
+			     (eq ender-start (match-end 0)))
+			;; The comment ender is prefixed by nothing
+			;; but a comment line prefix.  Remove it
+			;; along with surrounding ws.
+			(setq spaces (- (match-end 1) (match-end 2)))
+		      (goto-char ender-start))
+		    (skip-chars-backward " \t\r\n") ; Surely this can be
+					; " \t"? "*/" is NOT alone on the line (ACM, 2005/8/18)
 
-			(if (/= (point) ender-start)
-			    (progn
-			      (if (<= here (point))
-				  ;; Don't adjust point below if it's
-				  ;; before the string we replace.
-				  (setq point-rel -1))
-			      ;; Keep one or two spaces between the
-			      ;; text and the ender, depending on how
-			      ;; many there are now.
-			      (unless spaces
-				(setq spaces (- ender-column (current-column))))
-			      (setq auto-fill-spaces (c-delete-and-extract-region
+		    (if (/= (point) ender-start)
+			(progn
+			  (if (<= here (point))
+			      ;; Don't adjust point below if it's
+			      ;; before the string we replace.
+			      (setq point-rel -1))
+			  ;; Keep one or two spaces between the
+			  ;; text and the ender, depending on how
+			  ;; many there are now.
+			  (unless spaces
+			    (setq spaces (- ender-column (current-column))))
+			  (setq auto-fill-spaces (c-delete-and-extract-region
 						  (point) ender-start))
-			      ;; paragraph filling condenses multiple spaces to
-			      ;; single or double spaces.  auto-fill doesn't.
-			      (if fill-paragraph
-				  (setq spaces
-					(max
-					 (min spaces
-					      (if sentence-end-double-space 2 1))
-					 1)))
-			      ;; Insert the filler first to keep marks right.
-			      (insert-char ?x spaces t)
-			      (setq hang-ender-stuck spaces)
-			      (setq point-rel
-				    (and (>= point-rel 0)
-					 (- (point) (min point-rel spaces)))))
-			  (setq point-rel nil)))
+			  ;; paragraph filling condenses multiple spaces to
+			  ;; single or double spaces.  auto-fill doesn't.
+			  (if fill-paragraph
+			      (setq spaces
+				    (max
+				     (min spaces
+					  (if sentence-end-double-space 2 1))
+				     1)))
+			  ;; Insert the filler first to keep marks right.
+			  (insert-char ?x spaces t)
+			  (setq hang-ender-stuck spaces)
+			  (setq point-rel
+				(and (>= point-rel 0)
+				     (- (point) (min point-rel spaces)))))
+		      (setq point-rel nil)))
 
-		      (if point-rel
-			  ;; Point was in the middle of the string we
-			  ;; replaced above, so put it back in the same
-			  ;; relative position, counting from the end.
-			  (goto-char point-rel)))
-		  )
+		  (if point-rel
+		      ;; Point was in the middle of the string we
+		      ;; replaced above, so put it back in the same
+		      ;; relative position, counting from the end.
+		      (goto-char point-rel)))
 		))
 
 	    (when (<= beg (car c-lit-limits))
