@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.225 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.226 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -229,6 +229,7 @@ Font Locking
 Configuration Strategies
 
 * CC Hooks::                    
+* Style Variables::             
 * Styles::                      
 
 Styles
@@ -272,8 +273,8 @@ Syntactic Symbols
 
 Customizing Indentation
 
+* c-offsets-alist::             
 * Interactive Customization::   
-* Permanent Customization::     
 * Line-Up Functions::           
 * Custom Line-Up::              
 * Other Indentation::           
@@ -344,21 +345,10 @@ functions in @ccmode{} are prefixed with @code{c-@var{thing}}, and
 provided.  This package is intended to be a replacement for
 @file{c-mode.el}, @file{c++-mode.el} and @file{awk-mode.el}.
 
-@c @cindex @file{cc-compat.el} file
-@c This distribution also contains a file
-@c called @file{cc-compat.el} which should ease your transition from BOCM
-@c to @ccmode{}.  If you have a BOCM configuration you are really happy
-@c with, and want to postpone learning how to configure @ccmode{}, take a
-@c look at that file.  It maps BOCM configuration variables to @ccmode{}'s
-@c indentation model.  It is not actively supported so for the long run,
-@c you should learn how to customize @ccmode{} to support your coding
-@c style.
-
 A special word of thanks goes to Krishna Padmasola for his work in
-converting the original @file{README} file to Texinfo format.  I'd also
-like to thank all the @ccmode{} victims who help enormously during the
-early beta stages of @ccmode{}'s development.
-
+converting the original @file{README} file to Texinfo format.  I'd
+also like to thank all the @ccmode{} victims who help enormously
+during the early beta stages of @ccmode{}'s development.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Overview, Getting Connected, Introduction, Top
@@ -424,13 +414,6 @@ The FAQ contains a list of common problems and questions.
 @item
 The next two chapters tell you how to get in touch with the @ccmode{}
 project - whether for updating @ccmode{} or submitting bug reports.
-@c
-@c @item
-@c ``Mode Initialization'' describes in full detail how @ccmode{} is
-@c loaded and initialized.  This is advanced material, mainly useful if
-@c you want to write a derived mode, or debug a difficult problem.
-@c FIXME!!!  It @emph{will} describe this in full detail, but is not yet
-@c written (2004/11/7).
 @end itemize
 
 @noindent
@@ -469,6 +452,17 @@ Using CC Mode version 5.XX
 @noindent
 where @samp{XX} is the minor release number.
 @end deffn
+
+@c FIXME!!!  This bit plonked here, 2005/10/9 (no, 2005/11/4)@*
+@c So, for example, because most of the default offsets are defined in
+@c terms of @code{+}, @code{-}, and @code{0}, if you like the general
+@c indentation style, but you use 4 spaces instead of 2 spaces per level,
+@c you can probably achieve your style just by changing
+@c @code{c-basic-offset} like so@footnote{You can try this interactively in
+@c a C buffer by typing the text that appears in italics.}:
+@c @*End of plonked bit.
+
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Commands, Font Locking, Getting Connected, Top
@@ -542,7 +536,7 @@ Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
 hitting @kbd{TAB} on every line of the region.
 
-These commands are useful when indenting code:
+These commands indent code:
 
 @table @asis
 @item @kbd{TAB} (@code{c-indent-command})
@@ -1319,18 +1313,13 @@ file:
 
 @example
 (add-hook
-@c 'c-mode-common-hook  (Changed 2004/9/19)
- 'c-mode-initialization-hook
- (lambda ()
-   (define-key c-mode-base-map
-               [?\C-c ?\d] 'c-hungry-backspace)
-   (define-key c-mode-base-map
-               [?\C-c ?\C-d] 'c-hungry-delete-forward)))
+  'c-mode-initialization-hook
+  (lambda ()
+    (define-key c-mode-base-map
+                [?\C-c ?\d] 'c-hungry-backspace)
+    (define-key c-mode-base-map
+                [?\C-c ?\C-d] 'c-hungry-delete-forward)))
 @end example
-
-@c (2004/9/19):  I've posted onto emacs-devel (X-posted to
-@c bug-gnu-emacs) asking if it would be OK to just bind C-c <del> and
-@c C-c <backspace> as standard.
 
 @deffn Command c-hungry-backspace
 @findex hungry-backspace (c-)
@@ -1502,8 +1491,6 @@ lengths to recognize declarations and casts correctly, especially when
 the types aren't recognized by standard patterns.  This is a fairly
 demanding analysis which can be slow on older hardware, and it can
 therefore be disabled by choosing a lower decoration level with the
-@c FIXME: Crossref.  DONE, ACM 2005/8/28.  (It doesn't exist in the
-@c XEmacs manual).
 variable @code{font-lock-maximum-decoration} (@pxref{Font Lock,,,
 emacs, GNU Emacs Manual}).
 
@@ -1827,6 +1814,13 @@ You configure @ccmode{} by setting Lisp variables and calling (and
 perhaps writing) Lisp functions, which is usually done by adding code
 to your @file{.emacs} file.
 
+Several of these variables (currently 16), are known collectively as
+@dfn{style variables}.  @ccmode{} provides a special mechanism, known
+as @dfn{styles} to make it easier to set these variables as a group,
+to ``inherit'' settings from one style into another, and so on.  Style
+variables remain ordinary Lisp variables, whose values can be read and
+changed independently of the style system.  @xref{Style Variables}.
+
 There are several ways you can write this code, depending on the
 precise effect you want---they are described lower down on this page.
 If you make conflicting settings in several of these ways, the way
@@ -1835,9 +1829,9 @@ that takes precedence is the one that appears latest in this list:
 @item
 @table @asis
 @item Style
-@itemx File Style
 @itemx Top-level command or ``customization interface''
 @itemx Hook
+@itemx File Style
 @end table
 @end itemize
 
@@ -1847,20 +1841,20 @@ settings:
 @table @asis
 @item Top-level commands or the ``customization interface''
 Most simply, you can write @code{setq} and similar commands at the top
-level of your @file{.emacs} file.  These commands need to run
-@emph{before} @ccmode{} is first initialized@footnote{The first
-initialization of @ccmode{} makes many important variables buffer
-local.  If you set them later, the changes will affect only the buffer
-which is current at the time of the changes.} - in particular, they
-must be placed before any call to @code{desktop-read} (@pxref{Saving
-Emacs Sessions,,, emacs, GNU Emacs Manual}).  For example, you might
-set c-basic-offset thus:
+level of your @file{.emacs} file.  When you load a @ccmode{} buffer,
+it initializes its buffer-local bindings with the current global
+values (at least, for those settings you have given global values to),
+so it makes sense to have these @code{setq} commands run @emph{before}
+@ccmode{} is first initialized---in particular, before any call to
+@code{desktop-read} (@pxref{Saving Emacs Sessions,,, emacs, GNU Emacs
+Manual}).  For example, you might set c-basic-offset thus:
 
+@c END OF NEW STOUGH@*
 @example
 (setq c-basic-offset 4)
 @end example
 
-You can instead use the more user friendly Customization interface,
+You can use the more user friendly Customization interface instead,
 but this manual does not cover in detail how that works.  To do this,
 start by typing @kbd{M-x customize-group @key{RET} c @key{RET}}.
 @xref{Easy Customization,,,@emacsman{}, @emacsmantitle{}}.
@@ -1869,6 +1863,10 @@ Emacs normally writes the customizations at the end of your
 @file{.emacs} file.  If you use @code{desktop-read}, you should edit
 your @file{.emacs} to place the call to @code{desktop-read} @emph{after}
 the customizations.
+
+The first initialization of @ccmode{} puts a snapshot of the
+configuration settings into the special style ``user''.
+@xref{Built-in Styles}.
 
 For basic use of Emacs, either of these ways of configuring is
 adequate.  However, the settings are then the same in all @ccmode{}
@@ -1918,12 +1916,12 @@ in your @file{.emacs} file:
                         (other . "free-group-style")))
 @end example
 
-See @ref{Styles} for how to create @ccmode{} styles and fuller details
-on their use.
+See @ref{Styles} for fuller details on using @ccmode{} styles and how
+to create them.
 
 @item File Styles
 A @dfn{file style} is a rarely used variant of the ``style'' mechanism
-described above, which applies to a individual source file.  To use
+described above, which applies to an individual source file.  To use
 it, you set certain Emacs local variables in a special block at the
 end of the source file.  @xref{File Styles}.
 
@@ -1947,32 +1945,14 @@ could achieve this with code like this in your @file{.emacs}:
 @end example
 @end table
 
-@c Variables set like this at the top level in @file{.emacs} take effect in
-@c all @ccmode{} buffers, regardless of language.  The indentation style
-@c related variables, e.g. @code{c-offsets-alist}, that you don't set this
-@c way get their value from the style system (@pxref{Styles}), and they
-@c therefore depend on the setting of @code{c-default-style}.  Note that if
-@c you use Customize, this means that the greyed-out default values
-@c presented there might not be the ones you actually get, since the actual
-@c values depend on the style, which might very well be different for
-@c different languages.
-
-@c If you want to make more advanced configurations, e.g. language-specific
-@c customization, setting global variables isn't enough.  For that you can
-@c use the language hooks, see @ref{Hooks}, and/or the style system, see
-@c @ref{Styles}.
-
-
-@c Fill in this section:
-@c writing directly into .emacs vs. hooks; and
-@c writing customizations directly vs. using styles. ##################
 @menu
 * CC Hooks::                    
+* Style Variables::             
 * Styles::                      
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    CC Hooks, Styles, Config Strategies, Config Strategies
+@node    CC Hooks, Style Variables, Config Strategies, Config Strategies
 @comment node-name, next, previous, up
 @section Hooks
 @cindex mode hooks
@@ -2045,10 +2025,96 @@ file.
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 @end example
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Style Variables, Styles, CC Hooks, Config Strategies
+@comment node-name, next, previous, up
+@section Style Variables
+@cindex styles
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@cindex style variables
+The variables that @ccmode{}'s style system control are called
+@dfn{style variables}.  Note that style variables are ordinary Lisp
+variables, which the style system initializes; you can change their
+values at any time (e.g. in a hook function).  The style system can
+also also set other variables, to some extent.  @xref{Styles}.
+
+@dfn{Style variables} are handled specially in several ways:
+
+@itemize @bullet
+@item
+Style variables are by default buffer-local variables.  However, they
+can instead be made global by setting
+@code{c-style-variables-are-local-p} to @code{nil} before @ccmode{} is
+initialized.
+
+@item
+@vindex c-old-style-variable-behavior
+@vindex old-style-variable-behavior (c-)
+The default global binding of any style variable (with two exceptions
+- see below) is the special symbol @code{set-from-style}.  When the
+style system initializes a buffer-local copy of a style variable for a
+@ccmode{} buffer, if its global binding is still that symbol then it
+will be set from the current style.  Otherwise it will retain its
+global default@footnote{This is a big change from versions of
+@ccmode{} earlier than 5.26, where such settings would get overridden
+by the style system unless special precautions were taken.  That was
+changed since it was counterintuitive and confusing, especially to
+novice users.  If your configuration depends on the old overriding
+behavior, you can set the variable
+@code{c-old-style-variable-behavior} to non-@code{nil}.}.  This
+``otherwise'' happens, for example, when you've set the variable with
+@code{setq} at the top level of your @file{.emacs} (@pxref{Config
+Strategies}).
+
+@item
+The style variable @code{c-offsets-alist} (@pxref{c-offsets-alist}) is
+an association list with an element for each syntactic symbol.  It's
+handled a little differently from the other style variables.  It's
+default global binding is the empty list @code{nil}, rather than
+@code{set-from-style}.  Before the style system is initialized, you
+can add individual elements to @code{c-offsets-alist} by calling
+@code{c-set-offset}(@pxref{c-offsets-alist}) just like you would set
+other style variables with @code{setq}.  Those elements will then
+prevail when the style system later initializes a buffer-local copy of
+@code{c-offsets-alist}.
+
+@item
+The style variable @code{c-special-indent-hook} is also handled in a
+special way.  Styles can only add functions to this hook, not remove
+them, so any global settings you put on it are always
+preserved@footnote{This did not change in version 5.26.}.  The value
+you give this variable in a style definition can be either a function
+or a list of functions.
+
+@item
+The global bindings of the style variables get captured in the special
+@code{user} style when the style system is first initialized.
+@xref{Built-in Styles}, for details.
+@end itemize
+
+The style variables are:@*
+@code{c-indent-comment-alist},
+@code{c-indent-comments-syntactically-p} (@pxref{Indentation
+Commands});@*
+@code{c-doc-comment-style} (@pxref{Doc Comments});@*
+@code{c-block-comment-prefix}, @code{c-comment-prefix-regexp}
+(@pxref{Custom Filling and Breaking});@*
+@code{c-hanging-braces-alist} (@pxref{Hanging Braces});@*
+@code{c-hanging-colons-alist} (@pxref{Hanging Colons});@*
+@code{c-hanging-semi&comma-criteria} (@pxref{Hanging Semicolons and
+Commas});@*
+@code{c-cleanup-list} (@pxref{Clean-ups});@*
+@code{c-basic-offset} (@pxref{Customizing Indentation});@*
+@code{c-offsets-alist} (@pxref{c-offsets-alist});@*
+@code{c-comment-only-line-offset} (@pxref{Comment Line-Up});@*
+@code{c-special-indent-hook}, @code{c-label-minimum-indentation}
+(@pxref{Other Indentation});@*
+@code{c-backslash-column}, @code{c-backslash-max-column}
+(@pxref{Custom Macros}).
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Styles,  , CC Hooks, Config Strategies
+@node    Styles,  , Style Variables, Config Strategies
 @comment node-name, next, previous, up
 @section Styles
 @cindex styles
@@ -2064,79 +2130,6 @@ this reason, @ccmode{} makes it convenient for you to set up logical
 groupings of customizations called @dfn{styles}, associate a single name
 for any particular style, and pretty easily start editing new or
 existing code using these styles.
-
-@cindex style variables
-The variables that @ccmode{}'s style system affect are called
-@dfn{style variables}.  They are handled specially in several ways:
-
-@itemize @bullet
-@item
-@vindex c-old-style-variable-behavior
-@vindex old-style-variable-behavior (c-)
-The default value of any style variable (with two exceptions - see
-below) is the special symbol @code{set-from-style}.  A Variable whose
-global default is still set to that symbol when a @ccmode{} buffer is
-initialized will be set according to the current style, otherwise, it
-will retain its global default@footnote{This is a big change from
-versions of @ccmode{} earlier than 5.26, where such settings would get
-overridden by the style system unless special precautions were taken.
-That was changed since it was counterintuitive and confusing,
-especially to novice users.  If your configuration depends on the old
-overriding behavior, you can set the variable
-@code{c-old-style-variable-behavior} to non-@code{nil}.}.  This
-``otherwise'' happens, for example, when you've set the variable with
-@code{setq} at the top level of your @file{.emacs} (@pxref{Config
-Strategies})).
-
-Note that when we talk about the ``default value'' for a style variable,
-we don't mean the @code{set-from-style} symbol that all style variables
-are set to initially, but instead the value it will get at mode
-initialization when neither a style nor a global setting has set its
-value.
-
-The style variable @code{c-offsets-alist} is handled a little
-differently from the other style variables.  It's an association list,
-and is by default set to the empty list, @code{nil}, rather than
-@code{set-from-style}.  When @ccmode{} is first initialized, any
-syntactic symbols already on @code{c-offsets-alist} are kept --- only
-the missing ones are filled in from the factory defaults.
-@c FIXME!!! Check all this.  2005/8/28.
-@c I think it works like this:  At first time initialization, the
-@c global default of c-offsets-alist is formed from combining the
-@c existing elements of the alist with the factory defaults (in table
-@c c-fallback-style).
-
-The style variable @code{c-special-indent-hook} is also handled in a
-special way.  Styles might only add more functions on this hook, so the
-global settings on it are always preserved@footnote{This did not change
-in version 5.26.}.
-
-@item
-The global settings of style variables get captured in the special
-@code{user} style, which is used as the base for all the other styles.
-@xref{Built-in Styles}, for details.
-
-@item
-Style variables are by default buffer local variables.  However, they
-can instead be made global by setting
-@code{c-style-variables-are-local-p} to @code{nil} before @ccmode{} is
-initialized.
-@end itemize
-
-The style variables are:
-@code{c-basic-offset},
-@code{c-comment-only-line-offset},
-@code{c-block-comment-prefix},
-@code{c-comment-prefix-regexp},
-@code{c-cleanup-list},
-@code{c-hanging-braces-alist},
-@code{c-hanging-colons-alist},
-@code{c-hanging-semi&comma-criteria},
-@code{c-backslash-column},
-@code{c-backslash-max-column},
-@code{c-special-indent-hook},
-@code{c-label-minimum-indentation}, and
-@code{c-offsets-alist}.
 
 @menu
 * Built-in Styles::             
@@ -2212,18 +2205,13 @@ The style for editing AWK code.  Note that the default value for
 
 @item user
 @cindex User style
-This is a special style for several reasons.  First, the @ccmode{}
-customizations you do by using either the Customization interface, or
-by writing @code{setq}s at the top level of your @file{.emacs} file,
-will be captured in the @code{user} style.  Also, all other styles
-implicitly inherit their settings from @code{user} style.  This means
-that for any styles you add via @code{c-add-style} (@pxref{Adding
-Styles}) you need only define the differences between your new style
-and @code{user} style.
-@c FIXME!!!  ACM, 2005/8/28:  The above is inaccurate: Other styles do
-@c NOT inherit from "user" implicitly.  They inherit from an internal
-@c table stored in the variable `c-fallback-style', as mentioned in
-@c the @node "Adding Styles".
+This is a special style created by you.  It consists of the factory
+defaults for all the style variables as modified by the customizations
+you do either with the Customization interface or by writing
+@code{setq}s and @code{c-set-offset}s at the top level of your
+@file{.emacs} file (@pxref{Config Strategies}).  The style system
+creates this style as part of its initialization and doesn't modify it
+afterwards.
 @end table
 
 
@@ -2242,7 +2230,7 @@ Switch to the specified style in the current buffer.  Use
 interactively like this:
 
 @example
-@kbd{C-c . @var{style-name} RET}
+@kbd{C-c . @var{style-name} @key{RET}}
 @end example
 
 You can use the @key{TAB} in the normal way to do completion on the
@@ -2252,15 +2240,15 @@ ones you define yourself.
 Setting a style in this way does @emph{not} automatically reindent your
 file.  For commands that you can use to view the effect of your changes,
 see @ref{Indentation Commands} and @ref{Filling and Breaking}.
-@c @ref{Commands}.
 @end deffn
 
 The default style in all newly created buffers is @code{gnu}, except
 in Java and AWK modes where it's @code{java} and @code{awk}.
 
 Remember that if you set a style variable with the Customization
-interface or at the top level of your @file{.emacs} file, this will
-override the setting, if any, that the style system gives the
+interface or at the top level of your @file{.emacs} file before the
+style system is initialised (@pxref{Config Strategies}), this setting
+will override the one that the style system would have given the
 variable.
 
 @defopt c-default-style
@@ -2285,13 +2273,12 @@ looked up.  If it's found then the associated style is used.
 
 @item
 If @samp{other} is not found then the @samp{gnu} style is used.
+@end enumerate
 
-@item
 In all cases, the style described in @code{c-default-style} is installed 
 @emph{before} the language hooks are run, so you can always override
 this setting by including an explicit call to @code{c-set-style} in your 
 language mode hook, or in @code{c-mode-common-hook}.
-@end enumerate
 
 The standard value of @code{c-default-style} is @w{@code{((java-mode
 . "java") (awk-mode . "awk") (other . "gnu"))}}.
@@ -2324,14 +2311,11 @@ definition in @ref{Sample .emacs File}.
 Optional @var{base-style}, if present, must be a string which is the
 name of the @dfn{base style} from which this style inherits.  At most
 one @var{base-style} is allowed in a style definition.  If
-@var{base-style} is not specified, the style inherits from a table of
-default values@footnote{This table is stored internally in the
-variable c-fallback-style.  It is computed during the initialization
-of @ccmode{} from the factory defaults of the style variables and any
-global values they might have been given since starting Emacs.} instead.
-All styles eventually inherit from this internal table.  Style loops
-generate errors.  The list of pre-existing styles can be seen in
-@ref{Built-in Styles}.
+@var{base-style} is not specified, the style inherits from the table
+of factory default values@footnote{This table is stored internally in
+the variable c-fallback-style.} instead.  All styles eventually
+inherit from this internal table.  Style loops generate errors.  The
+list of pre-existing styles can be seen in @ref{Built-in Styles}.
 
 The dotted pairs (@var{variable} . @var{value}) each consist of a
 variable and the value it is to be set to when the style is later
@@ -2340,7 +2324,7 @@ by the Customization interface or a @code{setq} at the top level of
 your @file{.emacs}, this value will override the one the style system
 tries to give it.}  The variable can be either a @ccmode{} style
 variable or an arbitrary Emacs variable.  In the latter case, it is
-@emph{not} made buffer local by the @ccmode{} style system.
+@emph{not} made buffer-local by the @ccmode{} style system.
 @c FIXME!!!  Do I want an xref in the above footnote, to "Config
 @c Strategies" or the like?  ACM, 2005/8/28.
 @end defvr
@@ -2360,9 +2344,9 @@ The value is in turn a list of dotted pairs of the form
 (@r{@var{syntactic-symbol}} . @r{@var{offset}})
 @end example
 
-as described in @ref{Customizing Indentation}.  These are passed to
-@code{c-set-offset} so there is no need to set every syntactic symbol in
-your style, only those that are different from the inherited style.
+as described in @ref{c-offsets-alist}.  These are passed to
+@code{c-set-offset} so there is no need to set every syntactic symbol
+in your style, only those that are different from the inherited style.
 
 @item c-special-indent-hook
 The value is added to @code{c-special-indent-hook} using
@@ -2381,9 +2365,12 @@ Add or update a style called @var{stylename}, a string.
 above.  If @var{stylename} already exists in @code{c-style-alist} then
 it is replaced by @var{description}.  (Note, this replacement is
 total.  The old style is @emph{not} merged into the new one.)
-Otherwise, a new style is added.  If the optional @var{set-p} is
-non-@code{nil} then the new style is applied to the current buffer as
-well.
+Otherwise, a new style is added.
+
+If the optional @var{set-p} is non-@code{nil} then the new style is
+applied to the current buffer as well.  The use of this facility is
+deprecated and it might be removed from @ccmode{} in a future release.
+You should use @code{c-set-style} instead.
 
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
@@ -2410,23 +2397,25 @@ per-file basis by including a @dfn{file local variable} block at the end
 of the file (@pxref{File Variables,, Local Variables in Files, @emacsman{},
 @emacsmantitle{}}).
 
-So far, you've only seen a functional interface to @ccmode{}
-customization, which can't be used there.  @ccmode{} provides two
-variables intended for use in a file's local variable list.  These
-allow you to customize the indentation style on a per-file basis:
+So far, you've only seen a functional interface for setting styles in
+@ccmode{}, and this can't be used here.  @ccmode{} fills the gap by
+providing two variables for use in a file's local variable list.
+Don't use them anywhere else!  These allow you to customize the style
+on a per-file basis:
 
 @defvar c-file-style
 @vindex file-style (c-)
-This variable can be set to a style name string.  When the file is
-visited, @ccmode{} will automatically set the file's style to this
-one using @code{c-set-style}.
+Set this variable to a style name string in the Local Variables list.
+From now on, when you visit the file, @ccmode{} will automatically set
+the file's style to this one using @code{c-set-style}.
 @end defvar
 
 @defvar c-file-offsets
 @vindex file-offsets (c-)
-This variable can be set to an association list of the same format as
-@code{c-offsets-alist}.  When the file is visited, @ccmode{} will
-automatically institute these offsets using @code{c-set-offset}.
+Set this variable (in the Local Variables list) to an association list
+of the same format as @code{c-offsets-alist}.  From now on, when you
+visit the file, @ccmode{} will automatically institute these offsets
+using @code{c-set-offset}.
 @end defvar
 
 Note that file style settings (i.e. @code{c-file-style}) are applied
@@ -2438,12 +2427,12 @@ made local to that buffer, even if
 variable is virtually always non-@code{nil} anyhow, you're unlikely to
 notice this effect.}.
 
-The normal style system (@pxref{Styles}) will not overwrite any
-settings made by the mechanism described here.  However, they can be
-changed by the functions in your mode hooks (@pxref{CC Hooks}), and
-any settings made by the customization system or by @code{setq}s at
-the top level of your @file{.emacs} file will take precedence over
-those of the file local variables.
+If you set any variables, including style variables, by the file local
+variables mechanism, these settings take priority over all other
+settings, even those in your mode hooks (@pxref{CC Hooks}).  If you
+use @code{c-file-style} or @code{c-file-offsets} and also explicitly
+set a style variable in a local variable block, the explicit setting
+will take priority.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Custom Filling and Breaking, Custom Auto-newlines, Config Strategies, Top
@@ -2474,7 +2463,7 @@ variables@footnote{@code{comment-start}, @code{comment-end},
 @code{comment-start-skip}, @code{paragraph-start},
 @code{paragraph-separate}, @code{paragraph-ignore-fill-prefix},
 @code{adaptive-fill-mode}, @code{adaptive-fill-regexp}, and
-@code{adaptive-fill-first-line-regexp}.} buffer local and modifies them
+@code{adaptive-fill-first-line-regexp}.} buffer-local and modifies them
 according to the language syntax and the comment line prefix.
 
 @defopt c-comment-prefix-regexp
@@ -2725,30 +2714,46 @@ circumstances.  @xref{Clean-ups}.
 @cindex hanging braces
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-When the conditions for auto-newline hold (@pxref{Auto-newlines}) and
-you type an open or close brace at the end of a line, @ccmode{}
-proceeds as follows to decide where, if anywhere, to put
-auto-newlines:
+To specify which kinds of braces you want auto-newlines put around,
+you set the style variable @code{c-hanging-braces-alist}.  Its
+structure and semantics are described in this section.  Details of how
+to set it up, and its relationship to CC Mode's style system are given
+in @ref{Style Variables}.
 
-@enumerate
-@item
-It determines the @dfn{syntactic context} of the brace - i.e. if the
-brace were to stand alone on a line, what the context of the line
-would be.  @xref{Syntactic Analysis}.  This might be
-@samp{((substatement-open@tie{}6180))}, for example.
+Say you wanted an auto-newline after (but not before) the following
+@samp{@{}:
 
-@item
-As a sanity check, if this syntactic context is not relevant to
-braces, the analysis is aborted and no auto-newlines are inserted;
+@example
+if (foo < 17) @{
+@end example
 
-@item
-It looks up the syntactic symbol (say, @samp{substatement-open}) in
-the association list @code{c-hanging-braces-alist}.  If it finds a
-matching entry, it inserts newlines accordingly (which might be no
-newlines anywhere).  If it fails to find a matching entry, it performs
-the default action, inserting a newline both before and after the
-brace.
-@end enumerate
+@noindent
+First you need to find the @dfn{syntactic context} of the brace---type
+a @key{RET} before the brace to get it on a line of its
+own@footnote{Also insert a @samp{\} at the end of the previous line if
+you're in AWK Mode.}, then type @kbd{C-c C-s}.  That will tell you
+something like:
+
+@example
+((substatement-open 1061))
+@end example
+
+@noindent
+So here you need to put the entry @code{(substatement-open . (after))}
+into @code{c-hanging-braces-alist}.
+
+If you don't want any auto-newlines for a particular syntactic symbol,
+put this into @code{c-hanging-braces-alist}:
+
+@example
+(brace-entry-open)
+@end example
+
+If some brace syntactic symbol is not in @code{c-hanging-brace-alist},
+its entry is taken by default as @code{(before after)}---insert a
+newline both before and after the brace.  In place of a
+``before/after'' list you can specify a function in this alist---this
+is useful when the auto newlines depend on the code around the brace.
 
 @defopt c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
@@ -2878,6 +2883,21 @@ action function, but the function must preserve it (e.g. by using
 some combination of @code{before} and @code{after}, including neither
 of them (i.e. @code{nil}).
 
+@defvar c-syntactic-context
+@vindex syntactic-context (c-)
+During the call to the indentation or brace hanging @var{action}
+function, this variable is bound to the full syntactic analysis list.
+This might be, for example, @samp{((block-close 73))}.  Don't ever
+give @code{c-syntactic-context} a value yourself---this would disrupt
+the proper functioning of @ccmode{}.
+
+This variable is also bound in three other circumstances:
+(i)@tie{}when calling a c-hanging-semi&comma-criteria function
+(@pxref{Hanging Semicolons and Commas}; (ii)@tie{}when calling a
+line-up function (@pxref{Custom Line-Up}; (iii)@tie{}when calling a
+c-special-indent-hook function (@pxref{Other Indentation}).
+@end defvar
+
 As an example, @ccmode{} itself uses this feature to dynamically
 determine the hanginess of braces which close ``do-while''
 constructs:
@@ -2923,13 +2943,6 @@ clause and if so, returns the list @samp{(before)} indicating
 that a newline should be inserted before the brace, but not after it.
 In all other cases, it returns the list @samp{(before after)} so
 that the brace appears on a line by itself.
-
-@defvar c-syntactic-context
-@vindex syntactic-context (c-)
-During the call to the indentation or brace hanging @var{action}
-function, this variable is bound to the full syntactic analysis list.
-This might be, for example, @samp{((block-close 73))}.
-@end defvar
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Custom Auto-newlines
@@ -2990,9 +3003,12 @@ This style variable takes a list of functions; these get called when
 you type a semicolon or comma.  The functions are called in order
 without arguments.  When these functions are entered, point is just
 after the newly inserted @samp{;} or @samp{,} and they must preserve
-point (e.g., by using @code{save-excursion}).  They don't insert
-newlines themselves, rather they direct @ccmode{} whether or not to do
-so.  They should return one of the following values:
+point (e.g., by using @code{save-excursion}).  During the call, the
+variable @code{c-syntactic-context} is bound to the syntactic context
+of the current line@footnote{This was first introduced in @ccmode{}
+5.31.} @pxref{Custom Braces}.  These functions don't insert newlines
+themselves, rather they direct @ccmode{} whether or not to do so.
+They should return one of the following values:
 
 @table @code
 @item t
@@ -3317,26 +3333,27 @@ a line of code, it separates its calculations into two steps:
 @item
 @cindex syntactic symbol
 @cindex anchor position
-It analyzes the line to determine its @dfn{syntactic symbol} (the kind
-of language construct it's looking at) and its @dfn{anchor position}
-(the position earlier in the file that @ccmode{} will indent the line
-relative to).  The anchor position might be the location of an opening
-brace in the previous line, for example.  @xref{Syntactic Analysis}.
+It analyzes the line to determine its @dfn{syntactic symbol(s)} (the
+kind of language construct it's looking at) and its @dfn{anchor
+position} (the position earlier in the file that @ccmode{} will indent
+the line relative to).  The anchor position might be the location of
+an opening brace in the previous line, for example.  @xref{Syntactic
+Analysis}.
 @item
 @cindex offsets
 @cindex indentation offset specifications
-It looks up the syntactic symbol in the configuration to get the
-@dfn{offset(s)} for that syntactic symbol.  The symbol @code{+}, which
-means ``indent this line one more level'' is a typical offset.
-@ccmode{} then applies these offsets to the anchor position, giving
-the indentation for the line.  The different sorts of offsets are
-described in @ref{Customizing Indentation}.
+It looks up the syntactic symbol(s) in the configuration to get the
+corresponding @dfn{offset(s)}.  The symbol @code{+}, which means
+``indent this line one more level'' is a typical offset.  @ccmode{}
+then applies these offset(s) to the anchor position, giving the
+indentation for the line.  The different sorts of offsets are
+described in @ref{c-offsets-alist}.
 @end enumerate
 
 In exceptional circumstances, the syntax directed indentation
 described here may be a nuisance rather than a help.  You can disable
-it by setting @code{c-syntactic-indentation}.  (To set the variable
-interactively, @ref{Minor Modes}).  @c FIXME!!! document
+it by setting @code{c-syntactic-indentation} to @code{nil}.  (To set
+the variable interactively, @ref{Minor Modes}).  @c FIXME!!! document
 @c c-toggle-syntactic-indentation in "Minor Modes".  2005/10/4.
 
 @defopt c-syntactic-indentation
@@ -3383,7 +3400,7 @@ brief and typical example:
 
 @cindex syntactic symbol
 @noindent
-The first entry inside a syntactic element list is always a
+The first thing inside each syntactic element is always a
 @dfn{syntactic symbol}.  It describes the kind of construct that was
 recognized, e.g. @code{statement}, @code{substatement},
 @code{class-open}, @code{class-close}, etc.  @xref{Syntactic Symbols},
@@ -3413,7 +3430,7 @@ don't actually appear in the buffer, of course!}:
 
 @noindent
 We can use @kbd{C-c C-s} (@code{c-show-syntactic-information}) to
-simply report what the syntactic analysis is for the current line:
+report what the syntactic analysis is for the current line:
 
 @table @asis
 @item @kbd{C-c C-s} (@code{c-show-syntactic-information})
@@ -3525,7 +3542,7 @@ them.
 More detailed descriptions of these symbols, together with snippets of
 source code to which they apply, appear in the examples in the
 subsections below.  Note that, in the interests of brevity, the anchor
-position associated with each syntactic symbol is @emph{not}
+position associated with most syntactic symbols is @emph{not}
 specified.  In cases of doubt, type @kbd{C-c C-s} on a pertinent
 line---this highlights the anchor position.
 
@@ -3923,8 +3940,8 @@ elements:
 ((inclass 58) (topmost-intro 380) (friend))
 @end example
 
-The @code{friend} syntactic symbol is a modifier that typically does not
-have an anchor position.
+The @code{friend} and @code{inline-open} syntactic symbols are
+modifiers that do not have anchor positions.
 
 @ssindex template-args-cont
 Template definitions introduce yet another syntactic symbol:
@@ -4215,6 +4232,13 @@ parenthesis.  Contrast this against lines 6 and 13 which are assigned
 @code{arglist-cont} syntax.  This is because the parenthesis that opens
 their argument lists is the last character on that line.
 
+Syntactic elements with @code{arglist-intro},
+@code{arglist-cont-nonempty}, and @code{arglist-close} contain two
+buffer positions: the anchor position (the beginning of the
+declaration or statement) and the position of the open parenthesis.
+The latter position can be used in a line-up function (@pxref{Line-Up
+Functions}).
+
 Note that there is no @code{arglist-open} syntax.  This is because any
 parenthesis that opens an argument list, appearing on a separate line,
 is assigned the @code{statement-cont} syntax instead.
@@ -4260,7 +4284,9 @@ Line 2 is assigned the @code{func-decl-cont} syntax.
 @item
 @ssindex comment-intro
 Line 4 is assigned both @code{defun-block-intro} @emph{and}
-@code{comment-intro} syntax.
+@code{comment-intro} syntax.  A syntactic element with
+@code{comment-intro} has no anchor point --- It is always accompanied
+by another syntactic element which does have one.
 
 @item
 @ssindex c
@@ -4285,7 +4311,10 @@ Line 10 is assigned @code{label} syntax.
 
 @item
 @ssindex block-open
-Line 11 is assigned @code{block-open} syntax.
+Line 11 is assigned @code{block-open} as well as @code{statement}
+syntax.  A @code{block-open} syntactic element doesn't have an anchor
+position, since it always appears with another syntactic element which
+does have one.
 
 @item
 @ssindex cpp-macro
@@ -4295,7 +4324,8 @@ normal syntactic symbols (@code{statement-block-intro} and
 configured to cancel out the normal syntactic context to make all
 preprocessor directives stick to the first column, but that's easily
 changed if you want preprocessor directives to be indented like the rest
-of the code.
+of the code.  Like @code{comment-intro}, a syntactic element with
+@code{cpp-macro} doesn't contain an anchor position.
 
 @item
 @ssindex stream-op
@@ -4394,7 +4424,8 @@ The brace following the @code{new} operator opens the anonymous class.
 Lines 3 and 6 are assigned the @code{inexpr-class} syntax, besides the
 @code{inclass} symbol used in normal classes.  Thus, the class will be
 indented just like a normal class, with the added indentation given to
-@code{inexpr-class}.
+@code{inexpr-class}.  An @code{inexpr-class} syntactic element doesn't
+have an anchor position.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Statement Block Symbols, K&R Symbols, Anonymous Class Symbol, Syntactic Symbols
@@ -4418,7 +4449,8 @@ this, e.g:
 Lines 2 and 5 get the @code{inexpr-statement} syntax, besides the
 symbols they'd get in a normal block.  Therefore, the indentation put on
 @code{inexpr-statement} is added to the normal statement block
-indentation.
+indentation.  An @code{inexpr-statement} syntactic element doesn't
+contain an anchor position.
 
 In Pike code, there are a few other situations where blocks occur inside
 statements, as illustrated here:
@@ -4501,11 +4533,12 @@ indentation calculation.  It's the anchor position in the first
 syntactic element that provides one that is used.  If no syntactic
 element has an anchor position then column zero is used.
 
-Second, the syntactic symbols in each syntactic element are looked up in
-the @code{c-offsets-alist} style variable, which is an association list
-of syntactic symbols and the offsets to apply for those symbols.  These
-offsets are added together with the base column to produce the new
-indentation column.
+Second, the syntactic symbols in each syntactic element are looked up
+in the @code{c-offsets-alist} style variable
+(@pxref{c-offsets-alist}), which is an association list of syntactic
+symbols and the offsets to apply for those symbols.  These offsets are
+added together with the base column to produce the new indentation
+column.
 
 Let's use our two code examples above to see how this works.  Here is
 our first example again:
@@ -4572,7 +4605,7 @@ Simple, huh?
 
 Actually, it's a bit more complicated than that since the entries on
 @code{c-offsets-alist} can be much more than plain offsets.
-@xref{Customizing Indentation}, for the full story.
+@xref{c-offsets-alist}, for the full story.
 
 Anyway, the mode usually just does The Right Thing without you having to
 think about it in this much detail.  But when customizing indentation,
@@ -4592,53 +4625,129 @@ minibuffer when you hit @kbd{TAB}.
 @cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-The context sensitive indentation is mainly controlled by the variable
-@code{c-offsets-alist}:
+The principal variable for customizing indentation is the style
+variable @code{c-offsets-alist}, which gives an @dfn{offset} (an
+indentation rule) for each syntactic symbol.  Its structure and
+semantics are completely described in @ref{c-offsets-alist}.  The
+various ways you can set the variable, including the use of the
+@ccmode{} style system, are described in @ref{Config Strategies} and
+its sections, in particular @ref{Style Variables}.
+
+The simplest and most used kind of ``offset'' setting in
+@code{c-offsets-alist} is in terms of multiples of
+@code{c-basic-offset}:
+
+@defopt c-basic-offset
+@vindex basic-offset (c-)
+This style variable holds the basic offset between indentation levels.
+It's factory default is 4, but all the built-in styles set it
+themselves, to some value between 2 (for @code{gnu} style) and 8 (for
+@code{bsd}, @code{linux}, and @code{python} styles).
+@end defopt
+
+The most flexible ``offset'' setting you can make in
+@code{c-offsets-alist} is a line-up function (or even a list of them),
+either one supplied by @ccmode{} (@pxref{Line-Up Functions}) or one
+you write yourself (@pxref{Custom Line-Up}).
+
+Finally, in @ref{Other Indentation} you'll find the tool of last
+resort: a hook which is called after a line has been indented.  You
+can install functions here to make ad-hoc adjustments to any line's
+indentation.
+
+@menu
+* c-offsets-alist::             
+* Interactive Customization::   
+* Line-Up Functions::           
+* Custom Line-Up::              
+* Other Indentation::           
+@end menu
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    c-offsets-alist, Interactive Customization, Customizing Indentation, Customizing Indentation
+@comment node-name, next, previous, up
+@section c-offsets-alist
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+This section explains the structure and semantics of the style
+variable @code{c-offset-alist}, the principal variable for configuring
+indentation.  Details of how to set it up, and its relationship to
+@ccmode{}'s style system are given in @ref{Style Variables}.
 
 @defopt c-offsets-alist
 @vindex offsets-alist (c-)
-This special style variable contains the mappings between syntactic
-symbols and the offsets to apply for those symbols.  It's set at mode
-initialization from a @emph{style} you may specify.  Styles are
-groupings of syntactic symbol offsets and other style variable values.
-Most likely, you'll find that one of the predefined styles will suit
-your needs.  @xref{Styles}, for an explanation of how to set up named
-styles.
+This is an alist which associates an offset with each syntactic
+symbol.  This @dfn{offset} is a rule specifying how to indent a line
+whose syntactic context matches the symbol.  @xref{Syntactic
+Analysis}.
 
-Only syntactic symbols not already bound on @code{c-offsets-alist} will
-be set from styles.  This means that any association you set on it, be
-it before or after mode initialization, will not be changed.  The
-@code{c-offsets-alist} variable may therefore be used from e.g. the
-Customization interface to easily change indentation offsets without
-having to bother about styles.  Initially @code{c-offsets-alist} is
-empty, so that all syntactic symbols are set by the style system.
+Note that the buffer-local binding of this alist in a @ccmode{} buffer
+contains an entry for @emph{every} syntactic symbol.  Its global
+binding and its settings within style specifications usually contain
+only a few entries.  @xref{Style Variables}.
 
-The offset specification associated with any particular syntactic symbol
-can be an integer, a variable name, a vector, a function or lambda
-expression, a list, or one of the following special symbols: @code{+},
-@code{-}, @code{++}, @code{--}, @code{*}, or @code{/}.  The meaning of
-these values are described in detail below.
+The offset specification associated with any particular syntactic
+symbol can be an integer, a variable name, a vector, a function or
+lambda expression, a list, or one of the following special symbols:
+@code{+}, @code{-}, @code{++}, @code{--}, @code{*}, or @code{/}.  The
+meanings of these values are described in detail below.
+
+Here is an example fragment of a @code{c-offsets-alist}, showing some
+of these kinds of offsets:
+
+@example
+((statement . 0)
+ (substatement . +)
+ (cpp-macro . [0])
+ (topmost-intro-cont . c-lineup-topmost-intro-cont)
+ (statement-block-intro . (add c-lineup-whitesmith-in-block
+                               c-indent-multi-line-block))
+ @dots{}
+@*)
+@end example
 @end defopt
 
+@deffn Command c-set-offset (@kbd{C-c C-o})
+@findex set-offset (c-)
+@kindex C-c C-o
+This command changes the entry for a syntactic symbol in the current
+binding of @code{c-offsets-alist}, or it inserts a new entry if there
+isn't already one for that syntactic symbol.
+
+You can use @code{c-set-offsets} interactively within a @ccmode{}
+buffer to make experimental changes to your indentation settings.
+@kbd{C-c C-o} prompts you for the syntactic symbol to change
+(defaulting to that of the current line) and the new offset
+(defaulting to the current offset).
+
+@code{c-set-offsets} takes two arguments when used programmatically:
+@var{symbol}, the syntactic element symbol to change and @var{offset},
+the new offset for that syntactic element.  You can call the command
+in your @file{.emacs} to change the global binding of
+@code{c-offsets-alist} (@pxref{Style Variables}); you can use it in a
+hook function to make changes from the current style.  @ccmode{}
+itself uses this function when initializing styles.
+@end deffn
+
 @cindex offset specification
-An @dfn{offset specification} in @code{c-offsets-alist} can be any of
+The ``offset specifications'' in @code{c-offsets-alist} can be any of
 the following:
 
 @table @asis
 @item An integer
-The integer specifies a relative offset.  All relative offsets will be
-added together and used to calculate the indentation relative an anchor
-position earlier in the buffer.  @xref{Indentation Calculation}, for
-details.
+The integer specifies a relative offset.  All relative
+offsets@footnote{The syntactic context @code{@w{((defun-block-intro
+2724) (comment-intro))}} would likely have two relative offsets.} will
+be added together and used to calculate the indentation relative to an
+anchor position earlier in the buffer.  @xref{Indentation
+Calculation}, for details.  Most of the time, it's probably better to
+use one of the special symbols like @code{+} than an integer (apart
+from zero).
 
-@item One of @code{+}, @code{-}, @code{++}, @code{--}, @code{*}, or @code{/}
-These special symbols describe a relative offset in multiples of the
-value of @code{c-basic-offset}:
-
-@defopt c-basic-offset
-@vindex basic-offset (c-)
-Style variable that holds the basic offset between indentation levels.
-@end defopt
+@item One of the symbols @code{+}, @code{-}, @code{++}, @code{--}, @code{*}, or @code{/}
+These special symbols describe a relative offset in multiples of
+@code{c-basic-offset}:
 
 By defining a style's indentation in terms of @code{c-basic-offset},
 you can change the amount of whitespace given to an indentation level
@@ -4660,16 +4769,13 @@ values that the special symbols correspond to:
 @code{c-basic-offset} times -0.5
 @end table
 
-@item A symbol with a variable binding
-The value of the variable must be an integer which is used as relative
-offset.
-
 @item A vector
-The first element of the vector sets the absolute indentation column,
-which will override any previously calculated indentation.  It won't
-override additional relative indentation for nested constructs,
-i.e. those whose syntactic elements occur later on in the syntactic
-context.
+The first element of the vector, an integer, sets the absolute
+indentation column.  This will override any previously calculated
+indentation, but won't override relative indentation calculated from
+syntactic elements later on in the syntactic context of the line being
+indented.  @xref{Indentation Calculation}.  Any elements in the vector
+beyond the first will be ignored.
 
 @item A function or lambda expression
 The function will be called and its return value will in turn be
@@ -4678,20 +4784,28 @@ context than just the syntactic symbol is needed to get the desired
 indentation.  @xref{Line-Up Functions}, and @ref{Custom Line-Up}, for
 details about them.
 
-@item A list
-The offset can also be a list containing several offset specifications
-which are evaluated recursively.  A list is typically only useful when
-some of the offsets are line-up functions whose return values you want
-to combine in different ways, especially when functions return
-@code{nil} if the context isn't one where they should apply.  @code{nil}
-values are always ignored when the offsets are combined.
+@item A symbol with a variable binding
+If the symbol also has a function binding, the function takes
+precedence over the variable.  Otherwise the value of the variable is
+used.  It must be an integer (which is used as relative offset) or a
+vector (an absolute offset).
 
-The first element of the list specifies the method to combine the
-offsets from the remaining elements:
+@item A list
+The offset can also be a list containing several offset
+specifications; these are evaluated recursively and combined.  A list
+is typically only useful when some of the offsets are line-up
+functions.  A common strategy is calling a sequence of functions in
+turn until one of them recognizes that it is appropriate for the
+source line and returns a non-@code{nil} value.
+
+@code{nil} values are always ignored when the offsets are combined.
+The first element of the list specifies the method of combining the
+non-@code{nil} offsets from the remaining elements:
 
 @table @code
 @item first
-Use the first offset (that doesn't evaluate to @code{nil}).
+Use the first offset that doesn't evaluate to @code{nil}.  Subsequent
+elements of the list don't get evaluated.
 @item min
 Use the minimum of all the offsets.  All must be either relative or
 absolute - they can't be mixed.
@@ -4719,67 +4833,8 @@ it doesn't work well with some of the alignment functions that returns
 @code{nil} instead of zero.  You should therefore leave
 @code{c-strict-syntax-p} set to @code{nil}.}.
 
-So, for example, because most of the default offsets are defined in
-terms of @code{+}, @code{-}, and @code{0}, if you like the general
-indentation style, but you use 4 spaces instead of 2 spaces per level,
-you can probably achieve your style just by changing
-@code{c-basic-offset} like so@footnote{You can try this interactively in
-a C buffer by typing the text that appears in italics.}:
-
-@example
-@emph{M-x set-variable RET}
-Set variable: @emph{c-basic-offset RET}
-Set c-basic-offset to value: @emph{4 RET}
-@end example
-
-@noindent
-This would change
-
-@example
-@group
-int add( int val, int incr, int doit )
-@{
-  if( doit )
-    @{
-      return( val + incr );
-    @}
-  return( val );
-@}
-@end group
-@end example
-
-@noindent
-to
-
-@example
-@group
-int add( int val, int incr, int doit )
-@{
-    if( doit )
-        @{
-            return( val + incr );
-        @}
-    return( val );
-@}
-@end group
-@end example
-
-To change indentation styles more radically, you will want to change the
-offsets associated with other syntactic symbols.  First, I'll show you
-how to do that interactively, then I'll describe how to make changes to
-your @file{.emacs} file so that your changes are more permanent.
-
-@menu
-* Interactive Customization::   
-* Permanent Customization::     
-* Line-Up Functions::           
-* Custom Line-Up::              
-* Other Indentation::           
-@end menu
-
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Interactive Customization, Permanent Customization, Customizing Indentation, Customizing Indentation
+@node    Interactive Customization, Line-Up Functions, c-offsets-alist, Customizing Indentation
 @comment node-name, next, previous, up
 @section Interactive Customization
 @cindex customization, interactive
@@ -4872,6 +4927,7 @@ to take is to always start adjusting offsets for lines higher up in the
 file, then reindent and see if any following lines need further
 adjustments.
 
+@c Move this bit to "Styles" (2005/10/7) 
 @deffn Command c-set-offset symbol offset
 @findex set-offset (c-)
 @kindex C-c C-o
@@ -4883,36 +4939,10 @@ It takes two arguments when used programmatically: @var{symbol} is the
 syntactic element symbol to change and @var{offset} is the new offset
 for that syntactic element.
 @end deffn
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Permanent Customization, Line-Up Functions, Interactive Customization, Customizing Indentation
-@comment node-name, next, previous, up
-@section Permanent Customization
-@cindex customization, permanent
-@cindex permanent customization
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@comment The contents have been moved to the node ``Configuration
-@comment Strategies''  2004/8/10.
-
-@c These bits must stay in the indentation section.  2004/8/10
-When @ccmode{} initializes a buffer, it will fill out
-@code{c-offsets-alist} with the remaining syntactic symbols according to
-the style system.
-
-Variables set like this at the top level in @file{.emacs} take effect in
-all @ccmode{} buffers, regardless of language.  The indentation style
-related variables, e.g. @code{c-offsets-alist}, that you don't set this
-way get their value from the style system (@pxref{Styles}), and they
-therefore depend on the setting of @code{c-default-style}.  Note that if
-you use Customize, this means that the greyed-out default values
-presented there might not be the ones you actually get, since the actual
-values depend on the style, which might very well be different for
-different languages.
+@c End of MOVE THIS BIT. 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Line-Up Functions, Custom Line-Up, Permanent Customization, Customizing Indentation
+@node    Line-Up Functions, Custom Line-Up, Interactive Customization, Customizing Indentation
 @comment node-name, next, previous, up
 @section Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4926,7 +4956,7 @@ one rather than indenting relative to its ``anchor point''.  @ccmode{}
 provides this flexibility with @dfn{line-up functions}.
 
 The way you associate a line-up function with a syntactic symbol is
-described in @ref{Customizing Indentation}.  @ccmode{} comes with many
+described in @ref{c-offsets-alist}.  @ccmode{} comes with many
 predefined line-up functions for common situations.  If none of these
 does what you want, you can write your own.  @xref{Custom Line-Up}.
 Sometimes, it is easier to tweak the standard indentation by adding a
@@ -4935,6 +4965,12 @@ function to @code{c-special-indent-hook} (@pxref{Other Indentation}).
 The line-up functions haven't been adapted for AWK buffers or tested
 with them.  Some of them might work serendipitously.  There shouldn't be
 any problems writing custom line-up functions for AWK mode.
+
+The calling convention for line-up functions is described fully in
+@ref{Custom Line-Up}.  Roughly speaking, the return value is either an
+offset itself (such as @code{+} or @code{[0]}) or it's @code{nil},
+meaning ``this function is inappropriate in this case - try a
+different one''.  @xref{c-offsets-alist}.
 
 The subsections below describe all the standard line-up functions,
 categorized by the sort of token the lining-up centres around.  For
@@ -5901,45 +5937,9 @@ the_larch,            @hereFn{c-lineup-topmost-intro-cont}
 
 The most flexible way to customize indentation is by writing custom
 line-up functions, and associating them with specific syntactic
-symbols (@pxref{Customizing Indentation}).  Depending on the effect
-you want, it might be better to write a @code{c-special-indent-hook}
-function rather than a line-up function (@pxref{Other Indentation}).
-
-@c FIXME!!!  This example was commented out by ACM on 2005/10/2.
-@c Maybe it should be deleted.  Maybe it (together with the rest of it
-@c lower down) should be moved into a @subsection "Example Line-Up
-@c Function".
-@c 
-@c @example
-@c @group
-@c  1: void main(int argc, char**)
-@c  2: @{
-@c  3:   cout << "There were "
-@c  4:     << argc
-@c  5:     << "arguments passed to the program"
-@c  6:     << endl;
-@c  7: @}
-@c @end group
-@c @end example
-
-@c In this example, lines 4 through 6 are assigned the @code{stream-op}
-@c syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
-@c with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
-@c are simply indented two spaces to the right of line 3.  But perhaps we'd
-@c like @ccmode{} to be a little more intelligent so that it aligns all the
-@c @samp{<<} symbols in lines 3 through 6.  To do this, we have to write a
-@c custom line-up function which finds the column of the first stream
-@c operator on the first line of the statement.  Here is sample lisp code
-@c implementing this:
-
-@c @example
-@c (defun c-lineup-streamop (langelem)
-@c   (save-excursion
-@c     (goto-char (cdr langelem))
-@c     (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
-@c     (goto-char (match-beginning 0))
-@c     (vector (current-column))))
-@c @end example
+symbols (@pxref{c-offsets-alist}).  Depending on the effect you want,
+it might be better to write a @code{c-special-indent-hook} function
+rather than a line-up function (@pxref{Other Indentation}).
 
 @ccmode{} comes with an extensive set of predefined line-up functions,
 not all of which are used by the default styles.  So there's a good
@@ -5956,9 +5956,9 @@ element (see below).  The return value is a @code{c-offsets-alist}
 offset specification: for example, an integer, a symbol such as
 @code{+}, a vector, @code{nil}@footnote{Returning @code{nil} is useful
 when the offset specification for a syntactic element is a list
-containing the line-up function (@pxref{Customizing Indentation}).},
-or even another line-up function.  Full details of these are in @ref{
-Customizing Indentation}.
+containing the line-up function (@pxref{c-offsets-alist}).}, or even
+another line-up function.  Full details of these are in @ref{
+c-offsets-alist}.
 
 Line-up functions must not move point or change the content of the
 buffer (except temporarily).  They are however allowed to do
@@ -5997,8 +5997,8 @@ through the passed argument, which is a cons cell.  Instead, you can
 get this information from the variable @code{c-syntactic-element},
 which is dynamically bound to the complete syntactic element.  The
 variable @code{c-syntactic-context} might also be useful - it gets
-dynamically bound to the complete syntactic context.  @xref{Syntactic
-Analysis}.
+dynamically bound to the complete syntactic context.  @xref{Custom
+Braces}.
 
 @ccmode{} provides a few functions to access parts of syntactic
 elements in a more abstract way.  Besides making the code easier to
@@ -6033,35 +6033,6 @@ Note that the return value of this function is always @code{nil} if
 only meaningful when used on syntactic elements taken from
 @code{c-syntactic-element} or @code{c-syntactic-context}.
 @end defun
-
-@c FIXME!!!  This bit has been commented out together with the first
-@c part of the example above.
-@c 
-@c Now, to return to the example, we want to associate the function
-@c @code{c-lineup-streamop} with the @code{stream-op} syntactic symbol.  We
-@c can do that by adding something like the following to our
-@c @code{c++-mode-hook}@footnote{It probably makes more sense to add this
-@c to @code{c++-mode-hook} than @code{c-mode-common-hook} since stream
-@c operators are only relevant for C++.}:
-
-@c @example
-@c (c-set-offset 'stream-op 'c-lineup-streamop)
-@c @end example
-
-@c Now the function looks like this after reindenting (using @kbd{C-c
-@c C-q}):
-
-@c @example
-@c @group
-@c  1: void main(int argc, char**)
-@c  2: @{
-@c  3:   cout << "There were "
-@c  4:        << argc
-@c  5:        << " arguments passed to the program"
-@c  6:        << endl;
-@c  7: @}
-@c @end group
-@c @end example
 
 Custom line-up functions can be as simple or as complex as you like, and
 any syntactic symbol that appears in @code{c-offsets-alist} can have a
@@ -6103,21 +6074,16 @@ Line-Up}).
 When the indentation engine calls this hook, the variable
 @code{c-syntactic-context} is bound to the current syntactic context
 (i.e. what you would get by typing @kbd{C-c C-s} on the source line.
-FIXME!!!  Add an @@xref here, 2005/9/9).  Note that you should not
-change point or mark inside a @code{c-special-indent-hook} function,
-i.e. you'll probably want to wrap your function in a
-@code{save-excursion}@footnote{The numerical value returned by
-@code{point} will change if you change the indentation of the line
-within a @code{save-excursion} form, but point itself will still be
-over the same piece of text.}.
+@xref{Custom Braces}.).  Note that you should not change point or mark
+inside a @code{c-special-indent-hook} function, i.e. you'll probably
+want to wrap your function in a @code{save-excursion}@footnote{The
+numerical value returned by @code{point} will change if you change the
+indentation of the line within a @code{save-excursion} form, but point
+itself will still be over the same piece of text.}.
 
-Setting @code{c-special-indent-hook} in your style definition is
-handled slightly differently than other variables.  In your style
-definition, you should set the value for @code{c-special-indent-hook}
-to a function or list of functions, which will be appended to
-@code{c-special-indent-hook} using @code{add-hook}.  That way, the
-current setting for the buffer local value of
-@code{c-special-indent-hook} won't be overridden.
+Setting @code{c-special-indent-hook} in style definitions is handled
+slightly differently from other variables---A style can only add
+functions to this hook, not remove them.  @xref{Style Variables}.
 @end defopt
 
 
@@ -6480,20 +6446,6 @@ in your @code{c-initialization-hook}, or simply modify
 @example
 (setq c-offsets-alist '((substatement-open . 0)))
 @end example
-
-@c The next was commented out tentatively by ACM, 2005/8/29, since
-@c it's a long, long time ago (1998) since M-[ae] moved over entire
-@c brace blocks.
-@c @item
-@c @kindex M-a
-@c @kindex M-e
-@c @emph{@kbd{M-a} and @kbd{M-e} used to move over entire balanced brace
-@c lists, but now they move into blocks.  How do I get the old behavior
-@c back?}
-@c 
-@c Use @kbd{C-M-f} and @kbd{C-M-b} to move over balanced brace blocks.  Use
-@c @kbd{M-a} and @kbd{M-e} to move by statements, which will also move into
-@c blocks.
 
 @item
 @cindex open paren in column zero
