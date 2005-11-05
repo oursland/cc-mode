@@ -8,9 +8,28 @@ internal improvements.
 ** Emacs 19.34 and XEmacs xxxx are no longer supported.
 The minimum versions required are Emacs 20.1 or XEmacs 20.xxxx
 
-** The CC Mode manual has been extensively revised
+** The CC Mode manual has been extensively revised.
 The information about using CC Mode has been separated from the larger
 and more difficult chapters about configuration.
+
+** The Electric action of non-alphabetic keys can now be turned off.
+The new command c-toggle-electric mode is bound to C-c C-l.  Its current
+state is displayed in the mode line with an 'l', e.g. "C/al".
+
+** Changes in Minor Modes and Key Sequences
+*** c-toggle-auto-hungry-state (formerly bound to C-c C-t) has been removed.
+
+*** c-toggle-auto-state (C-c C-t) has been renamed to c-toggle-auto-newline.
+c-toggle-auto-state remains as an alias.
+
+*** c-toggle-hungry-state is now bound to C-c C-y
+It was formerly bound to C-c C-d.
+
+*** c-hungry-backspace and c-hungry-delete-forwards
+now have permanent key bindings, respectively C-c C-DEL (or C-c DEL, for
+the benefit of TTYs) and C-c C-d.
+
+*** The new command c-toggle-electric-mode is bound to C-c C-l
 
 ** AWK support
 AWK Mode is now better integrated into CC Mode as a whole.  In detail:

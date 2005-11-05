@@ -292,29 +292,34 @@ control).  See \"cc-mode.el\" for more info."
   ;; versions it's possible to do the same by using `function-key-map'.)
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
+  (define-key c-mode-base-map [?\C-c ?\d] 'c-hungry-backspace)
+  (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-backspace)
   (when (boundp 'delete-key-deletes-forward)
     ;; In XEmacs we fix the forward and backward deletion behavior by
     ;; binding the keysyms for the [delete] and [backspace] keys
     ;; directly, and use `delete-forward-p' or
     ;; `delete-key-deletes-forward' to decide what [delete] should do.
     (define-key c-mode-base-map [delete]    'c-electric-delete)
-    (define-key c-mode-base-map [backspace] 'c-electric-backspace))
+    (define-key c-mode-base-map [backspace] 'c-electric-backspace)
+    (define-key c-mode-base-map [?\C-c backspace] 'c-hungry-backspace) ; 2005/11/5:  ACM, CHECK THESE!!!
+    (define-key c-mode-base-map [?\C-c \C-backspace] 'c-hungry-backspace)) ; FIXME!!!
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
   (define-key c-mode-base-map "/"         'c-electric-slash)
-  (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
   (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
   (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-newline)
   (define-key c-mode-base-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-base-map "\C-c\C-c"  'comment-region)
-  (define-key c-mode-base-map "\C-c\C-d"  'c-toggle-hungry-state)
+  (define-key c-mode-base-map "\C-c\C-d"  'c-hungry-delete-forward)
   (define-key c-mode-base-map "\C-c\C-l"  'c-toggle-electric-state)
   (define-key c-mode-base-map "\C-c\C-o"  'c-set-offset)
+  (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
   (define-key c-mode-base-map "\C-c\C-s"  'c-show-syntactic-information)
   ;; (define-key c-mode-base-map "\C-c\C-t"  'c-toggle-auto-hungry-state)  Commented out by ACM, 2005-03-05.
   (define-key c-mode-base-map "\C-c."     'c-set-style)
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
+  (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)
   )
 
 ;; We don't require the outline package, but we configure it a bit anyway.

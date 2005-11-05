@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.226 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.227 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -978,13 +978,14 @@ it also enables electric minor mode.  Programmatically, if the
 function is given a numeric @var{arg}, a positive value will turn on
 auto-newline minor mode and a negative value will turn it off.
 
-@item @kbd{C-c C-d} (@code{c-toggle-hungry-state})
-@kindex C-c C-d
+@item @kbd{C-c C-y} (@code{c-toggle-hungry-state})
+@kindex C-c C-y
 @findex c-toggle-hungry-state
 @findex toggle-hungry-state (c-)
 Toggle hungry-delete minor mode.  Programmatically, if the function is
 given a numeric @var{arg}, a positive value will turn on hungry-delete
-minor mode and a negative value will turn it off.
+minor mode and a negative value will turn it off.  (Prior to @ccmode{}
+5.31, this command was bound to @kbd{C-c C-d}.)
 
 @item @kbd{M-x c-toggle-syntactic-indentation}
 @findex c-toggle-syntactic-indentation
@@ -1256,7 +1257,7 @@ There are two different ways you can use hungry deletion:
 
 @table @asis
 @item Using @dfn{Hungry Delete Mode} with @kbd{@key{DEL}} and @kbd{C-d}
-Here you toggle Hungry Delete minor mode with @kbd{C-c C-d}
+Here you toggle Hungry Delete minor mode with @kbd{C-c C-y}
 (@pxref{Minor Modes}.)  This makes @kbd{@key{DEL}} and @kbd{C-d} do
 forward and backwards hungry deletion.
 
@@ -1304,34 +1305,29 @@ default value is @code{delete-char}.
 @end table
 
 @item Using Distinct Bindings
-The other (newer) way to use hungry deletion is to bind
-@code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
-to suitable key sequences rather than using the minor mode toggling.
-For example, to bind @kbd{C-c C-d} and @kbd{C-c DEL} (matching plain
-@kbd{C-d} and @kbd{DEL}), put this near the top of your @file{.emacs}
-file:
+The other (newer and recommended) way to use hungry deletion is to
+perform @code{c-hungry-backspace} and @code{c-hungry-delete-forward}
+directly through their key sequences rather than using the minor mode
+toggling.
 
-@example
-(add-hook
-  'c-mode-initialization-hook
-  (lambda ()
-    (define-key c-mode-base-map
-                [?\C-c ?\d] 'c-hungry-backspace)
-    (define-key c-mode-base-map
-                [?\C-c ?\C-d] 'c-hungry-delete-forward)))
-@end example
-
-@deffn Command c-hungry-backspace
+@table @asis
+@item @kbd{C-c C-@key{DEL}} or @kbd{C-c @key{DEL}} (@code{c-hungry-backspace})
+@kindex C-c C-DEL
+@kindex C-c DEL
+@findex c-hungry-backspace
 @findex hungry-backspace (c-)
 Delete any amount of whitespace in the backwards direction (regardless
-whether hungry-delete mode is enabled or not).
-@end deffn
+whether hungry-delete mode is enabled or not).  This command is bound
+to two key sequences, since the more natural one, @kbd{C-c
+C-@key{DEL}} is sometimes difficult to type at a character terminal.
 
-@deffn Command c-hungry-delete-forward
+@item @kbd{C-c C-d} (@code{c-hungry-delete-forward})
+@kindex C-c C-d
+@findex c-hungry-delete-forward
 @findex hungry-delete-forward (c-)
 Delete any amount of whitespace in the forward direction (regardless
 whether hungry-delete mode is enabled or not).
-@end deffn
+@end table
 @end table
 
 Above we have only talked about the @kbd{DEL} and @kbd{C-d} key events,
@@ -6232,8 +6228,6 @@ anchoring position to indent the line in that case.
   (define-key c-mode-base-map "\C-m" 'c-context-line-break)
   (define-key c-mode-base-map [?\C-\M-a] 'c-beginning-of-defun)
   (define-key c-mode-base-map [?\C-\M-e] 'c-end-of-defun)
-  (define-key c-mode-base-map [?\C-c ?\d] 'c-hungry-backspace)
-  (define-key c-mode-base-map [?\C-c ?\C-d] 'c-hungry-delete-forward))
 (add-hook 'c-initialization-hook 'my-c-initialization-hook)
 
 @c FIXME!!!  What does the following do?  It doesn't look sensible
