@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.227 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.228 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -184,10 +184,10 @@ functions, classes etc - there are other packages for that.
 @menu
 * Introduction::                
 * Overview::                    
-* Getting Connected::           
+* Getting Started::             
 * Commands::                    
 * Font Locking::                
-* Config Strategies::           
+* Config Basics::               
 * Custom Filling and Breaking::  
 * Custom Auto-newlines::        
 * Clean-ups::                   
@@ -203,7 +203,7 @@ functions, classes etc - there are other packages for that.
 * Mailing Lists and Bug Reports::  
 * Command and Function Index::  
 * Variable Index::              
-* Concept Index::               
+* Concept Index::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -226,7 +226,7 @@ Font Locking
 * Doc Comments::                
 * AWK Mode Font Locking::       
 
-Configuration Strategies
+Configuration Basics
 
 * CC Hooks::                    
 * Style Variables::             
@@ -351,7 +351,7 @@ also like to thank all the @ccmode{} victims who help enormously
 during the early beta stages of @ccmode{}'s development.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Overview, Getting Connected, Introduction, Top
+@node    Overview, Getting Started, Introduction, Top
 @comment  node-name,  next,  previous,  up@cindex organization of the manual
 @chapter Overview of the Manual
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -420,14 +420,92 @@ project - whether for updating @ccmode{} or submitting bug reports.
 Finally, there are the customary indices.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting Connected, Commands, Overview, Top
+@node    Getting Started, Commands, Overview, Top
 @comment node-name, next, previous, up
-@chapter Getting Connected
+@chapter Getting Started
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If you got this version of @ccmode{} with Emacs or XEmacs, it should
 work just fine right out of the box.  Note however that you might not
-have the latest @ccmode{} release and might want to upgrade your copy.
+have the latest @ccmode{} release and might want to upgrade your copy
+(see below).
+
+You should probably start by reading the entire chapter
+@ref{Commands}) to get an overview of @ccmode{}'s capabilities.
+
+After trying out some commands, you may dislike some aspects of
+@ccmode{}'s default configuration.  Here is an outline of how to
+change some of the settings that newcomers to @ccmode{} most often
+want to change:
+
+@table @asis
+@item c-basic-offset
+This Lisp variable holds an integer, the number of columns @ccmode{}
+indents nested code.  To set this value to 6, customize
+@code{c-basic-offset} or put this into your @file{.emacs}:
+
+@example
+(setq c-basic-offset 6)
+@end example
+
+@item The (indentation) style
+The basic ``shape'' of indentation created by @ccmode{}---by default,
+this is @code{gnu} style (except for Java and AWK buffers).  A list of
+the availables styles and their descriptions can be found in
+@ref{Built-in Styles}.  A complete specification of the @ccmode{}
+style system, including how to create your own style, can be found in
+the chapter @ref{Styles}.  To set your style to @code{linux}, either
+customize @code{c-default-style} or put this into your @file{.emacs}:
+
+@example
+(setq c-default-style '((java-mode . "java")
+                        (awk-mode . "awk")
+                        (other . "linux")))
+@end example
+
+@item Electric Indentation
+Normally, when you type ``punctuation'' characters such as @samp{;} or
+@samp{@{}, @ccmode{} instantly reindents the current line.  This can
+be disconcerting until you get used to it.  To disable @dfn{electric
+indentation} in the current buffer, type @kbd{C-c C-l}.  Type the same
+thing to enable it again.  To have electric indentation disabled by
+default, put the following into your @file{.emacs} mode@footnote{There
+is no ``easy customization'' facility for making this change.}:
+
+@example
+(setq-default c-electric-flag nil)
+@end example
+
+@noindent
+Details of of this and other similar ``Minor Modes'' appear in the
+section @ref{Minor Modes}.
+
+@item Making the @key{RET} key indent the new line
+The standard Emacs binding for @key{RET} just adds a new line.  If you
+want it to reindent the new line as well, rebind the key.  Note that
+the action of rebinding will fail if the pertinent keymap doesn't yet
+exist---we thus need to delay the action until after @ccmode{} has
+been loaded.  Put the following code into your @file{.emacs}:
+
+@example
+(defun my-make-CR-do-indent ()
+  (define-key c-mode-base-map "\C-m" 'c-context-line-break))
+(add-hook 'c-initialization-hook 'my-make-CR-do-indent)
+@end example
+
+@noindent
+This example demonstrates the use of a very powerful @ccmode{} (and
+Emacs) facility, the hook.  The use of @ccmode{}'s hooks are described
+in @ref{CC Hooks}.
+@end table
+
+All these settings should occur in your @file{.emacs} @emph{before}
+any @ccmode{} buffers get loaded---in particular, before any call of
+@code{desktop-read}.
+
+As you get to know the mode better, you may want to make more
+ambitious changes to your configuration.  For this, you should start
+reading the chapter @ref{Config Basics}.
 
 If you are upgrading an existing @ccmode{} installation, please see
 the @file{README} file for installation details.  In particular, if
@@ -465,7 +543,7 @@ where @samp{XX} is the minor release number.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Commands, Font Locking, Getting Connected, Top
+@node    Commands, Font Locking, Getting Started, Top
 @comment node-name, next, previous, up
 @chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1435,7 +1513,7 @@ ask for help in the standard (X)Emacs forums.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Font Locking, Config Strategies, Commands, Top
+@node    Font Locking, Config Basics, Commands, Top
 @comment node-name, next, previous, up
 @chapter Font Locking
 @cindex font locking
@@ -1801,9 +1879,9 @@ escaped newline.  The @samp{\} is highlighted.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Config Strategies, Custom Filling and Breaking, Font Locking, Top
+@node    Config Basics, Custom Filling and Breaking, Font Locking, Top
 @comment  node-name,  next,  previous,  up
-@chapter Configuration Strategies
+@chapter Configuration Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 You configure @ccmode{} by setting Lisp variables and calling (and
@@ -1948,7 +2026,7 @@ could achieve this with code like this in your @file{.emacs}:
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    CC Hooks, Style Variables, Config Strategies, Config Strategies
+@node    CC Hooks, Style Variables, Config Basics, Config Basics
 @comment node-name, next, previous, up
 @section Hooks
 @cindex mode hooks
@@ -2022,7 +2100,7 @@ file.
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Style Variables, Styles, CC Hooks, Config Strategies
+@node    Style Variables, Styles, CC Hooks, Config Basics
 @comment node-name, next, previous, up
 @section Style Variables
 @cindex styles
@@ -2061,7 +2139,7 @@ behavior, you can set the variable
 @code{c-old-style-variable-behavior} to non-@code{nil}.}.  This
 ``otherwise'' happens, for example, when you've set the variable with
 @code{setq} at the top level of your @file{.emacs} (@pxref{Config
-Strategies}).
+Basics}).
 
 @item
 The style variable @code{c-offsets-alist} (@pxref{c-offsets-alist}) is
@@ -2110,7 +2188,7 @@ Commas});@*
 (@pxref{Custom Macros}).
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Styles,  , Style Variables, Config Strategies
+@node    Styles,  , Style Variables, Config Basics
 @comment node-name, next, previous, up
 @section Styles
 @cindex styles
@@ -2143,7 +2221,7 @@ existing code using these styles.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If you're lucky, one of @ccmode{}'s built-in styles might be just
-what you're looking for.  These include:
+what you're looking for.  These are:
 
 @table @code
 @item gnu
@@ -2205,8 +2283,8 @@ This is a special style created by you.  It consists of the factory
 defaults for all the style variables as modified by the customizations
 you do either with the Customization interface or by writing
 @code{setq}s and @code{c-set-offset}s at the top level of your
-@file{.emacs} file (@pxref{Config Strategies}).  The style system
-creates this style as part of its initialization and doesn't modify it
+@file{.emacs} file (@pxref{Config Basics}).  The style system creates
+this style as part of its initialization and doesn't modify it
 afterwards.
 @end table
 
@@ -2243,9 +2321,8 @@ in Java and AWK modes where it's @code{java} and @code{awk}.
 
 Remember that if you set a style variable with the Customization
 interface or at the top level of your @file{.emacs} file before the
-style system is initialised (@pxref{Config Strategies}), this setting
-will override the one that the style system would have given the
-variable.
+style system is initialised (@pxref{Config Basics}), this setting will
+override the one that the style system would have given the variable.
 
 @defopt c-default-style
 @vindex default-style (c-)
@@ -2431,7 +2508,7 @@ set a style variable in a local variable block, the explicit setting
 will take priority.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Filling and Breaking, Custom Auto-newlines, Config Strategies, Top
+@node    Custom Filling and Breaking, Custom Auto-newlines, Config Basics, Top
 @comment node-name, next, previous, up
 @chapter Customizing Filling and Line Breaking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3359,8 +3436,8 @@ of code is done according to its syntactic structure.  When it's
 @code{nil}, every line is just indented to the same level as the
 previous one, and @kbd{TAB} (@code{c-indent-command}) adjusts the
 indentation in steps of @code{c-basic-offset}.  The current style
-(@pxref{Config Strategies}) then has no effect on indentation, nor do
-any of the variables associated with indentation, not even
+(@pxref{Config Basics}) then has no effect on indentation, nor do any
+of the variables associated with indentation, not even
 @code{c-special-indent-hook}.
 @end defopt
 
@@ -4626,8 +4703,8 @@ variable @code{c-offsets-alist}, which gives an @dfn{offset} (an
 indentation rule) for each syntactic symbol.  Its structure and
 semantics are completely described in @ref{c-offsets-alist}.  The
 various ways you can set the variable, including the use of the
-@ccmode{} style system, are described in @ref{Config Strategies} and
-its sections, in particular @ref{Style Variables}.
+@ccmode{} style system, are described in @ref{Config Basics} and its
+sections, in particular @ref{Style Variables}.
 
 The simplest and most used kind of ``offset'' setting in
 @code{c-offsets-alist} is in terms of multiples of
@@ -6292,7 +6369,7 @@ leftmost column.  This is actually an Emacs constraint, as embodied in
 the @code{beginning-of-defun} function which @ccmode{} uses heavily.  If
 you hang top-level open braces on the right side of the line, then you
 might want to set the variable @code{defun-prompt-regexp} to something
-reasonable, however that ``something reasonable'' is difficult to
+reasonable; however, that ``something reasonable'' is difficult to
 define, so @ccmode{} doesn't do it for you.
 
 @vindex c-Java-defun-prompt-regexp
@@ -6394,20 +6471,9 @@ Manual}, which has more powerful reformatting capabilities than
 
 @itemize @bullet
 @item
-@kindex C-x h
-@kindex C-M-\
-@emph{How do I reindent the whole file?}
+@emph{How can I change the indent level from 4 spaces to 2 spaces?}
 
-Visit the file and hit @kbd{C-x h} to mark the whole buffer. Then hit
-@kbd{C-M-\}.
-
-@item
-@kindex C-M-q
-@kindex C-M-u
-@emph{How do I reindent the current block?}
-
-First move to the brace which opens the block with @kbd{C-M-u}, then
-reindent that expression with @kbd{C-M-q}.
+Set the variable @code{c-basic-offset}.  @xref{Getting Started}.
 
 @item
 @kindex RET
@@ -6422,8 +6488,31 @@ too by adding this to your @code{c-initialization-hook}:
 (define-key c-mode-base-map "\C-m" 'c-context-line-break)
 @end example
 
-This is a very common question.  If you want this to be the default
-behavior, don't lobby us, lobby RMS!  @t{:-)}
+@xref{Getting Started}.  This is a very common question.  If you want
+this to be the default behavior, don't lobby us, lobby RMS!  @t{:-)}
+
+@item
+@emph{How do I stop my code jumping all over the place when I type?}
+
+Deactivate ``electric minor mode'' with @kbd{C-c C-l}.  @xref{Getting
+Started}.
+
+@item
+@kindex C-x h
+@kindex C-M-\
+@emph{How do I reindent the whole file?}
+
+Visit the file and hit @kbd{C-x h} to mark the whole buffer. Then hit
+@kbd{C-M-\}.  @xref{Indentation Commands}.
+
+@item
+@kindex C-M-q
+@kindex C-M-u
+@emph{How do I reindent the current block?}
+
+First move to the brace which opens the block with @kbd{C-M-u}, then
+reindent that expression with @kbd{C-M-q}.  @xref{Indentation
+Commands}.
 
 @item
 @emph{I put @code{(c-set-offset 'substatement-open 0)} in my
@@ -6434,8 +6523,8 @@ This means that @ccmode{} hasn't yet been loaded into your Emacs
 session by the time the @code{c-set-offset} call is reached, most
 likely because @ccmode{} is being autoloaded.  Instead of putting the
 @code{c-set-offset} line in your top-level @file{.emacs} file, put it
-in your @code{c-initialization-hook}, or simply modify
-@code{c-offsets-alist} directly:
+in your @code{c-initialization-hook} (@pxref{CC Hooks}), or simply
+modify @code{c-offsets-alist} directly:
 
 @example
 (setq c-offsets-alist '((substatement-open . 0)))
@@ -6463,12 +6552,6 @@ This heuristic is built into the core syntax analysis routines in
 21.1 it became possible to turn it off@footnote{Using the variable
 @code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
 there since it's got its own system to keep track of blocks.
-
-@item
-@emph{How do I stop my code jumping all over the place when I type?}
-
-Deactivate ``electric minor mode'' with @kbd{C-c C-l}.  @ref{Minor
-Modes}.
 
 @end itemize
 
