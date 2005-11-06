@@ -6313,7 +6313,7 @@ comment at the start of cc-engine.el for more info."
 (defun c-beginning-of-decl-1 (&optional lim)
   ;; Go to the beginning of the current declaration, or the beginning
   ;; of the previous one if already at the start of it.  Point won't
-  ;; be moved out of any surrounding paren.  Return a cons cell on the
+  ;; be moved out of any surrounding paren.  Return a cons cell of the
   ;; form (MOVE . KNR-POS).  MOVE is like the return value from
   ;; `c-beginning-of-statement-1'.  If point skipped over some K&R
   ;; style argument declarations (and they are to be recognized) then
@@ -6627,7 +6627,7 @@ comment at the start of cc-engine.el for more info."
   ;; braces
   ;;
   ;; N.B.: This algorithm can potentially get confused by cpp macros
-  ;; places in inconvenient locations.  Its a trade-off we make for
+  ;; placed in inconvenient locations.  It's a trade-off we make for
   ;; speed.
   ;;
   ;; This function might do hidden buffer changes.
