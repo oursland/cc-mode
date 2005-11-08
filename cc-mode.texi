@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.228 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.229 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -385,7 +385,7 @@ increasing detail.
 
 @itemize @bullet
 @item
-The chapter ``Configuration Strategies'' tells you @emph{how} to write
+The chapter ``Configuration Basics'' tells you @emph{how} to write
 customizations - whether in hooks, in styles, in both, or in neither,
 depending on your needs.  It describes the @ccmode{} style system and
 lists the standard styles that @ccmode{} supplies.
@@ -431,7 +431,7 @@ have the latest @ccmode{} release and might want to upgrade your copy
 (see below).
 
 You should probably start by reading the entire chapter
-@ref{Commands}) to get an overview of @ccmode{}'s capabilities.
+@ref{Commands} to get an overview of @ccmode{}'s capabilities.
 
 After trying out some commands, you may dislike some aspects of
 @ccmode{}'s default configuration.  Here is an outline of how to
@@ -531,17 +531,6 @@ Using CC Mode version 5.XX
 where @samp{XX} is the minor release number.
 @end deffn
 
-@c FIXME!!!  This bit plonked here, 2005/10/9 (no, 2005/11/4)@*
-@c So, for example, because most of the default offsets are defined in
-@c terms of @code{+}, @code{-}, and @code{0}, if you like the general
-@c indentation style, but you use 4 spaces instead of 2 spaces per level,
-@c you can probably achieve your style just by changing
-@c @code{c-basic-offset} like so@footnote{You can try this interactively in
-@c a C buffer by typing the text that appears in italics.}:
-@c @*End of plonked bit.
-
-
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Commands, Font Locking, Getting Started, Top
 @comment node-name, next, previous, up
@@ -584,11 +573,11 @@ structures.
 @cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-The following list of commands reindent C constructs.  Note that when
-you change your coding style, either interactively or through some other 
+The following commands reindent C constructs.  Note that when you
+change your coding style, either interactively or through some other
 means, your file does @emph{not} automatically get reindented.  You
-will need to execute one of the following commands to see the effects of 
-your changes.
+will need to execute one of the following commands to see the effects
+of your changes.
 
 @cindex GNU indent program
 Also, variables like @code{c-hanging-*} and @code{c-cleanup-list}
@@ -876,6 +865,8 @@ negative argument, move in the opposite direction.
 These key sequences are not bound in AWK Mode, which doesn't have
 preprocessor statements.
 
+@c FIXME!!!  These should probably be removed after the subword stuff
+@c has been documented.  ACM, 2005/11/6.
 @item @kbd{M-x c-backward-into-nomenclature}
 @itemx @kbd{M-x c-forward-into-nomenclature}
 @findex c-backward-into-nomenclature
@@ -883,9 +874,9 @@ preprocessor statements.
 @findex backward-into-nomenclature (c-)
 @findex forward-into-nomenclature (c-)
 A popular programming style, especially for object-oriented languages
-such as C++ is to write symbols in a mixed case format, where the first
-letter of each word is capitalized, and not separated by underscores.
-E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
+such as C++ is to write symbols in a mixed case format, where the
+first letter of each word is capitalized, and not separated by
+underscores.  E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 
 These commands move backward or forward to the beginning of the next
 capitalized word.  With prefix argument @var{n}, move @var{n} times.
@@ -925,7 +916,6 @@ string literals, the new line gets the same indentation as the
 previous nonempty line.@footnote{You can change this default by
 setting the @code{string} syntactic symbol (@pxref{Syntactic Symbols}
 and @pxref{Customizing Indentation})}.
-@c FIXME: Crossref.  FIXED!!!, ACM, 2005/8/27.
 
 @table @asis
 @item @kbd{M-q} (@code{c-fill-paragraph})
@@ -1884,9 +1874,16 @@ escaped newline.  The @samp{\} is highlighted.
 @chapter Configuration Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@cindex Emacs Initiliazation File
+@cindex Configuration
 You configure @ccmode{} by setting Lisp variables and calling (and
-perhaps writing) Lisp functions, which is usually done by adding code
-to your @file{.emacs} file.
+perhaps writing) Lisp functions@footnote{DON'T PANIC!!!  This isn't
+difficult.}, which is usually done by adding code to an Emacs
+initialization file.  This file might be @file{site-start.el} or
+@file{.emacs} or @file{init.el} or @file{default.el} or perhaps some
+other file.  @xref{Init File,,,@emacsman{}, @emacsmantitle{}}.  For
+the sake of conciseness, we just call this file ``your @file{.emacs}''
+throughout the rest of the manual.
 
 Several of these variables (currently 16), are known collectively as
 @dfn{style variables}.  @ccmode{} provides a special mechanism, known
@@ -1895,7 +1892,7 @@ to ``inherit'' settings from one style into another, and so on.  Style
 variables remain ordinary Lisp variables, whose values can be read and
 changed independently of the style system.  @xref{Style Variables}.
 
-There are several ways you can write this code, depending on the
+There are several ways you can write the code, depending on the
 precise effect you want---they are described lower down on this page.
 If you make conflicting settings in several of these ways, the way
 that takes precedence is the one that appears latest in this list:
@@ -1939,7 +1936,7 @@ your @file{.emacs} to place the call to @code{desktop-read} @emph{after}
 the customizations.
 
 The first initialization of @ccmode{} puts a snapshot of the
-configuration settings into the special style ``user''.
+configuration settings into the special style @code{user}.
 @xref{Built-in Styles}.
 
 For basic use of Emacs, either of these ways of configuring is
@@ -1980,7 +1977,7 @@ with a name.  At any time, exactly one style is active in each
 @ccmode{} buffer, either the one you have selected or a default.
 @ccmode{} is delivered with several existing styles.  Additionally,
 you can create your own styles, possibly based on these existing
-styles.  If you worked in a programming group called the ``Free
+styles.  If you worked in a programming team called the ``Free
 Group'', which had its own coding standards, you might well have this
 in your @file{.emacs} file:
 
@@ -2001,9 +1998,9 @@ end of the source file.  @xref{File Styles}.
 
 @item Hooks with Styles
 For ultimate flexibility, you can use hooks and styles together.  For
-example, if your group were developing a product which required a
+example, if your team were developing a product which required a
 Linux driver, you'd probably want to use the ``linux'' style for the
-driver, and your own group's style for the rest of the code.  You
+driver, and your own team's style for the rest of the code.  You
 could achieve this with code like this in your @file{.emacs}:
 
 @example
@@ -2015,6 +2012,20 @@ could achieve this with code like this in your @file{.emacs}:
        "linux"
      "free-group-style")))
 (add-hook 'c-mode-hook 'my-c-mode-hook)
+@end group
+@end example
+
+In a programming team, a hook is a also a good place for each member
+to put his own personal preferences.  For example, you might be the
+only person in your team who likes Auto-newline minor mode.  You could
+have it enabled by default by placing the following in your
+@file{.emacs}:
+
+@example
+@group
+(defun my-turn-on-auto-newline ()
+  (c-toggle-auto-newline 1))
+(add-hook 'c-mode-common-hook 'my-turn-on-auto-newline)
 @end group
 @end example
 @end table
@@ -2033,7 +2044,7 @@ could achieve this with code like this in your @file{.emacs}:
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @c The node name is "CC Hooks" rather than "Hooks" because of a bug in
 @c some older versions of Info, e.g. the info.el in GNU Emacs 21.3.
-@c If you go to "Config Stragegies" and hit <CR> on the xref to "CC
+@c If you go to "Config Basics" and hit <CR> on the xref to "CC
 @c Hooks" the function Info-follow-reference searches for "*Note: CC
 @c Hooks" from the beginning of the page.  If this node were instead
 @c named "Hooks", that search would spuriously find "*Note:
@@ -2395,11 +2406,10 @@ variable and the value it is to be set to when the style is later
 activated.@footnote{Note that if the variable has been given a value
 by the Customization interface or a @code{setq} at the top level of
 your @file{.emacs}, this value will override the one the style system
-tries to give it.}  The variable can be either a @ccmode{} style
-variable or an arbitrary Emacs variable.  In the latter case, it is
-@emph{not} made buffer-local by the @ccmode{} style system.
-@c FIXME!!!  Do I want an xref in the above footnote, to "Config
-@c Strategies" or the like?  ACM, 2005/8/28.
+tries to give it. @xref{Config Basics}} The variable can be either a
+@ccmode{} style variable or an arbitrary Emacs variable.  In the
+latter case, it is @emph{not} made buffer-local by the @ccmode{} style
+system.
 @end defvr
 
 @footnote{Note that if the variable has been given a value by the
@@ -3426,8 +3436,7 @@ described in @ref{c-offsets-alist}.
 In exceptional circumstances, the syntax directed indentation
 described here may be a nuisance rather than a help.  You can disable
 it by setting @code{c-syntactic-indentation} to @code{nil}.  (To set
-the variable interactively, @ref{Minor Modes}).  @c FIXME!!! document
-@c c-toggle-syntactic-indentation in "Minor Modes".  2005/10/4.
+the variable interactively, @ref{Minor Modes}).
 
 @defopt c-syntactic-indentation
 @vindex syntactic-indentation (c-)
@@ -3666,8 +3675,8 @@ The region between a function definition's argument list and the
 function opening brace (excluding K&R argument declarations).  In C,
 you cannot put anything but whitespace and comments in this region,
 however in C++ and Java, @code{throws} declarations and other things
-can appear here.  @ref{Literal Symbols}.  @emph{FIXME!!!  Can it not
-go somewhere better?}
+can appear here.  @ref{Literal Symbols}. @c @emph{FIXME!!!  Can it not
+@c go somewhere better?}
 @item knr-argdecl-intro
 First line of a K&R C argument declaration.  @ref{K&R Symbols}.
 @item knr-argdecl
@@ -3753,7 +3762,7 @@ the same line as the arglist opening paren.  @ref{Paren List Symbols}.
 The solo close paren of an argument list.  @ref{Paren List Symbols}.
 @item stream-op
 Lines continuing a stream operator (C++ only).  @ref{Literal
-Symbols}.  @emph{FIXME!!!  Can this not be moved somewhere better?}
+Symbols}. @c @emph{FIXME!!!  Can this not be moved somewhere better?}
 @item inclass
 The line is nested inside a class definition.  @ref{Class Symbols}.
 @item cpp-macro
@@ -5050,7 +5059,6 @@ categorized by the sort of token the lining-up centres around.  For
 each of these functions there is a ``works with'' list that indicates
 which syntactic symbols the function is intended to be used with.
 
-@c Move these macro definition to the end of the node.  FIXME!!! 2005/9/18 
 @macro workswith
 @emph{Works with:@ }
 @end macro
@@ -6361,17 +6369,19 @@ farther this position is from the current insertion point, the slower it
 gets.
 
 @findex beginning-of-defun
-@findex defun-prompt-regexp
-One of the simplest things you can do to reduce scan time, is make sure
-any brace that opens a top-level construct@footnote{E.g. a function in
-C, or outermost class definition in C++ or Java.} always appears in the
-leftmost column.  This is actually an Emacs constraint, as embodied in
-the @code{beginning-of-defun} function which @ccmode{} uses heavily.  If
-you hang top-level open braces on the right side of the line, then you
-might want to set the variable @code{defun-prompt-regexp} to something
-reasonable; however, that ``something reasonable'' is difficult to
-define, so @ccmode{} doesn't do it for you.
+In earlier versions of @ccmode{}, we used to recommend putting the
+opening brace of a top-level construct@footnote{E.g. a function in C,
+or outermost class definition in C++ or Java.} into the leftmost
+column.  Earlier still, this used to be a rigid Emacs constraint, as
+embodied in the @code{beginning-of-defun} function.  @ccmode now
+caches syntactic information much better, so that the delay caused by
+searching for such a brace when it's not in column 0 is minimal,
+except perhaps when you've just moved a long way inside the file.
+Don't forget to rebind @kbd{C-M-a} and @kbd{C-M-e} to the @ccmode{}
+functions @code{beginning-of-defun} and @code{end-of-defun} if you're
+going to be hanging your braces! @xref{Sample .emacs File}.
 
+@findex defun-prompt-regexp
 @vindex c-Java-defun-prompt-regexp
 @vindex Java-defun-prompt-regexp (c-)
 A special note about @code{defun-prompt-regexp} in Java mode: The common
@@ -6460,8 +6470,14 @@ If you want to reformat old code, you're probably better off using some
 other tool instead, e.g. @ref{Top, , GNU indent, indent, The `indent'
 Manual}, which has more powerful reformatting capabilities than
 @ccmode{}.
-@end itemize
 
+@item
+The support for C++ templates (in angle brackets) is not yet complete.
+When a non-nested template is used in a declaration, @ccmode{} indents
+it and font-locks it OK.  Templates used in expressions, and nested
+templates do not fare so well.  Sometimes a workaround is to refontify
+the expression after typing the closing @samp{>}.
+@end itemize
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    FAQ, Updating CC Mode, Limitations and Known Bugs, Top
