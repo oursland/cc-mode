@@ -47,13 +47,13 @@
 xemacs
 @end macro
 @macro emacsmantitle
-"XEmacs User's Manual"
+XEmacs User's Manual
 @end macro
 @macro lispref
 lispref
 @end macro
 @macro lispreftitle
-"XEmacs Lisp Reference Manual"
+XEmacs Lisp Reference Manual
 @end macro
 @end ifset
 
@@ -62,13 +62,13 @@ lispref
 emacs
 @end macro
 @macro emacsmantitle
-"GNU Emacs Manual"
+GNU Emacs Manual
 @end macro
 @macro lispref
 elisp
 @end macro
 @macro lispreftitle
-"GNU Emacs Lisp Reference Manual"
+GNU Emacs Lisp Reference Manual
 @end macro
 @end ifclear
 
@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.229 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.230 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -203,7 +203,7 @@ functions, classes etc - there are other packages for that.
 * Mailing Lists and Bug Reports::  
 * Command and Function Index::  
 * Variable Index::              
-* Concept Index::
+* Concept Index::               
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -211,6 +211,7 @@ functions, classes etc - there are other packages for that.
 Commands
 
 * Indentation Commands::        
+* Comment Command::             
 * Movement Commands::           
 * Filling and Breaking::        
 * Minor Modes::                 
@@ -557,6 +558,7 @@ structures.
 
 @menu
 * Indentation Commands::        
+* Comment Command::             
 * Movement Commands::           
 * Filling and Breaking::        
 * Minor Modes::                 
@@ -567,7 +569,7 @@ structures.
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Commands, Movement Commands, Commands, Commands
+@node    Indentation Commands, Comment Command, Commands, Commands
 @comment node-name, next, previous,up
 @section Indentation Commands
 @cindex indentation
@@ -601,21 +603,94 @@ out correctly most of the time, though.
 
 Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
-hitting @kbd{TAB} on every line of the region.
+hitting @key{TAB} on every line of the region.
 
 These commands indent code:
 
 @table @asis
-@item @kbd{TAB} (@code{c-indent-command})
+@item @kbd{@key{TAB}} (@code{c-indent-command})
 @kindex TAB
 @findex c-indent-command
 @findex indent-command (c-)
-Indents the current line.  The actual behavior is controlled by several
-variables, described below.  See @code{c-tab-always-indent},
-@code{c-insert-tab-function}, and @code{indent-tabs-mode}.  With a
-numeric argument, this command rigidly indents the region, preserving
-the relative indentation among the lines.
+This command indents the current line.  That is all you need to know
+about it for normal use.
 
+@code{c-indent-command} does different things, depending on the
+settting of @code{c-syntactic-indentation} (@pxref{Indentation Engine
+Basics}):
+
+@itemize @bullet
+@item 
+When it's non-@code{nil} (which it normally is), the command indents
+the line according to its syntactic context.  With a prefix argument
+(@kbd{C-u @key{TAB}}), it will re-indent the entire
+expression@footnote{this is only useful for a line starting with a
+comment opener or an opening brace, parenthesis, or string quote.}
+that begins at the line's left margin.
+
+@item
+When it's @code{nil}, the command indents the line by an extra
+@code{c-basic-offset} columns.  A prefix argument acts as a
+multiplier.  A bare prefix (@kbd{C-u @key{TAB}} is equivalent to -1,
+removing @code{c-basic-offset} columns from the indentation.
+@end itemize
+
+The precise behavior is modified by several variables: With
+@code{c-tab-always-indent}, you can make @key{TAB} insert whitespace
+in some circumstances---@code{c-insert-tab-function} then defines
+precisely what sort of ``whitespace'' this will be.  Set the standard
+Emacs variable @code{indent-tabs-mode} to @code{t} if you want real
+@samp{tab} characters to be used in the indentation, to @code{nil} if
+you want only spaces.  @xref{Just Spaces,,, @emacsman{},
+@emacsmantitle{}}.
+
+@defopt c-tab-always-indent
+@vindex tab-always-indent (c-)
+@cindex literal
+This variable modifies how @key{TAB} operates.
+@itemize @bullet
+@item
+When it is @code{t} (the default), @key{TAB} simply indents the
+current line.
+@item
+When it is @code{nil}, @key{TAB} (re)indents the line only if point is
+to the left of the first non-whitespace character on the line.
+Otherwise it inserts some whitespace (a tab or an equivalent number of
+spaces - see below) at point.
+@item
+With some other value, the line is reindented.  Additionally, if point
+is within a string or comment, some whitespace is inserted.
+@end itemize
+@end defopt
+
+@defopt c-insert-tab-function
+@vindex insert-tab-function (c-)
+@findex tab-to-tab-stop
+When ``some whitespace'' is inserted as described above, what actually
+happens is that the function stored in @code{c-insert-tab-function} is
+called.  Normally, this is @code{insert-tab}, which inserts a real tab
+character or the equivalent number of spaces (depending on
+@code{indent-tabs-mode}).  Some people, however, set
+@code{c-insert-tab-function} to @code{tab-to-tab-stop} so as to get
+hard tab stops when indenting.
+@end defopt
+@end table
+
+@noindent
+The kind of indentation the next five commands do depends on the
+setting of @code{c-syntactic-indentation} (@pxref{Indentation Engine
+Basics}):
+@itemize @bullet
+@item
+when it is non-@code{nil} (the default), the commands indent lines
+according to their syntactic context;
+@item
+when it is @code{nil}, they just indent each line the same amount as
+the previous non-blank line.  The commands that indent a region aren't
+very useful in this case.
+@end itemize
+
+@table @asis
 @item @kbd{C-j} (@code{newline-and-indent})
 @kindex C-j
 @findex newline-and-indent
@@ -648,44 +723,6 @@ Indents an arbitrary region of code.  This is a standard Emacs command,
 tailored for C code in a @ccmode{} buffer.  Note, of course, that point
 and mark must delineate the region you want to indent.
 
-@item @kbd{M-;} (@code{indent-for-comment})
-@kindex M-;
-@findex indent-for-comment
-Insert a comment at the end of the current line, if none is there already.
-Then reindent the comment according to the variables
-@code{c-indent-comment-alist}, @code{c-indent-comments-syntactically-p}
-and @code{comment-column}.  Then position the point after the comment
-starter.  This is a standard Emacs command, but @ccmode{} enhances it a
-bit with two variables:
-
-@defopt c-indent-comment-alist
-@vindex indent-comment-alist (c-)
-@vindex comment-column
-This style variable allows you to control which column @kbd{M-;}
-indents the comment to, depending on the preceding code and the
-indentation of a similar comment on the preceding line, if there is
-any.  It is an association list that maps different types of lines to
-actions describing how they should be handled.  If a certain line type
-isn't present on the list then the line is indented to the column
-specified by @code{comment-column}.  See the documentation string for
-@code{c-indent-comment-alist} for a full description of the available
-line types and actions (use @kbd{C-h v c-indent-comment-alist}).
-@end defopt
-
-@defopt c-indent-comments-syntactically-p
-@vindex indent-comments-syntactically-p (c-)
-Normally, when this variable is @code{nil}, @kbd{M-;} will indent
-comment-only lines according to @code{c-indent-comment-alist}, just as
-it does with lines where other code precede the comments.  However, if
-you want it to act just like @kbd{TAB} for comment-only lines you can
-get that by setting @code{c-indent-comments-syntactically-p} to
-non-@code{nil}.
-
-If @code{c-indent-comments-syntactically-p} is non-@code{nil} then
-@code{c-indent-comment-alist} won't be consulted at all for comment-only
-lines.
-@end defopt
-
 @item @kbd{C-M-h} (@code{c-mark-function})
 @kindex C-M-h
 @findex c-mark-function
@@ -697,30 +734,6 @@ top-level constructs, and can't be used to mark say, a Java method.
 @end table
 
 These variables are also useful when indenting code:
-
-@defopt c-tab-always-indent
-@vindex tab-always-indent (c-)
-@cindex literal
-This variable controls how @kbd{TAB} (@code{c-indent-command}) operates.
-When it is @code{t}, @kbd{TAB} always indents the current line.  When it
-is @code{nil}, the line is (re)indented only if point is at the left
-margin, or on or before the first non-whitespace character on the line,
-otherwise some whitespace (a tab or an equivalent number of spaces - see
-below) is inserted at point.  If this variable is some other value then
-some whitespace is inserted at point only if it's within a string or
-comment, but the line is always reindented.
-@end defopt
-
-@defopt c-insert-tab-function
-@vindex insert-tab-function (c-)
-@findex tab-to-tab-stop
-When ``some whitespace'' is inserted as described above, what actually
-happens is that the function stored in @code{c-insert-tab-function} is
-called.  Normally, this just inserts a real tab character, or the
-equivalent number of spaces, depending on @code{indent-tabs-mode}.
-Some people, however, set @code{c-insert-tab-function} to
-@code{tab-to-tab-stop} so as to get hard tab stops when indenting.
-@end defopt
 
 @defopt indent-tabs-mode
 This is a standard Emacs variable that controls how line indentation
@@ -736,9 +749,62 @@ inhibit the progress messages, or set it to an integer which is how
 often (in seconds) progress messages are to be displayed.
 @end defopt
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Comment Command, Movement Commands, Indentation Commands, Commands
+@comment node-name, next, previous, up
+@section Comment Command
+@cindex comments (insertion of)
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@table @asis
+@item @kbd{M-;} (@code{comment-dwim} or @code{indent-for-comment} @footnote{The name of this command varies between (X)Emacs versions.})
+@kindex M-;
+@findex comment-dwim
+@findex indent-for-comment
+Insert a comment at the end of the current line, if none is there
+already.  Then reindent the comment according to @code{comment-column}
+@ifclear XEMACS
+(@pxref{Options for Comments,,, emacs, GNU Emacs Manual})
+@end ifclear
+@ifset XEMACS
+(@pxref{Comments,,, xemacs, XEmacs User's Manual})
+@end ifset
+and the variables below.  Finally, position the point after the
+comment starter.  This is a standard Emacs command, but @ccmode{}
+enhances it a bit with two variables:
+
+@defopt c-indent-comment-alist
+@vindex indent-comment-alist (c-)
+@vindex comment-column
+This style variable allows you to vary the column that @kbd{M-;} puts
+the comment at, depending on what sort of code is on the line, and
+possibly the indentation of any similar comment on the preceding line.
+It is an association list that maps different types of lines to
+actions describing how they should be handled.  If a certain line type
+isn't present on the list then the line is indented to the column
+specified by @code{comment-column}.
+
+See the documentation string for for a full description of this
+variable (use @kbd{C-h v c-indent-comment-alist}).
+@end defopt
+
+@defopt c-indent-comments-syntactically-p
+@vindex indent-comments-syntactically-p (c-)
+Normally, when this style variable is @code{nil}, @kbd{M-;} will
+indent comment-only lines according to @code{c-indent-comment-alist},
+just as it does with lines where other code precede the comments.
+However, if you want it to act just like @key{TAB} for comment-only
+lines you can get that by setting
+@code{c-indent-comments-syntactically-p} to non-@code{nil}.
+
+If @code{c-indent-comments-syntactically-p} is non-@code{nil} then
+@code{c-indent-comment-alist} won't be consulted at all for comment-only
+lines.
+@end defopt
+@end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Movement Commands, Filling and Breaking, Indentation Commands, Commands
+@node    Movement Commands, Filling and Breaking, Comment Command, Commands
 @comment node-name, next, previous, up
 @section Movement Commands
 @cindex movement
@@ -760,7 +826,7 @@ being the outermost brace pair which encloses point.  These functions
 are analogous to the Emacs built-in commands @code{beginning-of-defun}
 and @code{end-of-defun}, except they eliminate the constraint that the
 top-level opening brace of the defun must be in column zero.  See
-@ref{Defuns,,,@emacsman{}, @emacstitle{}}, for more information.
+@ref{Defuns,,,@emacsman{}, @emacsmantitle{}}, for more information.
 
 Depending on the coding style you're using, you might prefer these two
 commands to the standard Emacs ones.  If so, consider binding them to
@@ -1423,8 +1489,8 @@ and @kbd{C-d}.
 
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
-Delete,,,emacs}, might be helpful if you're having trouble with this
-in GNU Emacs.
+Delete,,,emacs, GNU Emacs Manual}, might be helpful if you're having
+trouble with this in GNU Emacs.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Hungry WS Deletion, Commands
@@ -2843,8 +2909,9 @@ is useful when the auto newlines depend on the code around the brace.
 
 This variable is an association list which maps syntactic symbols to
 lists of places to insert a newline.  @xref{Association
-Lists,,,@lispref{}}.  The key of each element is the syntactic symbol, the
-associated value is either @code{nil}, a list, or a function.
+Lists,,,@lispref{}, @lispreftitle{}}.  The key of each element is the
+syntactic symbol, the associated value is either @code{nil}, a list,
+or a function.
 
 @table @asis
 @item The Key - the syntactic symbol
@@ -6038,8 +6105,8 @@ offset specification: for example, an integer, a symbol such as
 @code{+}, a vector, @code{nil}@footnote{Returning @code{nil} is useful
 when the offset specification for a syntactic element is a list
 containing the line-up function (@pxref{c-offsets-alist}).}, or even
-another line-up function.  Full details of these are in @ref{
-c-offsets-alist}.
+another line-up function.  Full details of these are in
+@ref{c-offsets-alist}.
 
 Line-up functions must not move point or change the content of the
 buffer (except temporarily).  They are however allowed to do
@@ -6278,10 +6345,24 @@ anchoring position to indent the line in that case.
 @appendix Sample .emacs File
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@example
-;; Here's a sample .emacs file that might help you along the way.  Just
-;; copy this region and paste it into your .emacs file.  You might want
-;; to change some of the actual values.
+@verbatim
+;; Here's a sample .emacs file fragment that might help you along the
+;; way.  Just copy this region and paste it into your .emacs file.
+;; You might want to change some of the actual values.
+
+;; Make some non-standard key bindings.  We can put these in
+;; c-mode-base-map because c-mode-map, c++-mode-map, and so on,
+;; inherit from it.
+(defun my-c-initialization-hook ()
+  (define-key c-mode-base-map "\C-m" 'c-context-line-break)
+  (define-key c-mode-base-map [?\C-\M-a] 'c-beginning-of-defun)
+  (define-key c-mode-base-map [?\C-\M-e] 'c-end-of-defun)
+(add-hook 'c-initialization-hook 'my-c-initialization-hook)
+
+;; offset customizations not in my-c-style
+;; This will take precedence over any setting of the syntactic symbol
+;; made by a style.
+(setq c-offsets-alist '((member-init-intro . ++)))
 
 ;; Create my personal style.
 (defconst my-c-style
@@ -6306,20 +6387,6 @@ anchoring position to indent the line in that case.
   "My C Programming Style")
 (c-add-style "PERSONAL" my-c-style)
 
-;; Make some non-standard key bindings.  We can put these in
-;; c-mode-base-map because c-mode-map, c++-mode-map, and so on,
-;; inherit from it.
-(defun my-c-initialization-hook ()
-  (define-key c-mode-base-map "\C-m" 'c-context-line-break)
-  (define-key c-mode-base-map [?\C-\M-a] 'c-beginning-of-defun)
-  (define-key c-mode-base-map [?\C-\M-e] 'c-end-of-defun)
-(add-hook 'c-initialization-hook 'my-c-initialization-hook)
-
-@c FIXME!!!  What does the following do?  It doesn't look sensible
-@c (ACM, 2005/6/14). 
-;; offset customizations not in my-c-style
-(setq c-offsets-alist '((member-init-intro . ++)))
-
 ;; Customizations for all modes in CC Mode.
 (defun my-c-mode-common-hook ()
   ;; set my personal style for the current buffer
@@ -6330,9 +6397,8 @@ anchoring position to indent the line in that case.
         indent-tabs-mode nil)
   ;; we like auto-newline, but not hungry-delete
   (c-toggle-auto-newline 1))
-
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-@end example
+@end verbatim
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Performance Issues, Limitations and Known Bugs, Sample .emacs File, Top
