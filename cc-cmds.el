@@ -45,7 +45,6 @@
 (cc-require 'cc-engine)
 
 ;; Silence the compiler.
-(cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs
 (cc-bytecomp-defun delete-forward-p)	; XEmacs
 (cc-bytecomp-defvar filladapt-mode)	; c-fill-paragraph contains a kludge
 					; which looks at this.
@@ -409,22 +408,35 @@ See also \\[c-hungry-backspace]."
 (defun c-electric-delete (arg)
   "Deletes preceding or following character or whitespace.
 This function either deletes forward as `c-electric-delete-forward' or
-backward as `c-electric-backspace', depending on the configuration:
-
-If the function `delete-forward-p' is defined and returns non-nil, it
+backward as `c-electric-backspace', depending on the configuration: If
+the function `delete-forward-p' is defined and returns non-nil, it
 deletes forward.  Otherwise it deletes backward.
 
 Note: This is the way in XEmacs to choose the correct action for the
-\[delete] key, whichever key that means.  In other flavors this
-function isn't used, instead it's left to the user to bind \[delete]
-to either \\[c-electric-delete-forward] or \\[c-electric-backspace] as
-appropriate \(the keymap `function-key-map' is useful for that).
-Emacs 21 handles that automatically, though."
+\[delete] key, whichever key that means.  Other flavors don't use this
+function to control that."
   (interactive "*P")
   (if (and (fboundp 'delete-forward-p)
 	   (delete-forward-p))
       (c-electric-delete-forward arg)
     (c-electric-backspace arg)))
+
+;; This function is only used in XEmacs.
+(defun c-hungry-delete ()
+  "Delete a non-whitespace char, or all whitespace up to the next non-whitespace char.
+The direction of deletion depends on the configuration: If the
+function `delete-forward-p' is defined and returns non-nil, it deletes
+forward using `c-hungry-delete-forward'.  Otherwise it deletes
+backward using `c-hungry-backspace'.
+
+Note: This is the way in XEmacs to choose the correct action for the
+\[delete] key, whichever key that means.  Other flavors don't use this
+function to control that."
+  (interactive)
+  (if (and (fboundp 'delete-forward-p)
+	   (delete-forward-p))
+      (c-hungry-delete-forward)
+    (c-hungry-backspace)))
 
 (defun c-electric-pound (arg)
   "Insert a \"#\".
