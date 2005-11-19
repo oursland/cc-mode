@@ -228,20 +228,20 @@ control).  See \"cc-mode.el\" for more info."
       (setq defs (cdr defs)))))
 (put 'c-define-abbrev-table 'lisp-indent-function 1)
 
+(defun c-bind-special-erase-keys ()
+  ;; Only used in Emacs to bind C-c C-<delete> and C-c C-<backspace>
+  ;; to the proper keys depending on `normal-erase-is-backspace'.
+  (if normal-erase-is-backspace
+      (define-key c-mode-base-map (kbd "C-c C-<delete>")
+	'c-hungry-delete-forward)
+    (define-key c-mode-base-map (kbd "C-c C-<delete>")
+      'c-hungry-backspace)))
+
 (if c-mode-base-map
     nil
-  ;; TBD: should we even worry about naming this keymap. My vote: no,
-  ;; because Emacs and XEmacs do it differently.
+
   (setq c-mode-base-map (make-sparse-keymap))
-  ;; put standard keybindings into MAP
-  ;; the following mappings correspond more or less directly to BOCM
-  (define-key c-mode-base-map "{"         'c-electric-brace)
-  (define-key c-mode-base-map "}"         'c-electric-brace)
-  (define-key c-mode-base-map ";"         'c-electric-semi&comma)
-  (define-key c-mode-base-map "#"         'c-electric-pound)
-  (define-key c-mode-base-map ":"         'c-electric-colon)
-  (define-key c-mode-base-map "("         'c-electric-paren)
-  (define-key c-mode-base-map ")"         'c-electric-paren)
+
   ;; Separate M-BS from C-M-h.  The former should remain
   ;; backward-kill-word.
   (define-key c-mode-base-map [(control meta h)] 'c-mark-function)
@@ -255,21 +255,23 @@ control).  See \"cc-mode.el\" for more info."
   (substitute-key-definition 'indent-new-comment-line
 			     'c-indent-new-comment-line
 			     c-mode-base-map global-map)
+  (substitute-key-definition 'indent-for-tab-command
+			     'c-indent-command
+			     c-mode-base-map global-map)
   (when (fboundp 'comment-indent-new-line)
     ;; indent-new-comment-line has changed name to
     ;; comment-indent-new-line in Emacs 21.
     (substitute-key-definition 'comment-indent-new-line
 			       'c-indent-new-comment-line
 			       c-mode-base-map global-map))
+
   ;; RMS says don't make these the default.
 ;;  (define-key c-mode-base-map "\e\C-a"    'c-beginning-of-defun)
 ;;  (define-key c-mode-base-map "\e\C-e"    'c-end-of-defun)
+
   (define-key c-mode-base-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
-  (substitute-key-definition 'indent-for-tab-command
-			     'c-indent-command
-			     c-mode-base-map global-map)
 
   ;; It doesn't suffice to put `c-fill-paragraph' on
   ;; `fill-paragraph-function' since `c-fill-paragraph' must be called
@@ -286,31 +288,63 @@ control).  See \"cc-mode.el\" for more info."
   (substitute-key-definition 'fill-paragraph-or-region 'c-fill-paragraph
 			     c-mode-base-map global-map)
 
+  ;; We bind the forward deletion key and (implicitly) C-d to
+  ;; `c-electric-delete-forward', and the backward deletion key to
+  ;; `c-electric-backspace'.  The hungry variants are bound to the
+  ;; same keys but prefixed with C-c.  This implies that C-c C-d is
+  ;; `c-hungry-delete-forward'.  For consistency, we bind not only C-c
+  ;; <backspace> to `c-hungry-backspace' but also C-c C-<backspace>,
+  ;; so that the Ctrl key can be held down during the whole sequence
+  ;; regardless of the direction.  This in turn implies that we bind
+  ;; C-c C-<delete> to `c-hungry-delete-forward', for the same reason.
+
   ;; Bind the electric deletion functions to C-d and DEL.  Emacs 21
   ;; automatically maps the [delete] and [backspace] keys to these two
   ;; depending on window system and user preferences.  (In earlier
   ;; versions it's possible to do the same by using `function-key-map'.)
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
+  (define-key c-mode-base-map "\C-c\C-d"  'c-hungry-delete-forward)
   (define-key c-mode-base-map [?\C-c ?\d] 'c-hungry-backspace)
-  (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-backspace)
-  (when (boundp 'delete-key-deletes-forward)
+  (when (boundp 'normal-erase-is-backspace)
+    ;; The automatic C-d and DEL mapping functionality doesn't extend
+    ;; to special combinations like C-c C-<delete>, so we have to hook
+    ;; into the `normal-erase-is-backspace' system to bind it directly
+    ;; as appropriate.
+    (add-hook 'normal-erase-is-backspace-hook 'c-bind-special-erase-keys)
+    (c-bind-special-erase-keys))
+
+  (when (fboundp 'delete-forward-p)
     ;; In XEmacs we fix the forward and backward deletion behavior by
     ;; binding the keysyms for the [delete] and [backspace] keys
-    ;; directly, and use `delete-forward-p' or
-    ;; `delete-key-deletes-forward' to decide what [delete] should do.
+    ;; directly, and use `delete-forward-p' to decide what [delete]
+    ;; should do.  That's done in the XEmacs specific
+    ;; `c-electric-delete' and `c-hungry-delete' functions.
     (define-key c-mode-base-map [delete]    'c-electric-delete)
     (define-key c-mode-base-map [backspace] 'c-electric-backspace)
-    (define-key c-mode-base-map [?\C-c backspace] 'c-hungry-backspace) ; 2005/11/5:  ACM, CHECK THESE!!!
-    (define-key c-mode-base-map [?\C-c \C-backspace] 'c-hungry-backspace)) ; FIXME!!!
-  (define-key c-mode-base-map ","         'c-electric-semi&comma)
-  (define-key c-mode-base-map "*"         'c-electric-star)
+    (define-key c-mode-base-map (kbd "C-c <delete>") 'c-hungry-delete)
+    (define-key c-mode-base-map (kbd "C-c C-<delete>") 'c-hungry-delete)
+    (define-key c-mode-base-map (kbd "C-c <backspace>") 'c-hungry-backspace))
+
+  ;; Regardless of Emacs flavor and [delete] key behavior, we can use
+  ;; this to set C-c C-<backspace>.
+  (define-key c-mode-base-map (kbd "C-c C-<backspace>") 'c-hungry-backspace)
+
+  (define-key c-mode-base-map "#"         'c-electric-pound)
+  (define-key c-mode-base-map "{"         'c-electric-brace)
+  (define-key c-mode-base-map "}"         'c-electric-brace)
   (define-key c-mode-base-map "/"         'c-electric-slash)
+  (define-key c-mode-base-map "*"         'c-electric-star)
+  (define-key c-mode-base-map ";"         'c-electric-semi&comma)
+  (define-key c-mode-base-map ","         'c-electric-semi&comma)
+  (define-key c-mode-base-map ":"         'c-electric-colon)
+  (define-key c-mode-base-map "("         'c-electric-paren)
+  (define-key c-mode-base-map ")"         'c-electric-paren)
+
   (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
   (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-newline)
   (define-key c-mode-base-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-base-map "\C-c\C-c"  'comment-region)
-  (define-key c-mode-base-map "\C-c\C-d"  'c-hungry-delete-forward)
   (define-key c-mode-base-map "\C-c\C-l"  'c-toggle-electric-state)
   (define-key c-mode-base-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
