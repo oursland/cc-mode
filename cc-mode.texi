@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.232 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.233 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1455,32 +1455,44 @@ directly through their key sequences rather than using the minor mode
 toggling.
 
 @table @asis
-@item @kbd{C-c C-@key{DEL}} or @kbd{C-c @key{DEL}} (@code{c-hungry-backspace})
-@kindex C-c C-DEL
+@item @kbd{C-c C-@key{Backspace}}, @kbd{C-c DEL}, or @kbd{C-c @key{Backspace}} (@code{c-hungry-backspace})
+@kindex C-c C-<backspace>
 @kindex C-c DEL
+@kindex C-c <backspace>
 @findex c-hungry-backspace
 @findex hungry-backspace (c-)
 Delete any amount of whitespace in the backwards direction (regardless
 whether hungry-delete mode is enabled or not).  This command is bound
-to two key sequences, since the more natural one, @kbd{C-c
-C-@key{DEL}} is sometimes difficult to type at a character terminal.
+to both @kbd{C-c C-@key{Backspace}} and @kbd{C-c @key{Backspace}},
+since the more natural one, @kbd{C-c C-@key{Backspace}}, is sometimes
+difficult to type at a character terminal.
 
-@item @kbd{C-c C-d} (@code{c-hungry-delete-forward})
+@item @kbd{C-c C-@key{Delete}}, @kbd{C-c C-d}, or @kbd{C-c @key{Delete}} (@code{c-hungry-delete-forward})
+@kindex C-c C-<delete>
 @kindex C-c C-d
+@kindex C-c <delete>
 @findex c-hungry-delete-forward
 @findex hungry-delete-forward (c-)
 Delete any amount of whitespace in the forward direction (regardless
-whether hungry-delete mode is enabled or not).
+whether hungry-delete mode is enabled or not).  This command is bound
+to both @kbd{C-c C-@key{Delete}} and @kbd{C-c @key{Delete}} for the
+same reason as for @key{Backspace} above.
 @end table
 @end table
 
-Above we have only talked about the @kbd{DEL} and @kbd{C-d} key events,
-without connecting them to the physical keys commonly known as
-@key{Backspace} and @key{Delete}.  The default behavior of those two
-depends on the flavor of (X)Emacs you are using.
+@kindex <delete>
+@kindex <backspace>
+
+When we talk about @kbd{DEL}, @kbd{C-d}, @key{Backspace} and
+@key{Delete} above, we actually do so without connecting them to the
+physical keys commonly known as @key{Backspace} and @key{Delete}.  The
+default bindings to those two keys depends on the flavor of (X)Emacs
+you are using.
 
 @findex c-electric-delete
 @findex electric-delete (c-)
+@findex c-hungry-delete
+@findex hungry-delete (c-)
 @vindex delete-key-deletes-forward
 
 In XEmacs 20.3 and beyond, the @key{Backspace} key is bound to
@@ -1490,12 +1502,24 @@ setting the variable @code{delete-key-deletes-forward}, a standard
 XEmacs variable.  When this variable is non-@code{nil},
 @code{c-electric-delete} will do forward deletion with
 @code{c-electric-delete-forward}, otherwise it does backward deletion
-with @code{c-electric-backspace}.
+with @code{c-electric-backspace}.  Similarly, @kbd{C-c @key{Delete}}
+and @kbd{C-c C-@key{Delete}} are bound to @code{c-hungry-delete} which
+is controlled in the same way by @code{delete-key-deletes-forward}.
 
-In other Emacs versions, @ccmode{} doesn't bind either @key{Backspace}
-or @key{Delete}.  In Emacs prior to 21 that means that it's up to you to
-fix them.  Emacs 21 automatically binds them as appropriate to @kbd{DEL}
-and @kbd{C-d}.
+@findex normal-erase-is-backspace-mode
+
+Emacs 21 and later automatically binds @key{Backspace} and
+@key{Delete} to @kbd{DEL} and @kbd{C-d} according to your environment,
+and @ccmode{} extends those bindings to @kbd{C-c C-@key{Backspace}}
+etc.  If you need to change the bindings through
+@code{normal-erase-is-backspace-mode} then @ccmode{} will also adapt
+its extended bindings accordingly.
+
+In earlier (X)Emacs versions, @ccmode{} doesn't bind either
+@key{Backspace} or @key{Delete} directly.  Only the key codes
+@kbd{DEL} and @kbd{C-d} are bound, and it's up to the default bindings
+to map the physical keys to them.  You might need to modify this
+yourself if the defaults are unsuitable.
 
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
