@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.234 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.235 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1936,7 +1936,7 @@ above if found.  If it isn't found then the symbol `other' is looked up
 and its value is used instead.
 
 The default value for @code{c-doc-comment-style} is
-@w{@code{((java-mode . javadoc) (pike-mode . autodoc))}}.
+@w{@code{((java-mode . javadoc) (pike-mode . autodoc) (c-mode . gtkdoc))}}.
 
 Note that @ccmode{} uses this variable to set other variables that
 handle fontification etc.  That's done at mode initialization or when
@@ -1964,6 +1964,10 @@ Javadoc comments, the standard tool in Java.
 @item autodoc
 @cindex Pike autodoc markup
 For Pike autodoc markup, the standard in Pike.
+
+@item gtkdoc
+@cindex GtkDoc markup
+For GtkDoc markup, widely used in the Gnome community.
 @end table
 
 The above is by no means complete.  If you'd like to see support for
