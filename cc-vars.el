@@ -571,6 +571,9 @@ afterwards to redo that work."
 		  (const :format "Pike  " pike-mode)
 		  (c-symbol-list :format "%v"))
 	    (cons :format "%v"
+		  (const :format "AWK   " awk-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
 		  (const :format "Other " other)
 		  (c-symbol-list :format "%v")))))
   :group 'c)
@@ -838,9 +841,9 @@ space."
   :group 'c)
 
 (defcustom c-require-final-newline
-  ;; C and C++ mandates that all nonempty files should end with a
+  ;; C and C++ mandate that all nonempty files should end with a
   ;; newline.  Objective-C refers to C for all things it doesn't
-  ;; specify, so the same holds there.  The other languages does not
+  ;; specify, so the same holds there.  The other languages do not
   ;; require it (at least not explicitly in a normative text).
   '((c-mode    . t)
     (c++-mode  . t)
@@ -868,6 +871,9 @@ present on the association list, CC Mode won't touch
 		    (symbol :format "%v" :value ,require-final-newline))
 	      (cons :format "%v"
 		    (const :format "Pike  " pike-mode)
+		    (symbol :format "%v" :value ,require-final-newline))
+	      (cons :format "%v"
+		    (const :format "AWK   " awk-mode)
 		    (symbol :format "%v" :value ,require-final-newline)))
   :group 'c)
 
@@ -935,6 +941,8 @@ can always override the use of `c-default-style' by making calls to
 		  (const :format "IDL   " idl-mode) (string :format "%v"))
 	    (cons :format "%v"
 		  (const :format "Pike  " pike-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "AWK   " awk-mode) (string :format "%v"))
 	    (cons :format "%v"
 		  (const :format "Other " other) (string :format "%v"))))
   :group 'c)
@@ -1361,6 +1369,11 @@ The list of variables to buffer localize are:
   :type 'hook
   :group 'c)
 
+(defcustom awk-mode-hook nil
+  "*Hook called by `awk-mode'."
+  :type 'hook
+  :group 'c)
+
 (defcustom c-mode-common-hook nil
   "*Hook called by all CC Mode modes for common initializations."
   :type 'hook
@@ -1540,40 +1553,49 @@ Note that file offset settings are applied after file style settings
 as designated in the variable `c-file-style'.")
 (make-variable-buffer-local 'c-file-offsets)
 
-;; It isn't possible to specify a docstring without specifying an
-;; initial value with `defvar', so the following two variables have
-;; only doc comments even though they are part of the API.  It's
-;; really good not to have an initial value for variables like these
-;; that always should be dynamically bound, so it's worth the
-;; inconvenience.
+;; It isn't possible to specify a doc-string without specifying an
+;; initial value with `defvar', so the following two variables have been
+;; given doc-strings by setting the property `variable-documentation'
+;; directly.  C-h v will read this documentation only for versions of GNU
+;; Emacs from 22.1.  It's really good not to have an initial value for
+;; variables like these that always should be dynamically bound, so it's
+;; worth the inconvenience.
 
 (cc-bytecomp-defvar c-syntactic-context)
 (defvar c-syntactic-context)
-;; Variable containing the syntactic analysis list during indentation.
-;; It is a list with one element for each found syntactic symbol.  See
-;; `c-syntactic-element' for further info.
-;;
-;; This is always bound dynamically.  It should never be set
-;; statically (e.g. with `setq').
+(put 'c-syntactic-context 'variable-documentation
+  "Variable containing the syntactic analysis list for a line of code.
+
+It is a list with one element for each syntactic symbol pertinent to the
+line, for example \"((defun-block-intro 1) (comment-intro))\".
+
+It is dynamically bound when calling \(i) a brace hanging \"action
+function\"; \(ii) a semicolon/comma hanging \"criteria function\"; \(iii) a
+\"line-up function\"; \(iv) a c-special-indent-hook function.  It is also
+used internally by CC Mode.
+
+c-syntactic-context is always bound dynamically.  It must NEVER be set
+statically (e.g. with `setq').")
+
 
 (cc-bytecomp-defvar c-syntactic-element)
 (defvar c-syntactic-element)
-;; Variable containing the info regarding the current syntactic
-;; element during calls to the lineup functions.  The value is one of
-;; the elements in the list in `c-syntactic-context' and is a list
-;; with the symbol name in the first position, followed by zero or
-;; more elements containing any additional info associated with the
-;; syntactic symbol.  There are accessor functions `c-langelem-sym',
-;; `c-langelem-pos', `c-langelem-col', and `c-langelem-2nd-pos' to
-;; access the list.
-;;
-;; Specifically, the element returned by `c-langelem-pos' is the
-;; anchor position, or nil if there isn't any.  See the comments in
-;; the `c-offsets-alist' variable for more detailed info about the
-;; data each syntactic symbol provides.
-;; 
-;; This is always bound dynamically.  It should never be set
-;; statically (e.g. with `setq').
+(put 'c-syntactic-element 'variable-documentation
+     "Variable containing the current syntactic element during calls to
+the lineup functions.  The value is one of the elements in the list in
+`c-syntactic-context' and is a list with the symbol name in the first
+position, followed by zero or more elements containing any additional
+info associated with the syntactic symbol.  There are accessor functions
+`c-langelem-sym', `c-langelem-pos', `c-langelem-col', and
+`c-langelem-2nd-pos' to access the list.
+
+Specifically, the element returned by `c-langelem-pos' is the anchor
+position, or nil if there isn't any.  See the comments in the
+`c-offsets-alist' variable and the CC Mode manual for more detailed info
+about the data each syntactic symbol provides.
+
+This is always bound dynamically.  It should never be set
+statically (e.g. with `setq').")
 
 (defvar c-indentation-style nil
   "Name of the currently installed style.
