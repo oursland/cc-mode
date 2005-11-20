@@ -2072,6 +2072,35 @@ need for `pike-font-lock-extra-types'.")
 			      (copy-marker (1+ start))))
       t)))
 
+;; GtkDoc patterns contributed by Masatake YAMATO <jet@gyve.org>.
+
+(defconst gtkdoc-font-lock-doc-comments
+  (let ((symbol "[a-zA-Z0-9_]+")
+	(header "^ \\* "))
+    `((,(concat header "\\("     symbol "\\):[ \t]*$") 
+       1 ,c-doc-markup-face-name prepend nil)
+      (,(concat                  symbol     "()")
+       0 ,c-doc-markup-face-name prepend nil)
+      (,(concat header "\\(" "@" symbol "\\):")
+       1 ,c-doc-markup-face-name prepend nil)
+      (,(concat "[#%]" symbol)
+       0 ,c-doc-markup-face-name prepend nil))
+    ))
+
+(defconst gtkdoc-font-lock-doc-protection
+  `(("< \\(public\\|private\\|protected\\) >"
+     1 ,c-doc-markup-face-name prepend nil)))
+
+(defconst gtkdoc-font-lock-keywords
+  `((,(lambda (limit)
+	(c-font-lock-doc-comments "/\\*\\*$" limit
+	  gtkdoc-font-lock-doc-comments)
+	(c-font-lock-doc-comments "/\\*< " limit
+	  gtkdoc-font-lock-doc-protection)
+	))))
+
+;; Javadoc.
+
 (defconst javadoc-font-lock-doc-comments
   `(("{@[a-z]+[^}\n\r]*}"		; "{@foo ...}" markup.
      0 ,c-doc-markup-face-name prepend nil)
@@ -2096,6 +2125,8 @@ need for `pike-font-lock-extra-types'.")
   `((,(lambda (limit)
 	(c-font-lock-doc-comments "/\\*\\*" limit
 	  javadoc-font-lock-doc-comments)))))
+
+;; Pike autodoc.
 
 (defconst autodoc-decl-keywords
   ;; Adorned regexp matching the keywords that introduce declarations
