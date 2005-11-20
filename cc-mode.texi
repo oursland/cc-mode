@@ -154,7 +154,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.231 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.232 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -217,7 +217,8 @@ Commands
 * Minor Modes::                 
 * Electric Keys::               
 * Auto-newlines::               
-* Hungry WS Deletion::          
+* Hungry WS Deletion::
+* Subword Movement::
 * Other Commands::              
 
 Font Locking
@@ -563,8 +564,9 @@ structures.
 * Filling and Breaking::        
 * Minor Modes::                 
 * Electric Keys::               
-* Auto-newlines::               
-* Hungry WS Deletion::          
+* Auto-newlines::
+* Hungry WS Deletion::
+* Subword Movement::
 * Other Commands::              
 @end menu
 
@@ -1065,6 +1067,12 @@ This lets you delete a contiguous block of whitespace in a single
 operation - for example, the newline and indentation just inserted by
 auto-newline when you want to back up and write a comment after the
 last statement.
+@item subword mode
+This mode makes basic word movement commands like @kbd{M-f}
+(@code{forward-word}) and @kbd{M-b} (@code{backward-word}) treat the
+parts of sillycapsed symbols as different words.
+E.g. @samp{NSGraphicsContext} is treated as three words @samp{NS},
+@samp{Graphics}, and @samp{Context}.
 @item syntactic-indentation mode
 When this is enabled (which it normally is), indentation commands such
 as @kbd{C-j} indent lines of code according to their syntactic
@@ -1074,8 +1082,8 @@ of `c-basic-offset'.
 @end table
 
 Full details on how these minor modes work are at @ref{Electric Keys},
-@ref{Auto-newlines}, @ref{Hungry WS Deletion}, and @ref{Indentation
-Engine Basics}.
+@ref{Auto-newlines}, @ref{Hungry WS Deletion}, @ref{Subword Movement},
+and @ref{Indentation Engine Basics}.
 
 You can toggle each of these minor modes on and off, and you can
 configure @ccmode{} so that it starts up with your favourite
@@ -1083,13 +1091,13 @@ combination of them (@pxref{Sample .emacs File}).  By default, when
 you initialize a buffer, electric mode and syntactic-indentation mode
 are enabled but the other two modes are disabled.
 
-@ccmode{} displays the current state of the first three of these minor
+@ccmode{} displays the current state of the first four of these minor
 modes on the modeline by appending letters to the major mode's name,
 one letter for each enabled minor mode - @samp{l} for electric mode,
-@samp{a} for auto-newline mode, and @samp{h} for hungry delete mode.
-If all these modes were enabled, you'd see @samp{C/lah}@footnote{The
-@samp{C} would be replaced with the name of the language in question
-for the other languages @ccmode{} supports.}.
+@samp{a} for auto-newline mode, @samp{h} for hungry delete mode, and
+@samp{w} for subword mode.  If all these modes were enabled, you'd see
+@samp{C/lahw}@footnote{The @samp{C} would be replaced with the name of
+the language in question for the other languages @ccmode{} supports.}.
 
 Here are the commands to toggle these modes:
 
@@ -1099,36 +1107,37 @@ Here are the commands to toggle these modes:
 @findex c-toggle-electric-state
 @findex toggle-electric-state (c-)
 Toggle electric minor mode.  When the command turns the mode off, it
-also suppresses auto-newline mode.  Programmatically, if the function
-is given a numeric @var{arg}, a positive value will turn on
-auto-newline minor mode and a negative value will turn it off.
+also suppresses auto-newline mode.
 
 @item @kbd{C-c C-a} (@code{c-toggle-auto-newline})
 @kindex C-c C-a
 @findex c-toggle-auto-newline
 @findex toggle-auto-newline (c-)
 Toggle auto-newline minor mode.  When the command turns the mode on,
-it also enables electric minor mode.  Programmatically, if the
-function is given a numeric @var{arg}, a positive value will turn on
-auto-newline minor mode and a negative value will turn it off.
+it also enables electric minor mode.
 
 @item @kbd{C-c C-y} (@code{c-toggle-hungry-state})
 @kindex C-c C-y
 @findex c-toggle-hungry-state
 @findex toggle-hungry-state (c-)
-Toggle hungry-delete minor mode.  Programmatically, if the function is
-given a numeric @var{arg}, a positive value will turn on hungry-delete
-minor mode and a negative value will turn it off.  (Prior to @ccmode{}
-5.31, this command was bound to @kbd{C-c C-d}.)
+Toggle hungry-delete minor mode.  (Prior to @ccmode{} 5.31, this
+command was bound to @kbd{C-c C-d}.)
+
+@item @kbd{M-x c-subword-move-mode}
+@findex c-subword-move-mode
+@findex subword-move-mode (c-)
+Toggle subword mode.
 
 @item @kbd{M-x c-toggle-syntactic-indentation}
 @findex c-toggle-syntactic-indentation
 @findex toggle-syntactic-indentation (c-)
-Toggle syntactic-indentation-mode.  Programmatically, if the function
-is given a numeric @var{arg}, a positive value will turn on
-syntactic-indentation minor mode and a negative value will turn it
-off.
+Toggle syntactic-indentation mode.
 @end table
+
+Common to all the toggle functions above is that if they are called
+programmatically, they take an optional numerical argument.  A
+positive value will turn on the minor mode and a negative value will
+turn it off.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1365,8 +1374,9 @@ whitespace after you've typed the @samp{;}.  See @ref{Clean-ups} for a
 full description.  See also @ref{Electric Keys} for a summary of
 clean-ups listed by key.
 
+
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hungry WS Deletion, Other Commands, Auto-newlines, Commands
+@node    Hungry WS Deletion, Subword Movement, Auto-newlines, Commands
 @comment node-name, next, previous, up
 @section Hungry Deletion of Whitespace
 @cindex hungry-deletion
@@ -1492,8 +1502,83 @@ sometimes be tricky.  The information in @ref{DEL Does Not
 Delete,,,emacs, GNU Emacs Manual}, might be helpful if you're having
 trouble with this in GNU Emacs.
 
+
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Commands,  , Hungry WS Deletion, Commands
+@node    Subword Movement, Other Commands, Hungry WS Deletion, Commands
+@comment node-name, next, previous, up
+@section Subword Movement and Editing
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex nomenclature
+@cindex subword
+In spite of the GNU Coding Standards, it is popular to name a symbol
+by mixing uppercase and lowercase letters, e.g. @samp{GtkWidget},
+@samp{EmacsFrameClass}, or @samp{NSGraphicsContext}.  Here we call
+these mixed case symbols @dfn{nomenclatures}.  Also, each capitalized
+(or completely uppercase) part of a nomenclature is called a
+@dfn{subword}.  Here are some examples:
+
+@multitable {@samp{NSGraphicsContext}} {@samp{NS}, @samp{Graphics}, and @samp{Context}}
+@headitem Nomenclature
+  @tab Subwords
+@item @samp{GtkWindow}
+  @tab @samp{Gtk} and @samp{Window}
+@item @samp{EmacsFrameClass}
+  @tab @samp{Emacs}, @samp{Frame}, and @samp{Class}
+@item @samp{NSGraphicsContext}
+  @tab @samp{NS}, @samp{Graphics}, and @samp{Context}
+@end multitable
+
+The subword minor mode replaces the basic word oriented movement and
+editing commands with variants that recognize subwords in a
+nomenclature and treat them as separate words:
+
+@findex c-forward-subword
+@findex forward-subword (c-)
+@findex c-backward-subword
+@findex backward-subword (c-)
+@findex c-mark-subword
+@findex mark-subword (c-)
+@findex c-kill-subword
+@findex kill-subword (c-)
+@findex c-backward-kill-subword
+@findex backward-kill-subword (c-)
+@findex c-transpose-subwords
+@findex transpose-subwords (c-)
+@findex c-capitalize-subword
+@findex capitalize-subword (c-)
+@findex c-upcase-subword
+@findex upcase-subword (c-)
+@findex c-downcase-subword
+@findex downcase-subword (c-)
+@multitable @columnfractions .20 .40 .40
+@headitem Key         @tab Word oriented command     @tab Subword oriented command
+@item     @key{M-f}   @tab @code{forward-word}       @tab @code{c-forward-subword}
+@item     @key{M-b}   @tab @code{backward-word}      @tab @code{c-backward-subword}
+@item     @key{M-@@}  @tab @code{mark-word}          @tab @code{c-mark-subword}
+@item     @key{M-d}   @tab @code{kill-word}          @tab @code{c-kill-subword}
+@item     @key{M-DEL} @tab @code{backward-kill-word} @tab @code{c-backward-kill-subword}
+@item     @key{M-t}   @tab @code{transpose-words}    @tab @code{c-transpose-subwords}
+@item     @key{M-c}   @tab @code{capitalize-word}    @tab @code{c-capitalize-subword}
+@item     @key{M-u}   @tab @code{upcase-word}        @tab @code{c-upcase-subword}
+@item     @key{M-l}   @tab @code{downcase-word}      @tab @code{c-downcase-subword}
+@end multitable
+
+Note that if you have changed the key bindings for the word oriented
+commands in your @file{.emacs} or a similar place, the keys you have
+configured are also used for the corresponding subword oriented
+commands.
+
+To make the mode turn on automatically, put the following code in
+your @file{.emacs}:
+
+@example
+(add-hook 'c-mode-common-hook
+          (lambda () (c-subword-move-mode 1)))
+@end example
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Other Commands,  , Subword Movement, Commands
 @comment node-name, next, previous, up
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
