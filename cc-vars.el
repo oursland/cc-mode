@@ -506,9 +506,9 @@ variable in a mode hook."
   :group 'c)
 
 (defcustom-c-stylevar c-doc-comment-style
-  '((c-mode    . gtkdoc)
-    (java-mode . javadoc)
-    (pike-mode . autodoc))
+  '((java-mode . javadoc)
+    (pike-mode . autodoc)
+    (c-mode    . gtkdoc))
   "*Specifies documentation comment style(s) to recognize.
 This is primarily used to fontify doc comments and the markup within
 them, e.g. Javadoc comments.
@@ -516,9 +516,9 @@ them, e.g. Javadoc comments.
 The value can be any of the following symbols for various known doc
 comment styles:
 
- gtkdoc  -- GtkDoc style for \"/** ... **/\" comments (default in C mode).
  javadoc -- Javadoc style for \"/** ... */\" comments (default in Java mode).
  autodoc -- Pike autodoc style for \"//! ...\" comments (default in Pike mode).
+ gtkdoc  -- GtkDoc style for \"/** ... **/\" comments (default in C mode).
 
 The value may also be a list of doc comment styles, in which case all
 of them are recognized simultaneously (presumably with markup cues
