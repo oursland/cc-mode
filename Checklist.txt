@@ -25,16 +25,19 @@ Checklist for doing a release
 	 anoncvs.php.
       o  Check at least release.php for correctness.
 
+    - If there are any new files.el, make sure they've been inserted
+      into Makefile.
+
     - Run "make release" to make all the tarballs and documentation.
 
       XX is the minor revision number of the new release.
 
       This creates the following files in dist:
 	  cc-mode-5.XX.tar.gz
-          cc-mode.dvi.gz
-          cc-mode.ps.gz
-          cc-mode.rev.ps.gz
-          cc-mode.info.tar.gz
+	  cc-mode.dvi.gz
+	  cc-mode.ps.gz
+	  cc-mode.rev.ps.gz
+	  cc-mode.info.tar.gz
 	  cc-mode.html.tar.gz
 
     - Update the SourceForge site:
@@ -55,8 +58,14 @@ Checklist for doing a release
 
     - Post ANNOUNCEMENT to the following newsgroups:
 	gnu.emacs.sources
-	comp.emacs.xemacs
 	comp.emacs
+	comp.emacs.xemacs
+	comp.lang.c
+	comp.lang.c++
+	comp.lang.objective-c
+	comp.lang.java.softwaretools
+	comp.lang.idl
+	comp.lang.awk
       (Don't forget the correct sender here either.)
 
     - Tag the release using "./Release.py --tag XX" where XX is the
@@ -99,14 +108,14 @@ Patch releases
 	   ChangeLog.  NN is the patch count that's last in the
 	   version string in cc-defs.el.
        3.  Commit it.  (Also make sure everything else that should go
-           in is committed.)
+	   in is committed.)
        4.  Do "cvs tag Patch_5_30_NN".
        5.  Use the file tree in this state to send it whereever it
-           should go.
+	   should go.
        6.  Increase the patch count in the version string in
-           cc-defs.el and commit it.  That's the only place where the
-           patch count is present; it's enough to make it show in bug
-           reports and when people do M-x c-version.
+	   cc-defs.el and commit it.  That's the only place where the
+	   patch count is present; it's enough to make it show in bug
+	   reports and when people do M-x c-version.
 
        (Release.py automates some of this for a real release, but it's
        not yet adapted for patch releases.)
@@ -221,7 +230,7 @@ for both):
 
        RMS prefers if the entries are condensed as much as possible to
        summarize the overall code changes between the versions.  I
-       look through and remove entries that are superceded later on,
+       look through and remove entries that are superseded later on,
        but I don't spend overly much time on rewriting it all to be as
        compact as possible.
 

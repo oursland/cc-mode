@@ -12,6 +12,12 @@ The minimum versions required are Emacs 20.1 or XEmacs 20.xxxx
 The information about using CC Mode has been separated from the larger
 and more difficult chapters about configuration.
 
+*** There are now two variants of the manual - for GNU Emacs and XEmacs.
+The only difference between them is where some cross references point
+(e.g. GNU Emacs Manual vs. XEmacs Manual).  The default variant is for
+GNU.  To build an XEmacs version, you must define the texinfo symbol
+"XEMACS".  See README and cc-mode.texi.
+
 ** The Electric action of non-alphabetic keys can now be turned off.
 The new command c-toggle-electric mode is bound to C-c C-l.  Its current
 state is displayed in the mode line with an 'l', e.g. "C/al".
