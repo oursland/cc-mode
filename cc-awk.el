@@ -762,10 +762,12 @@
 	(anchor-state-/div nil)) ; t means a following / would be a div sign.
     (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
     (c-clear-char-properties (point) lim 'syntax-table)
-    (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
-
     ;; Once round the next loop for each string, regexp, or div sign
-    (while (< (point) lim)
+    (while (progn
+             ;; Skip any "harmless" lines before the next tricky one.
+             (if (search-forward-regexp c-awk-harmless-lines+-here-re nil t)
+                 (setq anchor-state-/div nil))
+             (< (point) lim))
       (setq anchor (point))
       (search-forward-regexp c-awk-harmless-string*-here-re nil t)
       ;; We are now looking at either a " or a /.
@@ -773,11 +775,7 @@
       (setq anchor-state-/div
             (if (looking-at "_?\"")
                 (c-awk-syntax-tablify-string)
-              (c-awk-syntax-tablify-/ anchor anchor-state-/div)))
-
-      ;; Skip any further "harmless" lines before the next tricky one. 
-      (if (search-forward-regexp c-awk-harmless-lines+-here-re nil t)
-          (setq anchor-state-/div nil)))
+              (c-awk-syntax-tablify-/ anchor anchor-state-/div))))
     nil))
 
 
