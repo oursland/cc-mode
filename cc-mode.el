@@ -235,6 +235,9 @@ control).  See \"cc-mode.el\" for more info."
       (define-key c-mode-base-map (kbd "C-c C-<delete>")
 	'c-hungry-delete-forward)
     (define-key c-mode-base-map (kbd "C-c C-<delete>")
+      'c-hungry-backspace)
+    ;; The following is needed for TTYs.
+    (define-key c-mode-base-map [?\C-c ?\C-\d]
       'c-hungry-backspace)))
 
 (if c-mode-base-map
@@ -635,7 +638,18 @@ Note that the style variables are always made local to the buffer."
 	    (let ((langelem (car langentry))
 		  (offset (cdr langentry)))
 	      (c-set-offset langelem offset)))
-	  c-file-offsets))))
+	  c-file-offsets))
+    ;; Problem: The file local variable block might have explicitly set a
+    ;; style variable.  The `c-set-style' or `mapcar' call might have
+    ;; overwritten this.  So we run `hack-local-variables' again to remedy
+    ;; this.  There are no guarantees this will work properly, particularly as
+    ;; we have no control over what the other hook functions on
+    ;; `hack-local-variables-hook' would have done, or what any "eval"
+    ;; expression will do when evaluated again.  C'est la vie!  ACM,
+    ;; 2005/11/2.
+    (if (or c-file-style c-file-offsets)
+	(let ((hack-local-variables-hook nil))
+	  (hack-local-variables)))))
 
 (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
 
