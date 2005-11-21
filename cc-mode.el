@@ -237,13 +237,15 @@ control).  See \"cc-mode.el\" for more info."
   ;; Only used in Emacs to bind C-c C-<delete> and C-c C-<backspace>
   ;; to the proper keys depending on `normal-erase-is-backspace'.
   (if normal-erase-is-backspace
-      (define-key c-mode-base-map (kbd "C-c C-<delete>")
-	'c-hungry-delete-forward)
+      (progn
+	(define-key c-mode-base-map (kbd "C-c C-<delete>")
+	  'c-hungry-delete-forward)
+	(define-key c-mode-base-map (kbd "C-c C-<backspace>")
+	  'c-hungry-backspace))
     (define-key c-mode-base-map (kbd "C-c C-<delete>")
       'c-hungry-backspace)
-    ;; The following is needed for TTYs.
-    (define-key c-mode-base-map [?\C-c ?\C-\d]
-      'c-hungry-backspace)))
+    (define-key c-mode-base-map (kbd "C-c C-<backspace>")
+      'c-hungry-delete-forward)))
 
 (if c-mode-base-map
     nil
@@ -312,8 +314,9 @@ control).  See \"cc-mode.el\" for more info."
   ;; versions it's possible to do the same by using `function-key-map'.)
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
-  (define-key c-mode-base-map "\C-c\C-d"  'c-hungry-delete-forward)
-  (define-key c-mode-base-map [?\C-c ?\d] 'c-hungry-backspace)
+  (define-key c-mode-base-map "\C-c\C-d"     'c-hungry-delete-forward)
+  (define-key c-mode-base-map [?\C-c ?\d]    'c-hungry-backspace)
+  (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-backspace)
   (when (boundp 'normal-erase-is-backspace)
     ;; The automatic C-d and DEL mapping functionality doesn't extend
     ;; to special combinations like C-c C-<delete>, so we have to hook
@@ -332,11 +335,8 @@ control).  See \"cc-mode.el\" for more info."
     (define-key c-mode-base-map [backspace] 'c-electric-backspace)
     (define-key c-mode-base-map (kbd "C-c <delete>") 'c-hungry-delete)
     (define-key c-mode-base-map (kbd "C-c C-<delete>") 'c-hungry-delete)
-    (define-key c-mode-base-map (kbd "C-c <backspace>") 'c-hungry-backspace))
-
-  ;; Regardless of Emacs flavor and [delete] key behavior, we can use
-  ;; this to set C-c C-<backspace>.
-  (define-key c-mode-base-map (kbd "C-c C-<backspace>") 'c-hungry-backspace)
+    (define-key c-mode-base-map (kbd "C-c <backspace>") 'c-hungry-backspace)
+    (define-key c-mode-base-map (kbd "C-c C-<backspace>") 'c-hungry-backspace))
 
   (define-key c-mode-base-map "#"         'c-electric-pound)
   (define-key c-mode-base-map "{"         'c-electric-brace)
