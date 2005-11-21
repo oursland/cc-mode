@@ -317,6 +317,9 @@ control).  See \"cc-mode.el\" for more info."
   (define-key c-mode-base-map "\C-c\C-d"     'c-hungry-delete-forward)
   (define-key c-mode-base-map [?\C-c ?\d]    'c-hungry-backspace)
   (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-backspace)
+  (define-key c-mode-base-map [?\C-c deletechar] 'c-hungry-delete-forward) ; C-c <delete> on a tty.
+  (define-key c-mode-base-map [?\C-c (control deletechar)] ; C-c C-<delete> on a tty.
+    'c-hungry-delete-forward)
   (when (boundp 'normal-erase-is-backspace)
     ;; The automatic C-d and DEL mapping functionality doesn't extend
     ;; to special combinations like C-c C-<delete>, so we have to hook
