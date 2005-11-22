@@ -30,6 +30,58 @@
 @comment %**start of header (This is for running Texinfo on a region)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment How to make the various output formats:
+@comment (Thanks to Robert Chassell for supplying this information.)
+@comment Note that Texinfo 4.7 (or later) is needed.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+@ignore
+In each of the following pairs of commands, the first generates a
+version with cross references pointing to the GNU Emacs manuals,
+the second with them pointing to the XEmacs manuals. 
+    ## Info output
+    makeinfo cc-mode.texi
+    makeinfo -DXEMACS cc-mode.texi
+
+    ## DVI output
+    ## You may need to set up the environment variable TEXINPUTS so 
+    ## that tex can find the file texinfo.tex - See the tex
+    ## manpage.
+    texi2dvi cc-mode.texi
+    texi2dvi -t "@set XEMACS " cc-mode.texi
+
+    ## HTML output.  (The --no-split parameter is optional)
+    makeinfo --html --no-split cc-mode.texi
+    makeinfo --html --no-split -DXEMACS cc-mode.texi
+
+    ## Plain text output
+    makeinfo --fill-column=70 --no-split --paragraph-indent=0 \
+      --no-headers --output=cc-mode.txt cc-mode.texi
+    makeinfo --fill-column=70 --no-split --paragraph-indent=0 \
+      --no-headers --output=cc-mode.txt -DXEMACS cc-mode.texi
+
+    ## DocBook output
+    makeinfo --docbook --no-split --paragraph-indent=0 \
+      cc-mode.texi
+    makeinfo --docbook --no-split --paragraph-indent=0 \
+      -DXEMACS cc-mode.texi
+
+    ## XML output
+    makeinfo --xml --no-split --paragraph-indent=0 \
+      cc-mode.texi
+    makeinfo --xml --no-split --paragraph-indent=0 \
+      -DXEMACS cc-mode.texi
+
+    #### (You must be in the same directory as the viewed file.)
+
+      ## View DVI output
+      xdvi cc-mode.dvi &
+
+      ## View HTML output
+      mozilla cc-mode.html
+@end ignore
+
 @comment No overfull hbox marks in the dvi file.
 @finalout
 
@@ -154,7 +206,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.235 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.236 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -203,7 +255,7 @@ functions, classes etc - there are other packages for that.
 * Mailing Lists and Bug Reports::  
 * Command and Function Index::  
 * Variable Index::              
-* Concept and Key Index::
+* Concept and Key Index::       
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -211,14 +263,14 @@ functions, classes etc - there are other packages for that.
 Commands
 
 * Indentation Commands::        
-* Comment Command::             
+* Comment Commands::            
 * Movement Commands::           
 * Filling and Breaking::        
 * Minor Modes::                 
 * Electric Keys::               
 * Auto-newlines::               
-* Hungry WS Deletion::
-* Subword Movement::
+* Hungry WS Deletion::          
+* Subword Movement::            
 * Other Commands::              
 
 Font Locking
@@ -497,7 +549,7 @@ been loaded.  Put the following code into your @file{.emacs}:
 
 @noindent
 This example demonstrates the use of a very powerful @ccmode{} (and
-Emacs) facility, the hook.  The use of @ccmode{}'s hooks are described
+Emacs) facility, the hook.  The use of @ccmode{}'s hooks is described
 in @ref{CC Hooks}.
 @end table
 
@@ -559,19 +611,19 @@ structures.
 
 @menu
 * Indentation Commands::        
-* Comment Command::             
+* Comment Commands::            
 * Movement Commands::           
 * Filling and Breaking::        
 * Minor Modes::                 
 * Electric Keys::               
-* Auto-newlines::
-* Hungry WS Deletion::
-* Subword Movement::
+* Auto-newlines::               
+* Hungry WS Deletion::          
+* Subword Movement::            
 * Other Commands::              
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Commands, Comment Command, Commands, Commands
+@node    Indentation Commands, Comment Commands, Commands, Commands
 @comment node-name, next, previous,up
 @section Indentation Commands
 @cindex indentation
@@ -703,9 +755,9 @@ typing.  This is a standard (X)Emacs command.
 @kindex C-M-q
 @findex c-indent-exp
 @findex indent-exp (c-)
-Indent an entire balanced brace or parenthesis expression.  Note that
-point must be on the opening brace or parenthesis of the expression you
-want to indent.
+Indents an entire balanced brace or parenthesis expression.  Note that
+point must be on the opening brace or parenthesis of the expression
+you want to indent.
 
 @item @kbd{C-c C-q} (@code{c-indent-defun})
 @kindex C-c C-q
@@ -752,13 +804,23 @@ often (in seconds) progress messages are to be displayed.
 @end defopt
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Comment Command, Movement Commands, Indentation Commands, Commands
+@node    Comment Commands, Movement Commands, Indentation Commands, Commands
 @comment node-name, next, previous, up
-@section Comment Command
+@section Comment Commands
 @cindex comments (insertion of)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @table @asis
+@item @kbd{C-c C-c} (@code{comment-region})
+@kindex C-c C-c
+@findex comment-region
+This command comments out the lines that start in the region.  With a
+negative argument, it does the opposite - it deletes the comment
+delimiters from these lines.  @xref{Multi-Line Comments,,, emacs, GNU
+Emacs Manual}, for fuller details.  @code{comment-region} isn't
+actually part of @ccmode{} - it is given a @ccmode{} binding for
+convenience.
+
 @item @kbd{M-;} (@code{comment-dwim} or @code{indent-for-comment} @footnote{The name of this command varies between (X)Emacs versions.})
 @kindex M-;
 @findex comment-dwim
@@ -806,7 +868,7 @@ lines.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Movement Commands, Filling and Breaking, Comment Command, Commands
+@node    Movement Commands, Filling and Breaking, Comment Commands, Commands
 @comment node-name, next, previous, up
 @section Movement Commands
 @cindex movement
@@ -1063,8 +1125,8 @@ This automatically inserts newlines where you'd probably want to type
 them yourself, e.g. after typing @samp{@}}s.  Its action is suppressed
 when electric mode is disabled.
 @item hungry-delete mode
-This lets you delete a contiguous block of whitespace in a single
-operation - for example, the newline and indentation just inserted by
+This lets you delete a contiguous block of whitespace with a single
+key - for example, the newline and indentation just inserted by
 auto-newline when you want to back up and write a comment after the
 last statement.
 @item subword mode
@@ -1116,12 +1178,17 @@ also suppresses auto-newline mode.
 Toggle auto-newline minor mode.  When the command turns the mode on,
 it also enables electric minor mode.
 
-@item @kbd{C-c C-y} (@code{c-toggle-hungry-state})
-@kindex C-c C-y
+@item @kbd{M-x c-toggle-hungry-state}
 @findex c-toggle-hungry-state
 @findex toggle-hungry-state (c-)
 Toggle hungry-delete minor mode.  (Prior to @ccmode{} 5.31, this
 command was bound to @kbd{C-c C-d}.)
+
+@item @kbd{M-x c-toggle-auto-hungry-state}
+@findex c-toggle-auto-hungry-state
+@findex toggle-auto-hungry-state (c-)
+Toggle both auto-newline and hungry delete minor modes.  (Prior to
+@ccmode{} 5.31, this command was bound to @kbd{C-c C-t}.)
 
 @item @kbd{M-x c-subword-move-mode}
 @findex c-subword-move-mode
@@ -1136,8 +1203,9 @@ Toggle syntactic-indentation mode.
 
 Common to all the toggle functions above is that if they are called
 programmatically, they take an optional numerical argument.  A
-positive value will turn on the minor mode and a negative value will
-turn it off.
+positive value will turn on the minor mode (or both of them in the
+case of @code{c-toggle-auto-hungry-state}) and a negative value will
+turn it (or them) off.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1401,9 +1469,12 @@ There are two different ways you can use hungry deletion:
 
 @table @asis
 @item Using @dfn{Hungry Delete Mode} with @kbd{@key{DEL}} and @kbd{C-d}
-Here you toggle Hungry Delete minor mode with @kbd{C-c C-y}
-(@pxref{Minor Modes}.)  This makes @kbd{@key{DEL}} and @kbd{C-d} do
-forward and backwards hungry deletion.
+Here you toggle Hungry Delete minor mode with @kbd{M-x
+c-toggle-hungry-state}@footnote{Prior to @ccmode{} 5.31, this command
+was bound to @kbd{C-c C-d}.  @kbd{C-c C-d} is now the default binding
+for @code{c-hungry-delete-forward}.} (@pxref{Minor Modes}.)  This
+makes @kbd{@key{DEL}} and @kbd{C-d} do forward and backwards hungry
+deletion.
 
 @table @asis
 @item @kbd{@key{DEL}} (@code{c-electric-backspace})
@@ -1610,16 +1681,6 @@ your @file{.emacs}:
 Here are the various other commands that didn't fit anywhere else:
 
 @table @asis
-@item @kbd{C-c C-c} (@code{comment-region})
-@kindex C-c C-c
-@findex comment-region
-This command comments out the lines that start in the region.  With a
-negative argument, it does the opposite - it deletes the comment
-delimiters from these lines.  @xref{Multi-Line Comments,,, emacs, GNU
-Emacs Manual}, for fuller details.  @code{comment-region} isn't
-actually part of @ccmode{} - it is given a @ccmode{} binding for
-convenience.
-
 @item @kbd{C-c :} (@code{c-scope-operator})
 @kindex C-c :
 @findex c-scope-operator
@@ -2813,6 +2874,7 @@ lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
 by default).  A patch for that is available from
 @uref{http://cc-mode.sourceforge.net/,, the CC Mode web site}.},
+@c 2005/11/22:  The above is still believed to be the case.
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
 Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
