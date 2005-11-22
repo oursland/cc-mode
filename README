@@ -42,16 +42,14 @@ MANUALS
     differences between them are the targets of some cross references
     within the manual.
 
-    To build the manual yourself, you will need a recent Texinfo
-    release (as of this writing, it's known to work with Texinfo 4.3
-    (FIXME!!! check this) but somewhat older releases might be ok
-    too).  To build the Info manual, simply type:
+    To build the manual yourself, you will need Texinfo 4.7 or later.
+    Simply type:
 
         % makeinfo cc-mode.texi                   # For GNU Emacs
     or
         % makeinfo -DXEMACS cc-mode.texi          # For XEmacs
 
-    To make the DVI version, simply type:
+    To make the DVI version, type:
 
         % texi2dvi cc-mode.texi
 
