@@ -261,11 +261,15 @@ Optional argument ARG is the same as for `upcase-word'."
 ;; Internal functions
 ;;
 (defun c-forward-subword-internal ()
-  (if (save-excursion 
-	(let ((case-fold-search nil))
-	  (re-search-forward 
-	   (concat "\\W*\\(\\([" c-upper "]*\\W?\\)[" c-lower c-digit "]*\\)")
-	   nil t)))
+  (if (and
+       (save-excursion 
+	 (let ((case-fold-search nil))
+	   (re-search-forward 
+	    (concat "\\W*\\(\\([" c-upper "]*\\W?\\)[" c-lower c-digit "]*\\)")
+	    nil t)))
+       (> (match-end 0) (point))) ; So we don't get stuck at a
+				  ; "word-constituent" which isn't c-upper,
+				  ; c-lower or c-digit
       (goto-char 
        (cond
 	((< 1 (- (match-end 2) (match-beginning 2)))

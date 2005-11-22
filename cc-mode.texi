@@ -206,7 +206,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.236 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.237 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1672,6 +1672,9 @@ your @file{.emacs}:
           (lambda () (c-subword-move-mode 1)))
 @end example
 
+As a bonus, you can also use @code{c-subword-move-mode} in
+non-@ccmode{} buffers.
+
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Subword Movement, Commands
 @comment node-name, next, previous, up
@@ -2134,6 +2137,9 @@ changed independently of the style system.  @xref{Style Variables}.
 
 There are several ways you can write the code, depending on the
 precise effect you want---they are described lower down on this page.
+If you are new to @ccmode{}, we suggest you begin with the simplest
+method, ``Top-level commands or the customization interface''.
+
 If you make conflicting settings in several of these ways, the way
 that takes precedence is the one that appears latest in this list:
 @itemize @w
@@ -2153,14 +2159,13 @@ settings:
 @item Top-level commands or the ``customization interface''
 Most simply, you can write @code{setq} and similar commands at the top
 level of your @file{.emacs} file.  When you load a @ccmode{} buffer,
-it initializes its buffer-local bindings with the current global
-values (at least, for those settings you have given global values to),
-so it makes sense to have these @code{setq} commands run @emph{before}
-@ccmode{} is first initialized---in particular, before any call to
-@code{desktop-read} (@pxref{Saving Emacs Sessions,,, emacs, GNU Emacs
-Manual}).  For example, you might set c-basic-offset thus:
+it initializes its configuration from these global values (at least,
+for those settings you have given values to), so it makes sense to
+have these @code{setq} commands run @emph{before} @ccmode{} is first
+initialized---in particular, before any call to @code{desktop-read}
+(@pxref{Saving Emacs Sessions,,, emacs, GNU Emacs Manual}).  For
+example, you might set c-basic-offset thus:
 
-@c END OF NEW STOUGH@*
 @example
 (setq c-basic-offset 4)
 @end example
