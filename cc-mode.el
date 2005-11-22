@@ -108,7 +108,7 @@
 
 ;; Autoload directive for emacsen that doesn't have an older CC Mode
 ;; version in the dist.
-(autoload 'c-subword-move-mode "cc-subword"
+(autoload 'c-subword-mode "cc-subword"
   "Mode enabling subword movement and editing keys." t)
 
 ;; Load cc-fonts first after font-lock is loaded, since it isn't

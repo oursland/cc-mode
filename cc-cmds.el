@@ -258,8 +258,8 @@ With universal argument, inserts the analysis as a comment on that line."
 		     (if c-hungry-delete-key "h" "")
 		     (if (and
 			  ;; cc-subword might not be loaded.
-			  (boundp 'c-subword-move-mode)
-			  (symbol-value 'c-subword-move-mode))
+			  (boundp 'c-subword-mode)
+			  (symbol-value 'c-subword-mode))
 			 "w"
 		       ""))))
     (setq c-submode-indicators

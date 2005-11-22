@@ -206,7 +206,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.237 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.238 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1190,9 +1190,9 @@ command was bound to @kbd{C-c C-d}.)
 Toggle both auto-newline and hungry delete minor modes.  (Prior to
 @ccmode{} 5.31, this command was bound to @kbd{C-c C-t}.)
 
-@item @kbd{M-x c-subword-move-mode}
-@findex c-subword-move-mode
-@findex subword-move-mode (c-)
+@item @kbd{M-x c-subword-mode}
+@findex c-subword-mode
+@findex subword-mode (c-)
 Toggle subword mode.
 
 @item @kbd{M-x c-toggle-syntactic-indentation}
@@ -1669,11 +1669,11 @@ your @file{.emacs}:
 
 @example
 (add-hook 'c-mode-common-hook
-          (lambda () (c-subword-move-mode 1)))
+          (lambda () (c-subword-mode 1)))
 @end example
 
-As a bonus, you can also use @code{c-subword-move-mode} in
-non-@ccmode{} buffers.
+As a bonus, you can also use @code{c-subword-mode} in non-@ccmode{}
+buffers.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Subword Movement, Commands
