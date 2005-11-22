@@ -364,7 +364,7 @@ control).  See \"cc-mode.el\" for more info."
   (define-key c-mode-base-map "\C-c."     'c-set-style)
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
-  (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)
+  ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
   )
 
 ;; We don't require the outline package, but we configure it a bit anyway.

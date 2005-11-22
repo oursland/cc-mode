@@ -325,19 +325,18 @@ whitespace in one fell swoop."
   (c-update-modeline)
   (c-keep-region-active))
 
-;;;; The following was commented out by ACM, 2005-03-05.
-;; (defun c-toggle-auto-hungry-state (&optional arg)
-;;   "Toggle auto-newline and hungry-delete-key features.
-;; Optional numeric ARG, if supplied, turns on auto-newline and
-;; hungry-delete when positive, turns them off when negative, and just
-;; toggles them when zero or left out.
-;; 
-;; See `c-toggle-auto-newline' and `c-toggle-hungry-state' for details."
-;;   (interactive "P")
-;;   (setq c-auto-newline (c-calculate-state arg c-auto-newline))
-;;   (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
-;;   (c-update-modeline)
-;;   (c-keep-region-active))
+(defun c-toggle-auto-hungry-state (&optional arg)
+  "Toggle auto-newline and hungry-delete-key features.
+Optional numeric ARG, if supplied, turns on auto-newline and
+hungry-delete when positive, turns them off when negative, and just
+toggles them when zero or left out.
+
+See `c-toggle-auto-newline' and `c-toggle-hungry-state' for details."
+  (interactive "P")
+  (setq c-auto-newline (c-calculate-state arg c-auto-newline))
+  (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
+  (c-update-modeline)
+  (c-keep-region-active))
 
 (defun c-toggle-electric-state (&optional arg)
   "Toggle the electric indentation feature.
@@ -2467,7 +2466,7 @@ sentence motion in or near comments and multiline strings."
 		   (let ((lim (c-literal-limits (c-point 'bol) t)))
 		     (when (consp lim)
 		       (goto-char (car lim))
-		       (when (looking-at "/[/*]")
+		       (when (looking-at "/[/*]") ; FIXME!!!  Adapt for AWK! (ACM, 2005/11/18)
 			 ;; Found comment to align with.
 			 (if (bolp)
 			     ;; Do not pad with one space if we're at bol.
