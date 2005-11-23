@@ -1,8 +1,4 @@
 \input texinfo
-@comment
-@comment FIXME: cc-subword docs.
-@comment
-
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -206,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.239 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.240 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -995,8 +991,6 @@ negative argument, move in the opposite direction.
 These key sequences are not bound in AWK Mode, which doesn't have
 preprocessor statements.
 
-@c FIXME!!!  These should probably be removed after the subword stuff
-@c has been documented.  ACM, 2005/11/6.
 @item @kbd{M-x c-backward-into-nomenclature}
 @itemx @kbd{M-x c-forward-into-nomenclature}
 @findex c-backward-into-nomenclature
@@ -1011,6 +1005,10 @@ underscores.  E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 These commands move backward or forward to the beginning of the next
 capitalized word.  With prefix argument @var{n}, move @var{n} times.
 If @var{n} is negative, move in the opposite direction.
+
+Note that these two commands have been superseded by
+@code{c-subword-mode}, which you should use instead.  @xref{Subword
+Movement}.  They might be removed from a future release of @ccmode{}.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1178,19 +1176,18 @@ also suppresses auto-newline mode.
 Toggle auto-newline minor mode.  When the command turns the mode on,
 it also enables electric minor mode.
 
-@item @kbd{M-x c-toggle-hungry-state}
+@item @kbd{M-x c-toggle-hungry-state}@footnote{Prior to @ccmode{} 5.31, this command was bound to @kbd{C-c C-d}.}
 @findex c-toggle-hungry-state
 @findex toggle-hungry-state (c-)
-Toggle hungry-delete minor mode.  (Prior to @ccmode{} 5.31, this
-command was bound to @kbd{C-c C-d}.)
+Toggle hungry-delete minor mode.
 
-@item @kbd{M-x c-toggle-auto-hungry-state}
+@item @kbd{M-x c-toggle-auto-hungry-state}@footnote{Prior to @ccmode{} 5.31, this command was bound to @kbd{C-c C-t}.}
 @findex c-toggle-auto-hungry-state
 @findex toggle-auto-hungry-state (c-)
-Toggle both auto-newline and hungry delete minor modes.  (Prior to
-@ccmode{} 5.31, this command was bound to @kbd{C-c C-t}.)
+Toggle both auto-newline and hungry delete minor modes.
 
-@item @kbd{M-x c-subword-mode}
+@item @kbd{C-c C-w} (@code{M-x c-subword-mode})
+@kindex C-c C-w
 @findex c-subword-mode
 @findex subword-mode (c-)
 Toggle subword mode.
@@ -1664,8 +1661,9 @@ commands in your @file{.emacs} or a similar place, the keys you have
 configured are also used for the corresponding subword oriented
 commands.
 
-To make the mode turn on automatically, put the following code in
-your @file{.emacs}:
+Type @kbd{C-c C-w} to toggle subword mode on and off.  To make the
+mode turn on automatically, put the following code in your
+@file{.emacs}:
 
 @example
 (add-hook 'c-mode-common-hook
@@ -1673,7 +1671,7 @@ your @file{.emacs}:
 @end example
 
 As a bonus, you can also use @code{c-subword-mode} in non-@ccmode{}
-buffers.
+buffers by typing @kbd{M-x c-subword-mode}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Subword Movement, Commands
@@ -2142,7 +2140,7 @@ method, ``Top-level commands or the customization interface''.
 
 If you make conflicting settings in several of these ways, the way
 that takes precedence is the one that appears latest in this list:
-@itemize @w
+@itemize @asis
 @item
 @table @asis
 @item Style
@@ -2634,7 +2632,9 @@ function @code{c-add-style}.  You can see an example of a style
 definition in @ref{Sample .emacs File}.
 
 @cindex style definition
-@defvr {List} style definition
+@c @defvr {List} style definition
+@table @asis
+@item Structure of a Style Definition List
 ([@var{base-style}] [(@var{variable} . @var{value}) @dots{}])
 
 Optional @var{base-style}, if present, must be a string which is the
@@ -2655,12 +2655,7 @@ tries to give it. @xref{Config Basics}.} The variable can be either a
 @ccmode{} style variable or an arbitrary Emacs variable.  In the
 latter case, it is @emph{not} made buffer-local by the @ccmode{} style
 system.
-@end defvr
-
-@footnote{Note that if the variable has been given a value by the
-Customization interface or a @code{setq} at the top level of your
-@file{.emacs}, this value will override the one the style system tries
-to give it.}
+@c @end defvr
 
 Two variables are treated specially in the dotted pair list:
 
@@ -2680,6 +2675,7 @@ in your style, only those that are different from the inherited style.
 The value is added to @code{c-special-indent-hook} using
 @code{add-hook}, so any functions already on it are kept.  If the value
 is a list, each element of the list is added with @code{add-hook}.
+@end table
 @end table
 
 Styles are kept in the @code{c-style-alist} variable, but you
