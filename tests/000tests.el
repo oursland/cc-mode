@@ -122,36 +122,28 @@ simplifications with lesser accuracy.")
   ;; Make sure all used faces are unique before loading cc-fonts.  We
   ;; might be screwed if it's already loaded - the check for ambiguous
   ;; faces below will complain in that case.
-  (unless (c-face-name-p 'font-lock-doc-face)
-    (if (c-face-name-p 'font-lock-comment-face)
-	(copy-face 'font-lock-comment-face 'font-lock-doc-face)
-      (make-face 'font-lock-doc-face)))
-  (unless (c-face-name-p 'font-lock-preprocessor-face)
-    (cond ((c-face-name-p 'font-lock-builtin-face)
-	   (copy-face 'font-lock-builtin-face 'font-lock-preprocessor-face))
-	  ((c-face-name-p 'font-lock-reference-face)
-	   (copy-face 'font-lock-reference-face 'font-lock-preprocessor-face))
-	  (t (make-face 'font-lock-preprocessor-face)))
-    (defvar font-lock-preprocessor-face nil)
-    (setq font-lock-preprocessor-face 'font-lock-preprocessor-face))
-  (unless (c-face-name-p 'font-lock-constant-face)
-    (if (c-face-name-p 'font-lock-reference-face)
-	(copy-face 'font-lock-reference-face 'font-lock-constant-face)
-      (make-face 'font-lock-constant-face))
-    (defvar font-lock-constant-face nil)
-    (setq font-lock-constant-face 'font-lock-constant-face))
-  (unless (c-face-name-p 'font-lock-label-face)
-    (if (c-face-name-p 'font-lock-reference-face)
-	(copy-face 'font-lock-reference-face 'font-lock-label-face)
-      (copy-face 'font-lock-constant-face 'font-lock-label-face))
-    (defvar font-lock-label-face nil)
-    (setq font-lock-label-face 'font-lock-label-face))
-  (unless (c-face-name-p 'font-lock-doc-markup-face)
-    (if (c-face-name-p 'font-lock-reference-face)
-	(copy-face 'font-lock-reference-face 'font-lock-doc-markup-face)
-      (copy-face 'font-lock-constant-face 'font-lock-doc-markup-face))
-    (defvar font-lock-doc-markup-face nil)
-    (setq font-lock-doc-markup-face 'font-lock-doc-markup-face))
+
+  (defun c-test-construct-face (face &rest fallback-faces)
+    ;; If `face' doesn't exist, define it.  The face definition is
+    ;; copied from the first of `fallback-faces' that exists.
+    (unless (c-face-name-p face)
+      (catch 'create-face
+	(while fallback-faces
+	  (let ((fallback-face (pop fallback-faces)))
+	    (when (c-face-name-p fallback-face)
+	      (copy-face fallback-face face)
+	      (throw 'create-face t))))
+	(make-face face))
+      (eval `(defvar ,face nil))
+      (set face face)))
+  (c-test-construct-face 'font-lock-doc-face 'font-lock-comment-face)
+  (c-test-construct-face 'font-lock-preprocessor-face
+			 'font-lock-builtin-face
+			 'font-lock-reference-face)
+  (c-test-construct-face 'font-lock-constant-face 'font-lock-reference-face)
+  (c-test-construct-face 'font-lock-label-face 'font-lock-reference-face)
+  (c-test-construct-face 'font-lock-doc-markup-face 'font-lock-reference-face)
+  (c-test-construct-face 'font-lock-negation-char-face 'default)
 
   ;; In Emacs face names are resolved as variables which can point to
   ;; another face.  Make sure we don't have such indirections when we
@@ -172,7 +164,9 @@ simplifications with lesser accuracy.")
 	    font-lock-constant-face
 	    font-lock-preprocessor-face
 	    font-lock-builtin-face
-	    font-lock-warning-face)))
+	    font-lock-warning-face
+	    font-lock-negation-char-face
+	    font-lock-comment-delimiter-face)))
 
 (require 'cc-mode)
 
@@ -194,7 +188,7 @@ simplifications with lesser accuracy.")
     (cpp . ,c-preprocessor-face-name)
     (err . font-lock-warning-face)
     (nbs . c-nonbreakable-space-face)
-
+    (neg . font-lock-negation-char-face)
     ;; The following is used on the comment delimiters themselves in
     ;; Emacs >= 22.  Just make it an alias for the comment face to
     ;; keep compatibility with our current set of test cases.  (It's
@@ -724,6 +718,12 @@ to be set as a file local variable.")
     (if (setq buf (get-buffer "*cc-resulting-faces*"))
 	(kill-buffer buf))))
 
+(defun c-test-not-loaded (package)
+  (when (and (featurep package)
+	     (not (get package 'load-warning)))
+    (put package 'load-warning t)
+    (cc-test-log "Warning: %s is loaded" package)))
+
 (defun do-one-test (filename &optional no-error collect-tests)
   (interactive "fFile to test: ")
 
@@ -758,15 +758,10 @@ to be set as a file local variable.")
 	     last-result
 	     (test-msg (if cc-test-benchmark-mode "Benching" "Testing")))
 
-	;; This shouldn't happen if CC Mode is byte compiled properly.
-	(when (and (featurep 'cc-langs)
-		   (not (get 'cc-langs 'load-warning)))
-	  (put 'cc-langs 'load-warning t)
-	  (cc-test-log "Warning: cc-langs is loaded"))
-	(when (and (featurep 'cc-bytecomp)
-		   (not (get 'cc-bytecomp 'load-warning)))
-	  (put 'cc-bytecomp 'load-warning t)
-	  (cc-test-log "Warning: cc-bytecomp is loaded"))
+	;; These shouldn't be loaded if CC Mode is byte compiled properly.
+	(c-test-not-loaded 'cc-langs)
+	(c-test-not-loaded 'cc-bytecomp)
+	(c-test-not-loaded 'cc-lobotomy)
 
 	(switch-to-buffer testbuf)
 	(setq ignore-errs (intersection cc-test-emacs-features
