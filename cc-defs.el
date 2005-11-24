@@ -883,6 +883,14 @@ MODE is either a mode symbol or a list of mode symbols."
 				       (cons property prop))))))))))
 (cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
 
+(defmacro c-char-to-int (char)
+  ;; In GNU Emacs, a character is an integer.  In XEmacs, a character is a
+  ;; type distinct from an integer.  Sometimes we positively need an integer.
+  ;; C-CHAR-TO-INT makes this conversion, if necessary.
+  (if (fboundp 'char-int)
+      `(char-int ,char)
+    char))
+
 (defmacro c-put-char-property (pos property value)
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
