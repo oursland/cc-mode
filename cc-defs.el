@@ -1266,16 +1266,20 @@ when it's needed.  The default is the current language taken from
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
 (defun c-make-bare-char-alt (chars &optional inverted)
-  "Make a character alternative string from the list of characters CHARS.
-The returned string is of the type that can be used with
-`skip-chars-forward' and `skip-chars-backward'.  If INVERTED is
-non-nil, a caret is prepended to invert the set."
+  "Make a character alternative string from the list of characters CHARS
+\(which are actually their integer character codes in XEmacs).
+
+The returned string is of the type that can be used with `skip-chars-forward'
+and `skip-chars-backward'.  If INVERTED is non-nil, a caret is prepended to
+invert the set."
   ;; This function ought to be in the elisp core somewhere.
   (let ((str (if inverted "^" "")) char char2)
     (setq chars (sort (append chars nil) `<))
     (while chars
       (setq char (pop chars))
-      (if (memq char '(?\\ ?^ ?-))
+      (if (memq char `(,(c-char-to-int ?\\)
+		       ,(c-char-to-int ?^)
+		       ,(c-char-to-int ?-)))
 	  ;; Quoting necessary (this method only works in the skip
 	  ;; functions).
 	  (setq str (format "%s\\%c" str char))
