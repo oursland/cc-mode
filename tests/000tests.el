@@ -193,7 +193,15 @@ simplifications with lesser accuracy.")
     (lbl . ,c-label-face-name)
     (cpp . ,c-preprocessor-face-name)
     (err . font-lock-warning-face)
-    (nbs . c-nonbreakable-space-face)))
+    (nbs . c-nonbreakable-space-face)
+
+    ;; The following is used on the comment delimiters themselves in
+    ;; Emacs >= 22.  Just make it an alias for the comment face to
+    ;; keep compatibility with our current set of test cases.  (It's
+    ;; not the kind of fontification we want to test here either,
+    ;; since we're mainly interested in the fontification rules we
+    ;; define in cc-fonts.el.)
+    (cmt . font-lock-comment-delimiter-face)))
 
 (if cc-test-extend-faces
     ;; Check that we don't have duplicates.
