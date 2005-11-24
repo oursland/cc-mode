@@ -678,7 +678,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  nil)
 		(goto-char (match-beginning 0))))))
 
-      ("\\(!\\)[^=]" 1 font-lock-negation-char-face)
+      ("\\(!\\)[^=]" 1 c-negation-char-face-name)
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
