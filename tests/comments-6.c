@@ -7,7 +7,7 @@ int x;
  * ender.  This test case documents that.
  *
  * Local Variables:
- * cc-test-skip: (emacs-19 emacs-20 emacs-21 xemacs-19 xemacs-20)
+ * cc-test-skip: (emacs-19 emacs-20 emacs-21 emacs-22 xemacs-19 xemacs-20)
  * End:
  */
 
