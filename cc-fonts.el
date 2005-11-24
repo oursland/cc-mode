@@ -171,6 +171,12 @@
 	 'font-lock-doc-markup-face
     c-label-face-name))
 
+(defconst c-negation-char-face-name
+  (if (c-face-name-p 'font-lock-negation-char-face)
+      ;; Emacs 22 has a special face for negation chars.
+      'font-lock-negation-char-face
+    'default))
+
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
 (cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
 
@@ -489,13 +495,10 @@ stuff.  Used on level 1 and higher."
 			 "\\)")
 		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
 
-	      ,@(when (c-face-name-p 'font-lock-negation-char-face)
-		  ;; Fontify the "n" in "#ifndef" in Emacs 22 which has a
-		  ;; special face for negation chars.
-		  `((,(concat noncontinued-line-end
-			      (c-lang-const c-opt-cpp-prefix)
-			      "if\\(n\\)def\\>")
-		     ,(+ ncle-depth 1) font-lock-negation-char-face prepend)))
+	      (,(concat noncontinued-line-end
+			(c-lang-const c-opt-cpp-prefix)
+			"if\\(n\\)def\\>")
+	       ,(+ ncle-depth 1) c-negation-char-face-name prepend)
 	      )))
 
       ,@(when (c-major-mode-is 'pike-mode)
@@ -675,9 +678,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  nil)
 		(goto-char (match-beginning 0))))))
 
-      ,@(when (c-face-name-p 'font-lock-negation-char-face)
-	  ;; Emacs 22 has a special face to fontify negation chars.
-	  '(("\\(!\\)[^=]" 1 font-lock-negation-char-face)))
+      ("\\(!\\)[^=]" 1 font-lock-negation-char-face)
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
