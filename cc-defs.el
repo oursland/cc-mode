@@ -363,6 +363,14 @@ to it is returned.  This function does not modify the point or the mark."
      (error nil)))
 (put 'c-safe 'lisp-indent-function 0)
 
+(defmacro c-int-to-char (integer)
+  ;; In GNU Emacs, a character is an integer.  In XEmacs, a character is a
+  ;; type distinct from an integer.  Sometimes we need to convert integers to
+  ;; characters.  `c-int-to-char' makes this conversion, if necessary.
+  (if (fboundp 'int-to-char)
+      `(int-to-char ,integer)
+    integer))
+
 ;; The following is essentially `save-buffer-state' from lazy-lock.el.
 ;; It ought to be a standard macro.
 (defmacro c-save-buffer-state (varlist &rest body)
@@ -881,15 +889,6 @@ MODE is either a mode symbol or a list of mode symbols."
 		    (put-text-property pos (1+ pos)
 				       'rear-nonsticky
 				       (cons property prop))))))))))
-(cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
-
-(defmacro c-char-to-int (char)
-  ;; In GNU Emacs, a character is an integer.  In XEmacs, a character is a
-  ;; type distinct from an integer.  Sometimes we positively need an integer.
-  ;; C-CHAR-TO-INT makes this conversion, if necessary.
-  (if (fboundp 'char-int)
-      `(char-int ,char)
-    char))
 
 (defmacro c-put-char-property (pos property value)
   ;; Put the given property with the given value on the character at
@@ -1266,20 +1265,16 @@ when it's needed.  The default is the current language taken from
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
 (defun c-make-bare-char-alt (chars &optional inverted)
-  "Make a character alternative string from the list of characters CHARS
-\(which are actually their integer character codes in XEmacs).
-
-The returned string is of the type that can be used with `skip-chars-forward'
-and `skip-chars-backward'.  If INVERTED is non-nil, a caret is prepended to
-invert the set."
+  "Make a character alternative string from the list of characters CHARS.
+The returned string is of the type that can be used with
+`skip-chars-forward' and `skip-chars-backward'.  If INVERTED is
+non-nil, a caret is prepended to invert the set."
   ;; This function ought to be in the elisp core somewhere.
   (let ((str (if inverted "^" "")) char char2)
     (setq chars (sort (append chars nil) `<))
     (while chars
       (setq char (pop chars))
-      (if (memq char `(,(c-char-to-int ?\\)
-		       ,(c-char-to-int ?^)
-		       ,(c-char-to-int ?-)))
+      (if (memq char '(?\\ ?^ ?-))
 	  ;; Quoting necessary (this method only works in the skip
 	  ;; functions).
 	  (setq str (format "%s\\%c" str char))

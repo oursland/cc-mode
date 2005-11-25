@@ -916,7 +916,7 @@ operators."
       (let (list (char 32))
 	(while (< char 127)
 	  (or (memq (char-syntax char) '(?w ?_ ?< ?> ?\ ))
-	      (setq list (cons char list)))
+	      (setq list (cons (c-int-to-char char) list)))
 	  (setq char (1+ char)))
 	list)))
 
@@ -2397,34 +2397,32 @@ possible for good performance."
 		     (let ((pos 0) res)
 		       (while (string-match "\\(\\s.\\|\\s(\\|\\s)\\)"
 					    op pos)
-			 (setq res (cons
-				    (c-char-to-int (aref op (match-beginning 1)))
-				    res)
+			 (setq res (cons (aref op (match-beginning 1)) res)
 			       pos (match-end 0)))
 		       res))))
 
   ;; Allow cpp operatios (where applicable).
   t (if (c-lang-const c-opt-cpp-prefix)
 	(set-difference (c-lang-const c-block-prefix-disallowed-chars)
-			  `(,(c-char-to-int ?#)))
+			'(?#))
       (c-lang-const c-block-prefix-disallowed-chars))
 
   ;; Allow ':' for inherit list starters.
   (c++ objc idl) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
-				 `(,(c-char-to-int ?:)))
+				 '(?:))
 
   ;; Allow ',' for multiple inherits.
   (c++ java) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
-			     `(,(c-char-to-int ?,)))
+			     '(?,))
 
   ;; Allow parentheses for anonymous inner classes in Java and class
   ;; initializer lists in Pike.
   (java pike) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
-			      `(,(c-char-to-int ?\() ,(c-char-to-int ?\))))
+			      '(?\( ?\)))
 
   ;; Allow '"' for extern clauses (e.g. extern "C" {...}).
   (c c++ objc) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
-			       `(,(c-char-to-int ?\") ,(c-char-to-int ?'))))
+			       '(?\" ?')))
 
 (c-lang-defconst c-block-prefix-charset
   ;; `c-block-prefix-disallowed-chars' as an inverted charset suitable
