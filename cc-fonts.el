@@ -261,6 +261,26 @@
 		    (c-got-face-at (point) c-literal-faces))))
       t))
 
+  (defun c-make-syntactic-matcher (regexp)
+    ;; Returns a byte compiled function suitable for use in place of a
+    ;; regexp string in a `font-lock-keywords' matcher, except that
+    ;; only matches outside comments and string literals count.
+    ;;
+    ;; This function does not do any hidden buffer changes, but the
+    ;; generated functions will.  (They are however used in places
+    ;; covered by the font-lock context.)
+    (byte-compile
+     `(lambda (limit)
+	(let (res)
+	  (while (and (setq res (re-search-forward ,regexp limit t))
+		      (progn
+			(goto-char (match-beginning 0))
+			(or (c-skip-comments-and-strings limit)
+			    (progn
+			      (goto-char (match-end 0))
+			      nil)))))
+	  res))))
+
   (defun c-make-font-lock-search-function (regexp &rest highlights)
     ;; This function makes a byte compiled function that works much like
     ;; a matcher element in `font-lock-keywords'.  It cuts out a little
@@ -291,25 +311,23 @@
     ;; lambda easier.
     (byte-compile
      `(lambda (limit)
-	(let (-match-end-pos-
-	      ;; The font-lock package in Emacs is known to clobber
+	(let (;; The font-lock package in Emacs is known to clobber
 	      ;; `parse-sexp-lookup-properties' (when it exists).
 	      (parse-sexp-lookup-properties
 	       (cc-eval-when-compile
 		 (boundp 'parse-sexp-lookup-properties))))
 	  (while (re-search-forward ,regexp limit t)
-	    (setq -match-end-pos- (point))
 	    (unless (progn
 		      (goto-char (match-beginning 0))
 		      (c-skip-comments-and-strings limit))
-	      (goto-char -match-end-pos-)
+	      (goto-char (match-end 0))
 	      ,@(mapcar
 		 (lambda (highlight)
 		   (if (integerp (car highlight))
 		       (progn
-			 (unless (nth 2 highlight)
+			 (unless (eq (nth 2 highlight) t)
 			   (error
-			    "The override flag must currently be set in %s"
+			    "The override flag must currently be t in %s"
 			    highlight))
 			 (when (nth 3 highlight)
 			   (error
@@ -333,6 +351,7 @@
   (eval-after-load "edebug"
     '(progn
        (def-edebug-spec c-fontify-types-and-refs let*)
+       (def-edebug-spec c-make-syntactic-matcher t)
        ;; If there are literal quoted or backquoted highlight specs in
        ;; the call to `c-make-font-lock-search-function' then let's
        ;; instrument the forms in them.
@@ -495,10 +514,13 @@ stuff.  Used on level 1 and higher."
 			 "\\)")
 		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
 
-	      (,(concat noncontinued-line-end
-			(c-lang-const c-opt-cpp-prefix)
-			"if\\(n\\)def\\>")
-	       ,(+ ncle-depth 1) c-negation-char-face-name prepend)
+	      (eval . (list ,(c-make-syntactic-matcher
+			      (concat noncontinued-line-end
+				      (c-lang-const c-opt-cpp-prefix)
+				      "if\\(n\\)def\\>"))
+			    ,(+ ncle-depth 1)
+			    c-negation-char-face-name
+			    'append))
 	      )))
 
       ,@(when (c-major-mode-is 'pike-mode)
@@ -678,7 +700,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  nil)
 		(goto-char (match-beginning 0))))))
 
-      ("\\(!\\)[^=]" 1 c-negation-char-face-name)
+      (eval . (list "\\(!\\)[^=]" 1 c-negation-char-face-name))
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
