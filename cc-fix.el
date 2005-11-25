@@ -50,6 +50,25 @@
 
 (cc-external-require 'advice)
 
+;; Emacs 20.n doesn't have the macros push and pop.  Here're the Emacs 21
+;; definitions.
+(or (fboundp 'push)
+    (defmacro push (newelt listname)
+      "Add NEWELT to the list stored in the symbol LISTNAME.
+This is equivalent to (setq LISTNAME (cons NEWELT LISTNAME)).
+LISTNAME must be a symbol."
+      (list 'setq listname
+	    (list 'cons newelt listname))))
+
+(or (fboundp 'pop)
+    (defmacro pop (listname)
+      "Return the first element of LISTNAME's value, and remove it from the list.
+LISTNAME must be a symbol whose value is a list.
+If the value is nil, `pop' returns nil but does not actually
+change the list."
+      (list 'prog1 (list 'car listname)
+	    (list 'setq listname (list 'cdr listname)))))
+
 
 (if (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
     (progn

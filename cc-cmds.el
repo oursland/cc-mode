@@ -218,21 +218,23 @@ With universal argument, inserts the analysis as a comment on that line."
     (if (not (consp arg))
 	(let (elem pos ol ols)
 	  (message "Syntactic analysis: %s" syntax)
-	  (unwind-protect
+	  (c-save-buffer-state ()
 	      (progn
 		(while syntax
 		  (setq elem (pop syntax))
 		  (when (setq pos (c-langelem-pos elem))
-		    (setq ol (make-overlay pos (1+ pos)))
-		    (overlay-put ol 'face 'highlight)
+		    (setq ol (cons pos (c-get-char-property pos 'face)))
+		    (c-put-char-property pos 'face 'highlight t)
 		    (push ol ols))
 		  (when (setq pos (c-langelem-2nd-pos elem))
-		    (setq ol (make-overlay pos (1+ pos)))
-		    (overlay-put ol 'face 'secondary-selection)
+		    (setq ol (cons pos (c-get-char-property pos 'face)))
+		    (c-put-char-property pos 'face 'highlight t)
 		    (push ol ols)))
 		(sit-for 10))
 	    (while ols
-	      (delete-overlay (pop ols)))))
+	      (setq ol (pop ols))
+	      (c-put-char-property (car ol) 'face (cdr ol) 'remove)))
+	  )
       (indent-for-comment)
       (insert-and-inherit (format "%s" syntax))
       ))
@@ -574,8 +576,8 @@ inside a literal or a macro, nothing special happens."
 
   (let ((here (point))
 	(pos (- (point-max) (point)))
-	mbeg mend mbeg1 mend1 mbeg4 mend4
-	eol-col cmnt-pos cmnt-col cmnt-gap tmp)
+	mbeg1 mend1 mbeg4 mend4
+	eol-col cmnt-pos cmnt-col cmnt-gap)
 
     (when
 	(save-excursion
@@ -711,7 +713,8 @@ settings of `c-cleanup-list' are done."
 	    ;; Do all appropriate clean ups
 	    (let ((here (point))
 		  (pos (- (point-max) (point)))
-		  mbeg mend tmp)
+		  mbeg mend
+		  )
 
 	      ;; `}': clean up empty defun braces
 	      (when (c-save-buffer-state ()
@@ -1757,7 +1760,8 @@ function does not require the declaration to contain a brace block."
   ;; This function might do hidden buffer changes.
   (save-match-data
     (let ((start-point (point))
-	  (lit-type (c-literal-type range)))
+	  ;; (lit-type (c-literal-type range))  ; Commented out, 2005/11/23, ACM
+	  )
       (save-restriction
 	(c-narrow-to-comment-innards range) ; This might move point forwards.
 	(let* ((here (point))

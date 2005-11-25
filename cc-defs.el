@@ -64,7 +64,8 @@
 ;; cc-fix.el contains compatibility macros that should be used if
 ;; needed.
 (eval-and-compile
-  (if (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
+  (if (or (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
+	  (not (fboundp 'push)))
       (cc-load "cc-fix")))
 
 (eval-after-load "font-lock"
@@ -846,7 +847,7 @@ MODE is either a mode symbol or a list of mode symbols."
 
 
 ;; Macros/functions to handle so-called "char properties", which are
-;; properties set on a single character and that never spreads to any
+;; properties set on a single character and that never spread to any
 ;; other characters.
 
 (eval-and-compile
@@ -869,20 +870,24 @@ MODE is either a mode symbol or a list of mode symbols."
     (cond (c-use-extents
 	   ;; XEmacs.
 	   (byte-compile
-	    (lambda (pos property value)
+	    (lambda (pos property value &optional force) ; see below
+					; for a description of FORCE.
 	      (let ((ext (extent-at pos nil property)))
-		(if ext
-		    (set-extent-property ext property value)
-		  (set-extent-properties (make-extent pos (1+ pos))
-					 (cons property
-					       (cons value
-						     '(start-open t
-						       end-open t)))))))))
+		(if (eq force 'remove)
+		    (delete-extent ext)
+		  (if (and ext (not (eq force t)))
+		      (set-extent-property ext property value)
+		    (set-extent-properties (make-extent pos (1+ pos))
+					   (cons property
+						 (cons value
+						       '(start-open t
+								    end-open t))))))))))
 
 	  ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
 	   ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
 	   (byte-compile
-	    (lambda (pos property value)
+	    (lambda (pos property value &optional force) ; see below
+					; for a description of FORCE.
 	      (put-text-property pos (1+ pos) property value)
 	      (let ((prop (get-text-property pos 'rear-nonsticky)))
 		(or (memq property prop)
@@ -890,7 +895,7 @@ MODE is either a mode symbol or a list of mode symbols."
 				       'rear-nonsticky
 				       (cons property prop))))))))))
 
-(defmacro c-put-char-property (pos property value)
+(defmacro c-put-char-property (pos property value &optional force)
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
   ;; in XEmacs vocabulary.  If the character already has the given
@@ -901,12 +906,24 @@ MODE is either a mode symbol or a list of mode symbols."
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
   ;;
+  ;; The optional parameter FORCE is a ghastly kludge for XEmacs: We
+  ;; call this macro from c-show-syntactic-information to set the
+  ;; face.  There is a danger that an extent with the `face' property,
+  ;; wider than 1 character will be found at POS.  This might change
+  ;; the face of the entire extent, not merely the one character.
+  ;; 
+  ;; FORCE takes the following values:
+  ;;     t:       in XEmacs, ALWAYS create a new extent
+  ;;     'remove: simply remove the requisite extent, doing nothing else.
+  ;;     
+  ;; This extra parameter, FORCE, is ignored in GNU Emacs.
+  ;;
   ;; This macro does a hidden buffer change.
   (setq property (eval property))
   (if (or c-use-extents
 	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
       ;; XEmacs and Emacs < 21.
-      `(c-put-char-property-fun ,pos ',property ,value)
+      `(c-put-char-property-fun ,pos ',property ,value ,force)
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
