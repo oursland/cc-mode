@@ -15,8 +15,8 @@ INTRODUCTION
 
     As of this writing (November 18, 2005), CC Mode currently works
     out of the box with XEmacs versions 21.4 and later, and with Emacs
-    versions 20.x, 21.x and 22.x.  (It will very likely work with
-    later versions too, when they become available.)
+    versions 20.4 and later, 21.x and 22.x.  (It will very likely work
+    with later versions too, when they become available.)
 
     Note that with CC Mode 5.31, we have finally dropped support for
     Emacs 19.34 and XEmacs 19.15.  CC Mode 5.31 _won't_ work with
@@ -78,9 +78,6 @@ INSTALLATION
     where $(EMACS) is either emacs or xemacs depending on the flavor
     you use.
 
-    If you compile with XEmacs 19, you'll get a lot of warnings.  They
-    can safely be ignored.
-
   Installing
 
     Put the compiled files somewhere (X)Emacs will find them, i.e. in
@@ -96,7 +93,7 @@ INSTALLATION
 
     This will cause (X)Emacs to use the new AWK Mode for AWK files,
     rather than the older mode contained in the file awk-mode.elc.
-    (But see the note below under "Compatibility Issues".)
+    (See also the note below under "Compatibility Issues".)
 
     To test that you have things set up correctly, visit a C file and
     then type:
