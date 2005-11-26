@@ -894,6 +894,7 @@ MODE is either a mode symbol or a list of mode symbols."
 		    (put-text-property pos (1+ pos)
 				       'rear-nonsticky
 				       (cons property prop))))))))))
+(cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
 
 (defmacro c-put-char-property (pos property value &optional force)
   ;; Put the given property with the given value on the character at
