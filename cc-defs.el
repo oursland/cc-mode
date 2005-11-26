@@ -870,24 +870,20 @@ MODE is either a mode symbol or a list of mode symbols."
     (cond (c-use-extents
 	   ;; XEmacs.
 	   (byte-compile
-	    (lambda (pos property value &optional force) ; see below
-					; for a description of FORCE.
+	    (lambda (pos property value)
 	      (let ((ext (extent-at pos nil property)))
-		(if (eq force 'remove)
-		    (delete-extent ext)
-		  (if (and ext (not (eq force t)))
-		      (set-extent-property ext property value)
-		    (set-extent-properties (make-extent pos (1+ pos))
-					   (cons property
-						 (cons value
-						       '(start-open t
-								    end-open t))))))))))
+		(if ext
+		    (set-extent-property ext property value)
+		  (set-extent-properties (make-extent pos (1+ pos))
+					 (cons property
+					       (cons value
+						     '(start-open t
+						       end-open t)))))))))
 
 	  ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
 	   ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
 	   (byte-compile
-	    (lambda (pos property value &optional force) ; see below
-					; for a description of FORCE.
+	    (lambda (pos property value)
 	      (put-text-property pos (1+ pos) property value)
 	      (let ((prop (get-text-property pos 'rear-nonsticky)))
 		(or (memq property prop)
@@ -896,7 +892,7 @@ MODE is either a mode symbol or a list of mode symbols."
 				       (cons property prop))))))))))
 (cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
 
-(defmacro c-put-char-property (pos property value &optional force)
+(defmacro c-put-char-property (pos property value)
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
   ;; in XEmacs vocabulary.  If the character already has the given
@@ -907,24 +903,12 @@ MODE is either a mode symbol or a list of mode symbols."
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
   ;;
-  ;; The optional parameter FORCE is a ghastly kludge for XEmacs: We
-  ;; call this macro from c-show-syntactic-information to set the
-  ;; face.  There is a danger that an extent with the `face' property,
-  ;; wider than 1 character will be found at POS.  This might change
-  ;; the face of the entire extent, not merely the one character.
-  ;; 
-  ;; FORCE takes the following values:
-  ;;     t:       in XEmacs, ALWAYS create a new extent
-  ;;     'remove: simply remove the requisite extent, doing nothing else.
-  ;;     
-  ;; This extra parameter, FORCE, is ignored in GNU Emacs.
-  ;;
   ;; This macro does a hidden buffer change.
   (setq property (eval property))
   (if (or c-use-extents
 	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
       ;; XEmacs and Emacs < 21.
-      `(c-put-char-property-fun ,pos ',property ,value ,force)
+      `(c-put-char-property-fun ,pos ',property ,value)
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
@@ -1000,9 +984,39 @@ MODE is either a mode symbol or a list of mode symbols."
     `(remove-text-properties ,from ,to '(,property nil))))
 
 
+;; Macros to put overlays (Emacs) or extents (XEmacs) on buffer text.
+;; For our purposes, these are characterized by being possible to
+;; remove again without affecting the other text properties in the
+;; buffer that got overridden when they were put.
+
+(defmacro c-put-overlay (from to property value)
+  ;; Put an overlay/extent covering the given range in the current
+  ;; buffer.  It's currently undefined whether it's front/end sticky
+  ;; or not.  The overlay/extent object is returned.
+  (if (fboundp 'make-overlay)
+      ;; Emacs.
+      `(let ((ol (make-overlay ,from ,to)))
+	 (overlay-put ol ,property ,value)
+	 ol)
+    ;; XEmacs.
+    `(let ((ext (make-extent ,from ,to)))
+       (set-extent-property ext ,property ,value)
+       ext)))
+
+(defmacro c-delete-overlay (overlay)
+  ;; Deletes an overlay/extent object previously retrieved using
+  ;; `c-put-overlay'.
+  (if (fboundp 'make-overlay)
+      ;; Emacs.
+      `(delete-overlay ,overlay)
+    ;; XEmacs.
+    `(delete-extent ,overlay)))
+
+
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
+     (def-edebug-spec cc-eval-when-compile t)
      (def-edebug-spec c-point t)
      (def-edebug-spec c-set-region-active t)
      (def-edebug-spec c-safe t)
@@ -1027,7 +1041,8 @@ MODE is either a mode symbol or a list of mode symbols."
      (def-edebug-spec c-get-char-property t)
      (def-edebug-spec c-clear-char-property t)
      (def-edebug-spec c-clear-char-properties t)
-     (def-edebug-spec cc-eval-when-compile t)))
+     (def-edebug-spec c-put-overlay t)
+     (def-edebug-spec c-delete-overlay t)))
 
 
 ;;; Functions.
