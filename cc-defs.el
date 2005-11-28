@@ -373,6 +373,22 @@ to it is returned.  This function does not modify the point or the mark."
       `(int-to-char ,integer)
     integer))
 
+(defmacro c-sentence-end ()
+  ;; Get the regular expression `sentence-end'.
+  (if (cc-bytecomp-fboundp 'sentence-end)
+      ;; Emacs 22:
+      `(sentence-end)
+    ;; Emacs <22 + XEmacs
+    `sentence-end))
+
+(defmacro c-default-value-sentence-end ()
+  ;; Get the default value of the variable sentence end.
+  (if (cc-bytecomp-fboundp 'sentence-end)
+      ;; Emacs 22:
+      `(let (sentence-end) (sentence-end))
+    ;; Emacs <22 + XEmacs
+    `(default-value 'sentence-end)))
+
 ;; The following is essentially `save-buffer-state' from lazy-lock.el.
 ;; It ought to be a standard macro.
 (defmacro c-save-buffer-state (varlist &rest body)

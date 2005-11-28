@@ -1623,7 +1623,7 @@ It treats escaped EOLs as whitespace.")
 It treats escaped EOLs as whitespace.")
 
 (defvar c-sentence-end-with-esc-eol
-  (concat "\\(\\(" (default-value 'sentence-end) "\\)"
+  (concat "\\(\\(" (c-default-value-sentence-end) "\\)"
 		;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".
 		"\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
 		"\\)")

@@ -1719,7 +1719,7 @@ function does not require the declaration to contain a brace block."
 	  ;; Now seek successively earlier sentence ends between PAR-BEG and
 	  ;; HERE, until the "start of sentence" following it is earlier than
 	  ;; HERE, or we hit PAR-BEG.  Beware of comment prefices!
-	  (while (and (re-search-backward sentence-end par-beg 'limit)
+	  (while (and (re-search-backward (c-sentence-end) par-beg 'limit)
 		      (setq last (point))
 		      (goto-char (match-end 0))	; tentative beginning of sentence
 		      (or (>= (point) here)
@@ -1782,7 +1782,7 @@ function does not require the declaration to contain a brace block."
 		(concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
 	  ;; Go forward one "comment-prefix which looks like sentence-end"
 	  ;; each time round the following:
-	  (while (and (re-search-forward sentence-end par-end 'limit)
+	  (while (and (re-search-forward (c-sentence-end) par-end 'limit)
 		      (progn
 			(setq last (point))
 			(skip-chars-backward " \t\n")
