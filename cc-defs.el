@@ -993,7 +993,7 @@ MODE is either a mode symbol or a list of mode symbols."
   ;; Put an overlay/extent covering the given range in the current
   ;; buffer.  It's currently undefined whether it's front/end sticky
   ;; or not.  The overlay/extent object is returned.
-  (if (fboundp 'make-overlay)
+  (if (cc-bytecomp-fboundp 'make-overlay)
       ;; Emacs.
       `(let ((ol (make-overlay ,from ,to)))
 	 (overlay-put ol ,property ,value)
@@ -1006,7 +1006,7 @@ MODE is either a mode symbol or a list of mode symbols."
 (defmacro c-delete-overlay (overlay)
   ;; Deletes an overlay/extent object previously retrieved using
   ;; `c-put-overlay'.
-  (if (fboundp 'make-overlay)
+  (if (cc-bytecomp-fboundp 'make-overlay)
       ;; Emacs.
       `(delete-overlay ,overlay)
     ;; XEmacs.
