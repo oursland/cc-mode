@@ -174,8 +174,7 @@
 (defconst c-negation-char-face-name
   (if (c-face-name-p 'font-lock-negation-char-face)
       ;; Emacs 22 has a special face for negation chars.
-      'font-lock-negation-char-face
-    'default))
+      'font-lock-negation-char-face))
 
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
 (cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
