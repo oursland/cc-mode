@@ -6,7 +6,8 @@ Checklist for doing a release
 
     - Proofread manual.
 
-    - Update ChangeLog.
+    - Update ChangeLog.  "make rcs2log" outputs the new information to
+      stdout - it can then be prefixed to the existing ChangeLog.
 
     - Add `Release 5.xx' tag to ChangeLog using C-x 4 a.  Release.py
       script looks for this.

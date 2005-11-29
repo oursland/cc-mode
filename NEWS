@@ -5,8 +5,8 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 This version contains few new visible features, but significant
 internal improvements.
 
-** Emacs 19.34 and XEmacs xxxx are no longer supported.
-The minimum versions required are Emacs 20.1 or XEmacs 20.xxxx
+** Emacs 19.34 and XEmacs 19.15 are no longer supported.
+The minimum versions required are now Emacs 20.4 or XEmacs 21.4.
 
 ** The CC Mode manual has been extensively revised.
 The information about using CC Mode has been separated from the larger
@@ -18,31 +18,55 @@ The only difference between them is where some cross references point
 GNU.  To build an XEmacs version, you must define the texinfo symbol
 "XEMACS".  See README and cc-mode.texi.
 
-** The Electric action of non-alphabetic keys can now be turned off.
-The new command c-toggle-electric mode is bound to C-c C-l.  Its current
-state is displayed in the mode line with an 'l', e.g. "C/al".
-
 ** Changes in Minor Modes and Key Sequences
-*** c-toggle-auto-hungry-state (formerly bound to C-c C-t) has been removed.
+*** c-toggle-auto-hungry-state is no longer bound to C-c C-t by default.
+
+*** c-toggle-hungry-state is no longer bound to C-c C-d by default.
+This binding has been taken over by c-hungry-delete-forwards.
 
 *** c-toggle-auto-state (C-c C-t) has been renamed to c-toggle-auto-newline.
 c-toggle-auto-state remains as an alias.
 
-*** c-toggle-hungry-state is now bound to C-c C-y
-It was formerly bound to C-c C-d.
-
 *** c-hungry-backspace and c-hungry-delete-forwards
 now have permanent key bindings, respectively C-c C-DEL (or C-c DEL, for
-the benefit of TTYs) and C-c C-d.
+the benefit of TTYs) and C-c C-d (or C-c C-<delete> or C-c <delete>).
+These commands delete entire blocks of whitespace with a single
+key-sequence.
 
-*** The new command c-toggle-electric-mode is bound to C-c C-l
+*** The new command c-toggle-electric-mode is bound to C-c C-l.
+
+*** The new command c-subword-mode is bound to C-c C-w.
+
+** The Electric action of non-alphabetic keys can now be turned off.
+The new command c-toggle-electric mode is bound to C-c C-l.  This is
+helpful for editing chaotically indented code, and for newbies, who
+sometimes find electric indentation disconcerting.  Its current state is
+displayed in the mode line with an 'l', e.g. "C/al".
+
+** The new Subword Minor Mode makes Emacs recognize upper case letters
+in StudlyCapsIdentifiers as word boundaries.  This can be enabled by C-c
+C-w by default.  This feature can also be used in non-CC Mode buffers.
+:-) Contributed by Masatake YAMOTO.  This feature doesn't (yet?) work in
+Emacs 20.n.
+
+** C-c C-s (`c-show-syntactic-information') now highlights the anchor
+position(s).
+
+** The new GtkDoc Doc Comment style has become the default for C Mode.
+Contributed by Masatake YAMOTO.
+
+** New clean-ups
+
+*** `comment-close-slash'.
+With this clean-up, a block (c-style) comment can be terminated by typing
+a slash at the start of a line.
+
+*** `c-one-liner-defun'
+This clean-up compresses a short enough defun (for example, an AWK
+pattern/action pair) onto a single line.  "Short enough" is configurable.
 
 ** AWK support
 AWK Mode is now better integrated into CC Mode as a whole.  In detail:
-
-*** The manual
-The separate section in the manual outlining restrictions applying to
-AWK has been removed.
 
 *** Comment and line-breaking commands now work for AWK
 
@@ -54,16 +78,12 @@ style for AWK code.  With its introduction, Auto-newline insertion can
 be used freely for AWK code, and there is no longer a need for the
 special initialization function in the AWK Mode hook.
 
-*** The standard Line-up functions haven't been adapted for AWK.
-Some of these may work serendipitously.  There shouldn't be any
-problems writing custom indentation functions for AWK mode.
+*** The standard Line-up functions still haven't been adapted for AWK.
+Some of these may work serendipitously.  There shouldn't be any problems
+writing custom indentation functions for AWK mode.
 
-*** AWK Font Locking hasn't been fully integrated into CC Mode.
+*** AWK Font Locking still hasn't been fully integrated into CC Mode.
 There is just a single level of font locking in AWK mode.
-
-** New clean-up `comment-close-slash'.
-With this clean-up, a block (c-style) comment can be terminated by typing a
-slash at the start of a line.
 
 * Changes in 5.30
 

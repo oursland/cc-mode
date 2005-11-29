@@ -22,6 +22,8 @@ INTRODUCTION
     Emacs 19.34 and XEmacs 19.15.  CC Mode 5.31 _won't_ work with
     these old versions.  Upgrade them now!
 
+    Currently, the new Subword Mode doesn't work in Emacs 20.n.
+
 MORE INFORMATION
 
     Check out the CC Mode web site for the latest information,
@@ -76,7 +78,9 @@ INSTALLATION
         % $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el
 
     where $(EMACS) is either emacs or xemacs depending on the flavor
-    you use.
+    you use.  Note that the byte compiled files from one version of
+    (X)Emacs are likely not to work on a different version - compile
+    them fresh when you upgrade your (X)Emacs version.
 
   Installing
 
