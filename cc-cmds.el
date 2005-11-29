@@ -1261,7 +1261,8 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 			      (setq beg (point))
 			      (c-on-identifier)))))
 		   (delete-region beg end))))
-	  (and (not executing-kbd-macro)
+	  (and (eq last-input-event ?\))
+	       (not executing-kbd-macro)
 	       old-blink-paren
 	       (funcall old-blink-paren))))))
 

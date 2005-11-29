@@ -95,7 +95,15 @@
 ;;; autoload form instead.
 ;;;###autoload (autoload 'c-subword-mode "cc-subword" "Mode enabling subword movement and editing keys." t)
 
-(when (fboundp 'define-minor-mode)
+(if (not (fboundp 'define-minor-mode))
+    (defun c-subword-mode ()
+      "(Missing) mode enabling subword movement and editing keys.
+This mode is not (yet) available in this version of (X)Emacs.  Sorry!  If
+you really want it, please send a request to <bug-gnu-emacs@gnu.org>,
+telling us which (X)Emacs version you're using."
+      (interactive)
+      (error
+       "c-subword-mode is not (yet) available in this version of (X)Emacs.  Sorry!"))
 
   (defvar c-subword-mode-map
     (let ((map (make-sparse-keymap)))

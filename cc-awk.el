@@ -888,7 +888,7 @@ many times.  Negative arg -N means move forward to Nth following beginning of
 defun.  Returns t unless search stops due to beginning or end of buffer.
 
 By a \"defun\" is meant either a pattern-action pair or a function.  The start
-of a defun is recognised as code starting at column zero which is neither a
+of a defun is recognized as code starting at column zero which is neither a
 closing brace nor a comment nor a continuation of the previous line.  Unlike
 in some other modes, having an opening brace at column 0 is neither necessary
 nor helpful.

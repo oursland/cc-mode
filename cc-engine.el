@@ -7322,6 +7322,9 @@ comment at the start of cc-engine.el for more info."
 			 containing-sexp paren-state))
      )))
 
+;; The next autoload was added by RMS on 2005/8/9 - don't know why (ACM,
+;; 2005/11/29).
+;;;###autoload
 (defun c-guess-basic-syntax ()
   "Return the syntactic context of the current line."
   (save-excursion

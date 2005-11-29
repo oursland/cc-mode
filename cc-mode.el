@@ -582,6 +582,7 @@ This does not load the font-lock package.  Use after
 	  nil nil
 	  ,c-identifier-syntax-modifications
 	  c-beginning-of-syntax
+	  (font-lock-lines-before . 1)
 	  (font-lock-mark-block-function
 	   . c-mark-function)))
 
