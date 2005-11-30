@@ -31,17 +31,17 @@
 @comment How to make the various output formats:
 @comment (Thanks to Robert Chassell for supplying this information.)
 @comment Note that Texinfo 4.7 (or later) is needed.
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @ignore
 In each of the following pairs of commands, the first generates a
 version with cross references pointing to the GNU Emacs manuals,
-the second with them pointing to the XEmacs manuals. 
+the second with them pointing to the XEmacs manuals.
     ## Info output
     makeinfo cc-mode.texi
     makeinfo -DXEMACS cc-mode.texi
 
     ## DVI output
-    ## You may need to set up the environment variable TEXINPUTS so 
+    ## You may need to set up the environment variable TEXINPUTS so
     ## that tex can find the file texinfo.tex - See the tex
     ## manpage.
     texi2dvi cc-mode.texi
@@ -132,7 +132,7 @@ CC Mode
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@comment 
+@comment
 @comment Texinfo manual for CC Mode
 @comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
@@ -143,7 +143,7 @@ CC Mode
 @comment Alan Mackenzie
 @comment
 @comment Maintained by Martin Stjernholm and Alan Mackenzie <bug-cc-mode@gnu.org>
-@comment 
+@comment
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @comment Define an index for syntactic symbols.
@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.240 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -670,7 +670,7 @@ settting of @code{c-syntactic-indentation} (@pxref{Indentation Engine
 Basics}):
 
 @itemize @bullet
-@item 
+@item
 When it's non-@code{nil} (which it normally is), the command indents
 the line according to its syntactic context.  With a prefix argument
 (@kbd{C-u @key{TAB}}), it will re-indent the entire
@@ -2507,7 +2507,7 @@ and Recommendations,'' Erik Nyquist and Mats Henricson,
 Ellemtel@footnote{This document is available at
 @uref{http://www.doc.ic.ac.uk/lab/cplus/c++.rules/} among other
 places.}.
-@c N.B.  This URL was still valid at 2005/8/28  (ACM). 
+@c N.B.  This URL was still valid at 2005/8/28  (ACM).
 
 @item linux
 @cindex Linux style
@@ -2602,9 +2602,9 @@ looked up.  If it's found then the associated style is used.
 If @samp{other} is not found then the @samp{gnu} style is used.
 @end enumerate
 
-In all cases, the style described in @code{c-default-style} is installed 
+In all cases, the style described in @code{c-default-style} is installed
 @emph{before} the language hooks are run, so you can always override
-this setting by including an explicit call to @code{c-set-style} in your 
+this setting by including an explicit call to @code{c-set-style} in your
 language mode hook, or in @code{c-mode-common-hook}.
 
 The standard value of @code{c-default-style} is @w{@code{((java-mode
@@ -4521,19 +4521,19 @@ calls.  This example illustrates these:
 @example
  1: void a_function( int line1,
  2:                  int line2 );
- 3: 
+ 3:
  4: void a_longer_function(
  5:     int line1,
  6:     int line2
  7:     );
- 8: 
+ 8:
  9: void call_them( int line1, int line2 )
 10: @{
 11:     a_function(
 12:         line1,
 13:         line2
 14:         );
-15: 
+15:
 16:     a_longer_function( line1,
 17:                        line2 );
 18: @}
@@ -4583,10 +4583,10 @@ covered are illustrated by this C++ example:
  3: @{
  4:     /* this line starts a multiline
  5:      * comment.  This line should get `c' syntax */
- 6: 
+ 6:
  7:     char* a_multiline_string = "This line starts a multiline \
  8: string.  This line should get `string' syntax.";
- 9: 
+ 9:
 10:   note:
 11:     @{
 12: #ifdef LOCK
@@ -5153,7 +5153,7 @@ will be combined according to the method @code{first}.
 If an offset specification evaluates to @code{nil}, then a relative
 offset of 0 (zero) is used@footnote{There is however a variable
 @code{c-strict-syntax-p} that when set to non-@code{nil} will cause an
-error to be signalled in that case.  It's now considered obsolete since
+error to be signaled in that case.  It's now considered obsolete since
 it doesn't work well with some of the alignment functions that returns
 @code{nil} instead of zero.  You should therefore leave
 @code{c-strict-syntax-p} set to @code{nil}.}.
@@ -5252,7 +5252,7 @@ to take is to always start adjusting offsets for lines higher up in the
 file, then reindent and see if any following lines need further
 adjustments.
 
-@c Move this bit to "Styles" (2005/10/7) 
+@c Move this bit to "Styles" (2005/10/7)
 @deffn Command c-set-offset symbol offset
 @findex set-offset (c-)
 @kindex C-c C-o
@@ -5264,7 +5264,7 @@ It takes two arguments when used programmatically: @var{symbol} is the
 syntactic element symbol to change and @var{offset} is the new offset
 for that syntactic element.
 @end deffn
-@c End of MOVE THIS BIT. 
+@c End of MOVE THIS BIT.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Line-Up Functions, Custom Line-Up, Interactive Customization, Customizing Indentation
@@ -5358,7 +5358,7 @@ indentation is added.  E.g:
 @example
 @group
 main (int,
-      char **           
+      char **
      )                @hereFn{c-lineup-close-paren}
 @end group
 @end example
@@ -5446,7 +5446,7 @@ Indent a multiline block @code{c-basic-offset} extra.  E.g:
 @example
 @group
 int *foo[] = @{
-    NULL,                 
+    NULL,
     @{17@},             @hereFn{c-indent-multi-line-block}
 @end group
 @end example
@@ -5701,7 +5701,7 @@ E.g:
 @example
 @group
 class Foo
-    extends           
+    extends
         Bar           @hereFn{c-lineup-java-inher}
     @sssTBasicOffset{}
 @end group
@@ -6853,7 +6853,7 @@ to include any code that appears @emph{before} your bug example, if
 you think it might affect our ability to reproduce it.
 
 Please try to produce the problem in an Emacs instance without any
-customizations loaded (i.e. start it with the @code{-q -no-site-file}
+customizations loaded (i.e. start it with the @samp{-q -no-site-file}
 arguments).  If it works correctly there, the problem might be caused
 by faulty customizations in either your own or your site
 configuration.  In that case, we'd appreciate if you isolate the Emacs
@@ -6875,9 +6875,9 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs},
 @code{comp.emacs.xemacs}, @code{comp.lang.c}, @code{comp.lang.c++},
 @code{comp.lang.objective-c}, @code{comp.lang.java.softwaretools},
 @code{comp.lang.idl}, and @code{comp.lang.awk}.
-@c There is no newsgroup for Pike.  :-( 
+@c There is no newsgroup for Pike.  :-(
 
-@c Removed the tentative node "Mode Initialization" from here, 2005/8/27. 
+@c Removed the tentative node "Mode Initialization" from here, 2005/8/27.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Command and Function Index, Variable Index, Mailing Lists and Bug Reports, Top
 @comment node-name, next, previous, up
