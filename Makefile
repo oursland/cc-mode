@@ -66,6 +66,7 @@ docs: distdir info html dvi ps
 
 info:
 	makeinfo cc-mode.texi
+	makeinfo -DXEMACS -o cc-mode.XEMACS.info cc-mode.texi
 
 html:
 	makeinfo --html -o html cc-mode.texi

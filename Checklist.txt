@@ -39,6 +39,7 @@ Checklist for doing a release
 	  cc-mode.ps.gz
 	  cc-mode.rev.ps.gz
 	  cc-mode.info.tar.gz
+	  cc-mode.XEMACS.info.tar.gz
 	  cc-mode.html.tar.gz
 
     - Update the SourceForge site:

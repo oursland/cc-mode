@@ -2,7 +2,7 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 * Changes in 5.31
 
-This version contains few new visible features, but significant
+This version contains only a few new visible features, but significant
 internal improvements.
 
 ** Emacs 19.34 and XEmacs 19.15 are no longer supported.
@@ -18,10 +18,10 @@ The only difference between them is where some cross references point
 GNU.  To build an XEmacs version, you must define the texinfo symbol
 "XEMACS".  See README and cc-mode.texi.
 
-** Changes in Minor Modes and Key Sequences
-*** c-toggle-auto-hungry-state is no longer bound to C-c C-t by default.
+** Changes in Key Sequences
+*** c-toggle-auto-hungry-state is no longer bound to C-c C-t.
 
-*** c-toggle-hungry-state is no longer bound to C-c C-d by default.
+*** c-toggle-hungry-state is no longer bound to C-c C-d.
 This binding has been taken over by c-hungry-delete-forwards.
 
 *** c-toggle-auto-state (C-c C-t) has been renamed to c-toggle-auto-newline.
@@ -31,23 +31,11 @@ c-toggle-auto-state remains as an alias.
 now have permanent key bindings, respectively C-c C-DEL (or C-c DEL, for
 the benefit of TTYs) and C-c C-d (or C-c C-<delete> or C-c <delete>).
 These commands delete entire blocks of whitespace with a single
-key-sequence.
+key-sequence.  [N.B. "DEL" is the <backspace> key.]
 
 *** The new command c-toggle-electric-mode is bound to C-c C-l.
 
 *** The new command c-subword-mode is bound to C-c C-w.
-
-** The Electric action of non-alphabetic keys can now be turned off.
-The new command c-toggle-electric mode is bound to C-c C-l.  This is
-helpful for editing chaotically indented code, and for newbies, who
-sometimes find electric indentation disconcerting.  Its current state is
-displayed in the mode line with an 'l', e.g. "C/al".
-
-** The new Subword Minor Mode makes Emacs recognize upper case letters
-in StudlyCapsIdentifiers as word boundaries.  This can be enabled by C-c
-C-w by default.  This feature can also be used in non-CC Mode buffers.
-:-) Contributed by Masatake YAMOTO.  This feature doesn't (yet?) work in
-Emacs 20.n.
 
 ** C-c C-s (`c-show-syntactic-information') now highlights the anchor
 position(s).
@@ -55,11 +43,24 @@ position(s).
 ** The new GtkDoc Doc Comment style has become the default for C Mode.
 Contributed by Masatake YAMOTO.
 
+** New Minor Modes
+*** Electric Minor Mode toggles the electric action of non-alphabetic keys.
+The new command c-toggle-electric-mode is bound to C-c C-l.  Turning the
+mode off can be helpful for editing chaotically indented code and for
+users new to CC Mode, who sometimes find electric indentation
+disconcerting.  Its current state is displayed in the mode line with an
+'l', e.g. "C/al".
+
+*** Subword Minor Mode makes Emacs recognize word boundaries at upper case
+letters in StudlyCapsIdentifiers.  You enable this feature by C-c C-w.  It can
+also be used in non-CC Mode buffers.  :-) Contributed by Masatake YAMOTO.
+Subword Minor Mode doesn't (yet?) work in Emacs 20.n.
+
 ** New clean-ups
 
 *** `comment-close-slash'.
-With this clean-up, a block (c-style) comment can be terminated by typing
-a slash at the start of a line.
+With this clean-up, a block (i.e. c-style) comment can be terminated by
+typing a slash at the start of a line.
 
 *** `c-one-liner-defun'
 This clean-up compresses a short enough defun (for example, an AWK
@@ -68,7 +69,7 @@ pattern/action pair) onto a single line.  "Short enough" is configurable.
 ** AWK support
 AWK Mode is now better integrated into CC Mode as a whole.  In detail:
 
-*** Comment and line-breaking commands now work for AWK
+*** Comment and line-breaking commands now work for AWK.
 
 *** M-a and M-e (c-beginning/end-of-statement) now work for AWK.
 
