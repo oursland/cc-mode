@@ -4,8 +4,8 @@
   include ("header.h");
 ?>
 
-<p>The current release is 5.30.9. <a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.9.tar.gz">Download</a>
+<p>The current release is 5.31. <a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.31.tar.gz">Download</a>
 the source package to upgrade the version that came with your Emacs or
 XEmacs dist.  Installation instructions are available in the <a
 href="src/README">README</a> file in the tarball and <a
@@ -18,16 +18,16 @@ either <a href="html-manual/index.html">browse</a> it on-line or grab
 one of the <a href="manual/">pre-formatted</a> documents generated
 from the texinfo source.
 
-<p>See the list of <a href="changes-530.php">user visible changes</a>
-since 5.29 and earlier versions, and the <a
-href="src/ChangeLog">ChangeLog file</a> for details about the fixed
-bugs since the first 5.30 release.
+<p>See the list of <a href="changes-531.php">user visible changes</a>
+since 5.30 and earlier versions, and the <a
+href="src/ChangeLog">ChangeLog file</a> for details about the bugs
+fixed in the patch releases made since the first 5.31 release.
 
 <h3>Notes</h3>
 
-<p>Since version 5.26, CC Mode supports using Filladapt mode to fill
+<p>Since version 5.26, CC Mode has supported the use of Filladapt mode to fill
 text in comments and string literals.  There are however some <a
-href="filladapt.php">issues</a> with this that you should be aware of
-if you want to use Filladapt in CC Mode.
+href="filladapt.php">issues</a> with this that you should be aware of if you
+want to use Filladapt in CC Mode.
 
 <?php include ("footer.h"); ?>

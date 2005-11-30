@@ -15,15 +15,15 @@ took over of BOCM (Boring Old C Mode) back in 1992 and revamped it to
 CC Mode.
 
 <p>The current release available for <a
-href="release.php">download</a> is 5.30.9.  There is a detailed list
-of <a href="changes-530.php">user visible changes</a>, as well as <a
+href="release.php">download</a> is 5.31.  There is a detailed list
+of <a href="changes-531.php">user visible changes</a>, as well as <a
 href="installation.php">installation instructions</a> and Emacs/XEmacs
 <a href="compat.php">compatibility details</a>.
 
-<p>The last number in the version spec is the patch release number.
-Patch releases are made fairly frequently and contain only bug fixes
-since the last "real" release.  The <a href="src/ChangeLog">ChangeLog
-file</a> lists the fixed bugs.
+<p>When a patch release is made, the last number in its version spec
+(e.g. 5.31.1) is the patch release number.  Patch releases are made fairly
+frequently and contain only bug fixes since the last "real" release.  The <a
+href="src/ChangeLog">ChangeLog file</a> lists the bugs fixed.
 
 <p>You can <a href="html-manual/index.html">browse the documentation
 on-line</a>.  It's also available for <a href="manual/">download</a>
