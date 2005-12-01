@@ -6,21 +6,20 @@
 
 <p>CC Mode is available through anonymous CVS.  You can get the latest
 development version and also (since version 5.30) the fixes that have
-been incorporated into the latest release, i.e. what will become 5.31.1,
-5.31.2 and so on.
-
-<h3>Checking out the latest release with fixes</h3>
+been incorporated into the latest release, i.e. what will become
+5.31.1, 5.31.2 and so on.  You can browse the CVS repository <a
+href="http://cvs.sf.net/viewcvs.py/cc-mode">here</a>.
 
 <p>To get the latest release with only bug fixes and no new features,
-check out the patch branch, which is called <i>Branch_5_30</i>:
+check out the patch branch, which is called <i>Branch_5_31</i>:
 
-<pre>
-cvs -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode login</pre>
+<pre
+cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/cc-mode login</pre>
 
 <p>Just press Enter at the password prompt. Then:
 
 <pre>
-cvs -z3 -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode co -rBranch_5_31 cc-mode</pre>
+cvs -z3 -d:pserver:anonymous@cvs.sf.net:/cvsroot/cc-mode co -rBranch_5_31 cc-mode</pre>
 
 <p>It should always be safe to use the latest version on this branch.
 Please report any problems.

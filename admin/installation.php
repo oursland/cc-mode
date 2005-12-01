@@ -23,9 +23,7 @@ M-0 M-x byte-recompile-directory RET /path/to/cc-mode RET</pre>
 % $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el</pre>
 
 where <code>$(EMACS)</code> is either <code>emacs</code> or
-<code>xemacs</code> depending on the flavor you use.  The compilation
-will produce a lot of warnings for XEmacs 19.  They can safely be
-ignored.
+<code>xemacs</code> depending on the flavor you use.
 
 <h3>Installing</h3>
 
@@ -43,7 +41,6 @@ into your <code>.emacs</code> or <code>init.el</code> file:
 
 This will cause (X)Emacs to use the new AWK Mode for AWK files, rather
 than the older mode contained in the file <code>awk-mode.elc</code>.
-(But see the note in <a href="compat.php">Compatibility Issues</a>.)
 
 <p>To test that you have things set up correctly, visit a C file and
 then type:<br>
