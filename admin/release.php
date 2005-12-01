@@ -10,7 +10,7 @@ the source package to upgrade the version that came with your Emacs or
 XEmacs dist.  Installation instructions are available in the <a
 href="src/README">README</a> file in the tarball and <a
 href="installation.php">on-line</a>.  Older releases can be found <a
-href="http://download.sourceforge.net/cc-mode/">here</a>.
+href="http://prdownloads.sourceforge.net/cc-mode/">here</a>.
 
 <p>You can also browse the <a href="src/">individual files</a>.
 

@@ -13,7 +13,7 @@ href="http://cvs.sf.net/viewcvs.py/cc-mode">here</a>.
 <p>To get the latest release with only bug fixes and no new features,
 check out the patch branch, which is called <i>Branch_5_31</i>:
 
-<pre
+<pre>
 cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/cc-mode login</pre>
 
 <p>Just press Enter at the password prompt. Then:
