@@ -44,7 +44,7 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-(eval-when-compile (require 'cl)) ; was (cc-external-require 'cl).  ACM 2005/11/29.
+(cc-external-require 'cl)
 (cc-external-require 'regexp-opt)
 
 ;; Silence the compiler.
