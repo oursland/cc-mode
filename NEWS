@@ -41,7 +41,7 @@ key-sequence.  [N.B. "DEL" is the <backspace> key.]
 position(s).
 
 ** The new GtkDoc Doc Comment style has become the default for C Mode.
-Contributed by Masatake YAMOTO.
+Contributed by Masatake YAMATO.
 
 ** New Minor Modes
 *** Electric Minor Mode toggles the electric action of non-alphabetic keys.
@@ -53,7 +53,7 @@ disconcerting.  Its current state is displayed in the mode line with an
 
 *** Subword Minor Mode makes Emacs recognize word boundaries at upper case
 letters in StudlyCapsIdentifiers.  You enable this feature by C-c C-w.  It can
-also be used in non-CC Mode buffers.  :-) Contributed by Masatake YAMOTO.
+also be used in non-CC Mode buffers.  :-) Contributed by Masatake YAMATO.
 Subword Minor Mode doesn't (yet?) work in Emacs 20.n.
 
 ** New clean-ups

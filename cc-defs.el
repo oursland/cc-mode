@@ -44,7 +44,7 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-(eval-when-compile (require 'cl)) ; was (cc-external-require 'cl).  ACM 2005/11/29.
+(cc-external-require 'cl)
 (cc-external-require 'regexp-opt)
 
 ;; Silence the compiler.
@@ -90,7 +90,7 @@
 
 ;;; Variables also used at compile time.
 
-(defconst c-version "5.31"
+(defconst c-version "5.31.1"
   "CC Mode version number.")
 
 (defconst c-version-sym (intern c-version))

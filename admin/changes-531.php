@@ -67,7 +67,7 @@ internal improvements.
    anchor position(s).
 
    <p><li>The new GtkDoc Doc Comment style has become the default for C Mode.
-   <br>Contributed by Masatake YAMOTO.
+   <br>Contributed by Masatake YAMATO.
 
    <p><li>New Minor Modes
 
@@ -87,7 +87,7 @@ internal improvements.
        <code>StudlyCapsIdentifiers</code>.
        <p>You enable this feature by <code>C-c C-w</code>.  It can
        also be used in non-CC Mode buffers.  :-) Contributed by
-       Masatake YAMOTO.  Subword Minor Mode doesn't (yet?) work in
+       Masatake YAMATO.  Subword Minor Mode doesn't (yet?) work in
        Emacs 20.n.
 
    </ul>
