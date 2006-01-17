@@ -177,7 +177,7 @@ the evaluated constant value at compile time."
   '(def-edebug-spec c-lang-defvar
      (&define name def-form &optional stringp)))
 
-(eval-when-compile
+(eval-and-compile
   ;; Some helper functions used when building the language constants.
 
   (defun c-filter-ops (ops opgroup-filter op-filter &optional xlate)
@@ -2821,7 +2821,7 @@ accomplish that conveniently."
 	 ;; This let sets up the context for `c-mode-var' and similar
 	 ;; that could be in the result from `cl-macroexpand-all'.
 	 (let ((c-buffer-is-cc-mode ',mode)
-	       current-var)
+	       current-var source-eval)
 	   (condition-case err
 
 	       (if (eq c-version-sym ',c-version-sym)
@@ -2847,6 +2847,7 @@ accomplish that conveniently."
 		 ;;  (put ',mode 'c-has-warned-lang-consts t))
 
 		 (require 'cc-langs)
+		 (setq source-eval t)
 		 (let ((init (cdr c-lang-variable-inits)))
 		   (while init
 		     (setq current-var (caar init))
@@ -2855,8 +2856,14 @@ accomplish that conveniently."
 
 	     (error
 	      (if current-var
-		  (message "Eval error in the `c-lang-defvar' for `%s': %S"
-			   current-var err)
+		  (message "Eval error in the `c-lang-defvar' for `%s'%s: %S"
+			   current-var
+			   (if source-eval
+			       (format "\
+ (fallback source eval - %s compiled with CC Mode %s but loaded with %s)"
+				       ',mode ,c-version c-version)
+			     "")
+			   err)
 		(signal (car err) (cdr err)))))))
 
     ;; Being evaluated from source.  Always use the dynamic method to
@@ -2876,8 +2883,9 @@ accomplish that conveniently."
 
 	   (error
 	    (if current-var
-		(message "Eval error in the `c-lang-defvar' for `%s': %S"
-			 current-var err)
+		(message
+		 "Eval error in the `c-lang-defvar' for `%s' (source eval): %S"
+		 current-var err)
 	      (signal (car err) (cdr err)))))))
     ))
 
