@@ -262,10 +262,17 @@ With universal argument, inserts the analysis as a comment on that line."
 			  (boundp 'c-subword-mode)
 			  (symbol-value 'c-subword-mode))
 			 "w"
-		       ""))))
-    (setq c-submode-indicators
+		       "")))
+	(bare-mode-name (if (string-match "\\(^[^/]*\\)/" mode-name)
+			    (substring mode-name (match-beginning 1) (match-end 1))
+			  mode-name)))
+;;     (setq c-submode-indicators
+;; 	  (if (> (length fmt) 1)
+;; 	      fmt))
+    (setq mode-name
 	  (if (> (length fmt) 1)
-	      fmt))
+	      (concat bare-mode-name fmt) 
+	bare-mode-name))
     (force-mode-line-update)))
 
 (defun c-toggle-syntactic-indentation (&optional arg)
@@ -648,7 +655,7 @@ If `c-electric-flag' is non-nil, the brace is not inside a literal and a
 numeric ARG hasn't been supplied, the command performs several electric
 actions:
 
-\(a) If the auto-newline feature is turned on (indicated by \"/ln\" on
+\(a) If the auto-newline feature is turned on (indicated by \"/la\" on
 the mode line) newlines are inserted before and after the brace as
 directed by the settings in `c-hanging-braces-alist'.
 
@@ -886,7 +893,7 @@ If `c-electric-flag' is non-nil, point isn't inside a literal and a
 numeric ARG hasn't been supplied, the command performs several electric
 actions:
 
-\(a) When the auto-newline feature is turned on (indicated by \"/ln\" on
+\(a) When the auto-newline feature is turned on (indicated by \"/la\" on
 the mode line) a newline might be inserted.  See the variable
 `c-hanging-semi&comma-criteria' for how newline insertion is determined.
 
@@ -958,7 +965,7 @@ If `c-electric-flag' is non-nil, the colon is not inside a literal and a
 numeric ARG hasn't been supplied, the command performs several electric
 actions:
 
-\(a) If the auto-newline feature is turned on (indicated by \"/ln\" on
+\(a) If the auto-newline feature is turned on (indicated by \"/la\" on
 the mode line) newlines are inserted before and after the colon based on
 the settings in `c-hanging-colons-alist'.
 
