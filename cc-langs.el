@@ -259,8 +259,10 @@ the evaluated constant value at compile time."
       "----"
       ("Toggle..."
        ["Syntactic indentation" c-toggle-syntactic-indentation t]
+       ["Electric mode"         c-toggle-electric-state t]
        ["Auto newline"          c-toggle-auto-newline t]
-       ["Hungry delete"         c-toggle-hungry-state t])))
+       ["Hungry delete"         c-toggle-hungry-state t]
+       ["Subword mode"          c-subword-mode t])))
 
 
 ;;; Syntax tables.
