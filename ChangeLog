@@ -1,3 +1,50 @@
+2006-01-25  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* Release 5.31.2
+
+2006-01-22  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.texi (Comment Commands): State that C-u M-; kills any
+	existing comment.
+	(Electric Keys): Add a justification for electric indentation.
+	(Hungry WS Deletion): Clear up the names and complications of the
+	BACKSPACE and DELETE keys.
+
+2006-01-18  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el (c-basic-common-init): Concatenate the minor mode
+	indicators directly onto mode-name, removing c-submode-indicators.
+	Sometimes, c-s-i got separated from the mode name on the mode
+	line.
+
+	* cc-langs.el (c-mode-menu): Add menu items for Electric Mode and
+	Subword Mode.
+
+	* cc-engine.el: Concatenate the minor mode indicators directly
+	onto mode-name, removing c-submode-indicators.  Sometimes, c-s-i
+	got separated from the mode name on the mode line.
+	(c-beginning-of-statment): Distinguish real labels ("case 1:" or
+	"foo:") from non-labels ("public:").
+	(c-forward-objc-directive): Replace c-forward-token-2 with crude
+	coding; c-f-t-2 doesn't move over a token at EOB.
+
+	* cc-defs.el (c-version): Update version number to 5.31.2
+
+	* cc-cmds.el (c-update-modeline): Concatenate the minor mode
+	indicators directly onto mode-name, removing c-submode-indicators.
+	Sometimes, c-s-i got separated from the mode name on the mode
+	line.
+	(c-electric-brace, c-electric-semi&comma, c-electric-colon):
+	Correct doc-strings: "/ln" -> "/la".
+
+2006-01-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-make-init-lang-vars-fun): Improved the error
+	message when there's an evaluation error to show whether it's
+	loaded from source or not.
+	(c-filter-ops): Made it available at runtime too to work when
+	`c-make-init-lang-vars-fun' needs to evaluate from source.
+
 2005-12-06  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Release 5.31.1
