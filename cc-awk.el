@@ -822,11 +822,12 @@
   (unless (and (boundp 'font-lock-mode) font-lock-mode)
     (save-restriction
       (save-excursion
-        (setq end (c-awk-end-of-change-region beg end old-len))
-        (c-awk-beginning-of-logical-line beg)
-        (c-save-buffer-state nil ; So that read-only status isn't affected.
+	(save-match-data
+	  (setq end (c-awk-end-of-change-region beg end old-len))
+	  (c-awk-beginning-of-logical-line beg)
+	  (c-save-buffer-state nil  ; So that read-only status isn't affected.
                                         ; (e.g. when first loading the buffer)
-          (c-awk-set-syntax-table-properties end))))))
+	    (c-awk-set-syntax-table-properties end)))))))
 
 ;; ACM 2002/5/25.  When font-locking is invoked by a buffer change, the region
 ;; specified by the font-lock after-change function must be expanded to
