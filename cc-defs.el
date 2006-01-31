@@ -71,6 +71,8 @@
 
 (eval-after-load "font-lock"
   '(if (and (not (featurep 'cc-fix)) ; only load the file once.
+	    (featurep 'xemacs) ; There is now (2005/12) code in GNU Emacs CVS
+			       ; to make the call to f-l-c-k throw an error.
             (let (font-lock-keywords)
               (font-lock-compile-keywords '("\\<\\>"))
 	      font-lock-keywords))     ; did the previous call foul this up?
@@ -80,6 +82,7 @@
 ;; to ensure correct byte compilation.
 (eval-when-compile
   (if (and (not (featurep 'cc-fix))
+	   (featurep 'xemacs)
 	   (progn
 	     (require 'font-lock)
 	     (let (font-lock-keywords)
@@ -1396,8 +1399,8 @@ non-nil, a caret is prepended to invert the set."
 	(modify-syntax-entry ?< ".")
 	(modify-syntax-entry ?> ".")
 	(insert "<()>")
-	(c-mark-<-as-paren 1)
-	(c-mark->-as-paren 4)
+	(c-mark-<-as-paren (point-min))
+	(c-mark->-as-paren (+ 3 (point-min)))
 	(goto-char 1)
 	(c-forward-sexp)
 	(if (= (point) 5)
@@ -1460,7 +1463,9 @@ non-nil, a caret is prepended to invert the set."
       (kill-buffer buf))
 
     ;; See if `parse-partial-sexp' returns the eighth element.
-    (if (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
+    (if (c-safe (>= (length (save-excursion
+			      (parse-partial-sexp (point) (point))))
+		    10))
 	(setq list (cons 'pps-extended-state list))
       (error (concat
 	      "CC Mode is incompatible with this version of Emacs - "
