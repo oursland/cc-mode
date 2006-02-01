@@ -630,6 +630,51 @@ compatible with old code; callers should always specify it."
       (make-local-variable 'require-final-newline)
       (setq require-final-newline (cdr rfn)))))
 
+(defun c-remove-any-local-eval-or-mode-variables ()
+  ;; If the buffer specifies `mode' or `eval' in its File Local Variable list
+  ;; or on the first line, remove all occurrences.  See
+  ;; `c-postprocess-file-styles' for justification.  There is no need to save
+  ;; point here, or even bother too much about the buffer contents.
+  ;;
+  ;; Most of the code here is derived from Emacs 21.3's `hack-local-variables'
+  ;; in files.el.
+  (goto-char (point-max))
+  (search-backward "\n\^L" (max (- (point-max) 3000) (point-min)) 'move)
+  (let (lv-point (prefix "") (suffix ""))
+    (when (let ((case-fold-search t))
+	    (search-forward "Local Variables:" nil t))
+      (setq lv-point (point))
+      ;; The prefix is what comes before "local variables:" in its line.
+      ;; The suffix is what comes after "local variables:" in its line.
+      (skip-chars-forward " \t")
+      (or (eolp)
+	  (setq suffix (buffer-substring (point)
+					 (progn (end-of-line) (point)))))
+      (goto-char (match-beginning 0))
+      (or (bolp)
+	  (setq prefix
+		(buffer-substring (point)
+				  (progn (beginning-of-line) (point)))))
+
+      (while (search-forward-regexp
+	      (concat "^[ \t]*"
+		      (regexp-quote prefix)
+		      "\\(mode\\|eval\\):.*"
+		      (regexp-quote suffix)
+		      "$")
+	      nil t)
+	(beginning-of-line)
+	(kill-line 1)))
+
+    ;; Delete the first line, if we've got one, in case it contains a mode spec.
+    (unless (and lv-point
+		 (progn (goto-char lv-point)
+			(forward-line 0)
+			(bobp)))
+      (goto-char (point-min))
+      (unless (eobp)
+	(kill-line 1)))))
+
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.
 Currently, this function simply applies any style and offset settings
@@ -657,12 +702,20 @@ Note that the style variables are always made local to the buffer."
     ;; overwritten this.  So we run `hack-local-variables' again to remedy
     ;; this.  There are no guarantees this will work properly, particularly as
     ;; we have no control over what the other hook functions on
-    ;; `hack-local-variables-hook' would have done, or what any "eval"
-    ;; expression will do when evaluated again.  C'est la vie!  ACM,
-    ;; 2005/11/2.
+    ;; `hack-local-variables-hook' would have done.  We now (2006/2/1) remove
+    ;; any `eval' or `mode' expressions before we evaluated again (see below).
+    ;; ACM, 2005/11/2.
+    ;;
+    ;; Problem (bug reported by Gustav Broberg): if one of the variables is
+    ;; `mode', this will invoke c-mode (etc.) again, setting up the style etc.
+    ;; We prevent this by temporarily removing `mode' from the Local Variables
+    ;; section.
     (if (or c-file-style c-file-offsets)
-	(let ((hack-local-variables-hook nil))
-	  (hack-local-variables)))))
+	(c-tentative-buffer-changes
+	  (let ((hack-local-variables-hook nil))
+	    (c-remove-any-local-eval-or-mode-variables)
+	    (hack-local-variables))
+	  nil))))
 
 (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
 
