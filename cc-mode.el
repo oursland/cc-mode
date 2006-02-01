@@ -414,23 +414,24 @@ preferably use the `c-mode-menu' language constant directly."
     ;; with regions outside the current narrowing.  This has been
     ;; observed in Emacs 20.7.
     (save-restriction
-      (widen)
+      (save-match-data		  ; c-recognize-<>-arglists changes match-data
+	(widen)
 
-      (when (> end (point-max))
-	;; Some emacsen might return positions past the end. This has been
-	;; observed in Emacs 20.7 when rereading a buffer changed on disk
-	;; (haven't been able to minimize it, but Emacs 21.3 appears to
-	;; work).
-	(setq end (point-max))
-	(when (> beg end)
-	  (setq beg end)))
+	(when (> end (point-max))
+	  ;; Some emacsen might return positions past the end. This has been
+	  ;; observed in Emacs 20.7 when rereading a buffer changed on disk
+	  ;; (haven't been able to minimize it, but Emacs 21.3 appears to
+	  ;; work).
+	  (setq end (point-max))
+	  (when (> beg end)
+	    (setq beg end)))
 
-      (c-invalidate-sws-region-after beg end)
-      (c-invalidate-state-cache beg)
-      (c-invalidate-find-decl-cache beg)
+	(c-invalidate-sws-region-after beg end)
+	(c-invalidate-state-cache beg)
+	(c-invalidate-find-decl-cache beg)
 
-      (when c-recognize-<>-arglists
-	(c-after-change-check-<>-operators beg end)))))
+	(when c-recognize-<>-arglists
+	  (c-after-change-check-<>-operators beg end))))))
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
