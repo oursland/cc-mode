@@ -759,7 +759,7 @@ settings of `c-cleanup-list' are done."
 				"{"
 				"\\=")
 			nil t))
-		  (delete-region mbeg mend)
+		  (delete-region (match-beginning 0) (match-end 0))
 		  (insert-and-inherit "} else {"))
 		 ((and (memq 'brace-elseif-brace c-cleanup-list)
 		       (progn
