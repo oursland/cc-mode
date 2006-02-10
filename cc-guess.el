@@ -1,7 +1,7 @@
 ;;; cc-guess.el --- guess indentation values by scanning existing code
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
+;; Foundation, Inc.
 
 ;; Author:     1994-1995 Barry A. Warsaw
 ;; Maintainer: Unmaintained

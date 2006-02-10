@@ -1,6 +1,6 @@
 ;;; cc-vars.el --- user customization variables for CC Mode
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005 Free Software
+;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
 ;; Foundation, Inc.
 
 ;; Authors:    1998- Martin Stjernholm
