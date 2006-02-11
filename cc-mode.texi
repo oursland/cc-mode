@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.2 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.3 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -744,7 +744,7 @@ very useful in this case.
 @item @kbd{C-j} (@code{newline-and-indent})
 @kindex C-j
 @findex newline-and-indent
-Inserts a linefeed and indents the new blank line, ready to start
+Inserts a newline and indents the new blank line, ready to start
 typing.  This is a standard (X)Emacs command.
 
 @item @kbd{C-M-q} (@code{c-indent-exp})
@@ -882,12 +882,14 @@ lines.
 @findex end-of-defun (c-)
 @findex beginning-of-defun
 @findex end-of-defun
-Move to the start or end of the current top-level definition, this
-being the outermost brace pair which encloses point.  These functions
-are analogous to the Emacs built-in commands @code{beginning-of-defun}
-and @code{end-of-defun}, except they eliminate the constraint that the
-top-level opening brace of the defun must be in column zero.  See
-@ref{Defuns,,,@emacsman{}, @emacsmantitle{}}, for more information.
+Move to the start or end of the current top-level definition.  This is
+the outermost brace pair which encloses point, together with the
+function header or similar preamble which precedes the opening brace.
+These functions are analogous to the Emacs built-in commands
+@code{beginning-of-defun} and @code{end-of-defun}, except they
+eliminate the constraint that the top-level opening brace of the defun
+must be in column zero.  See @ref{Defuns,,,@emacsman{},
+@emacsmantitle{}}, for more information.
 
 Depending on the coding style you're using, you might prefer these two
 commands to the standard Emacs ones.  If so, consider binding them to
@@ -4882,7 +4884,7 @@ our first example again:
  6: @}
 @end example
 
-Let's say point is on line 3 and we hit the @kbd{TAB} key to reindent
+Let's say point is on line 3 and we hit the @key{TAB} key to reindent
 the line.  The syntactic context for that line is:
 
 @example
