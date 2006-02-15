@@ -242,9 +242,9 @@ control).  See \"cc-mode.el\" for more info."
 	(define-key c-mode-base-map (kbd "C-c C-<delete>")
 	  'c-hungry-delete-forward)
 	(define-key c-mode-base-map (kbd "C-c C-<backspace>")
-	  'c-hungry-backspace))
+	  'c-hungry-delete-backwards))
     (define-key c-mode-base-map (kbd "C-c C-<delete>")
-      'c-hungry-backspace)
+      'c-hungry-delete-backwards)
     (define-key c-mode-base-map (kbd "C-c C-<backspace>")
       'c-hungry-delete-forward)))
 
@@ -304,10 +304,11 @@ control).  See \"cc-mode.el\" for more info."
   ;; `c-electric-backspace'.  The hungry variants are bound to the
   ;; same keys but prefixed with C-c.  This implies that C-c C-d is
   ;; `c-hungry-delete-forward'.  For consistency, we bind not only C-c
-  ;; <backspace> to `c-hungry-backspace' but also C-c C-<backspace>,
-  ;; so that the Ctrl key can be held down during the whole sequence
-  ;; regardless of the direction.  This in turn implies that we bind
-  ;; C-c C-<delete> to `c-hungry-delete-forward', for the same reason.
+  ;; <backspace> to `c-hungry-delete-backwards' but also
+  ;; C-c C-<backspace>, so that the Ctrl key can be held down during
+  ;; the whole sequence regardless of the direction.  This in turn
+  ;; implies that we bind C-c C-<delete> to `c-hungry-delete-forward',
+  ;; for the same reason.
 
   ;; Bind the electric deletion functions to C-d and DEL.  Emacs 21
   ;; automatically maps the [delete] and [backspace] keys to these two
@@ -316,8 +317,8 @@ control).  See \"cc-mode.el\" for more info."
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
   (define-key c-mode-base-map "\C-c\C-d"     'c-hungry-delete-forward)
-  (define-key c-mode-base-map [?\C-c ?\d]    'c-hungry-backspace)
-  (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-backspace)
+  (define-key c-mode-base-map [?\C-c ?\d]    'c-hungry-delete-backwards)
+  (define-key c-mode-base-map [?\C-c ?\C-\d] 'c-hungry-delete-backwards)
   (define-key c-mode-base-map [?\C-c deletechar] 'c-hungry-delete-forward) ; C-c <delete> on a tty.
   (define-key c-mode-base-map [?\C-c (control deletechar)] ; C-c C-<delete> on a tty.
     'c-hungry-delete-forward)
@@ -339,8 +340,10 @@ control).  See \"cc-mode.el\" for more info."
     (define-key c-mode-base-map [backspace] 'c-electric-backspace)
     (define-key c-mode-base-map (kbd "C-c <delete>") 'c-hungry-delete)
     (define-key c-mode-base-map (kbd "C-c C-<delete>") 'c-hungry-delete)
-    (define-key c-mode-base-map (kbd "C-c <backspace>") 'c-hungry-backspace)
-    (define-key c-mode-base-map (kbd "C-c C-<backspace>") 'c-hungry-backspace))
+    (define-key c-mode-base-map (kbd "C-c <backspace>")
+      'c-hungry-delete-backwards)
+    (define-key c-mode-base-map (kbd "C-c C-<backspace>")
+      'c-hungry-delete-backwards))
 
   (define-key c-mode-base-map "#"         'c-electric-pound)
   (define-key c-mode-base-map "{"         'c-electric-brace)
