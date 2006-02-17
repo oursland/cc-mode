@@ -1,3 +1,84 @@
+2006-02-17  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* Release 5.31.3
+
+2006-02-17  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-emacs-features): Don't assume point-min==1.
+
+	* cc-awk.el: Correct a typo.
+
+2006-02-15  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* admin/changes-531.php, cc-mode.texi, NEWS, cc-cmds.el,
+	cc-mode.el: Rename c-hungry-backspace to
+	c-hungry-delete-backwards, at the request of RMS.  Leave the old
+	name as an alias.
+
+2006-02-11  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.texi:
+	(i) Correct the definition of c-beginning-of-defun, to include the
+	function header within the defun.
+	(ii) Two minor amendments from Savannah.
+
+	* cc-fix.el: In the test for a broken (XEmacs)
+	font-lock-compile-keywords, exclude GNU Emacs, whose CVS version
+	would now signal an error.
+
+2006-02-10  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-fix.el, cc-guess.el, cc-lobotomy.el, cc-styles.el,
+	cc-subword.el, cc-vars.el, cc-langs.el, cc-menus.el, cc-mode.el,
+	cc-fonts.el, cc-bytecomp.el, cc-cmds.el, cc-compat.el, cc-defs.el,
+	cc-engine.el, cc-awk.el, cc-align.el:
+	(i) Add 2006 to the copyright statement.
+	(ii) Correct a typo in cc-mode.el.
+
+	* cc-mode.texi: (i) Add 2006 to the copyright.
+	(ii) Correct two typos.
+
+2006-02-09  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el: Update the version number to 5.31.3.
+
+2006-02-02  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace): Fix clean-up brace-else-brace
+	(error due to mbeg, mend being undefined).
+
+2006-02-01  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el: File Local variables: Solve the problem where both
+	`mode' and c-file-offsets are specified: `mode' will overwrite
+	c-f-o's settings:
+	(c-remove-any-local-eval-or-mode-variables): new function.
+	(c-postprocess-file-styles): call the above new function, within
+	c-tentative-buffer-change, to splat `mode' and `eval' before the
+	second hack-local-variables.
+
+2006-01-31  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el:
+	[Alternative patch to GNU Emacs: cc-engine.el V 1.45]
+	(c-after-change): Protect the match data with save-match-data.  It
+	was getting corrupted by c-after-change-check-<>-operators.
+
+	* cc-defs.el: [3 Patches from GNU Emacs: savannah V 1.3[678]:
+	(top level): Check for a buggy font-lock-compile-keywords ONLY in
+	XEmacs.  GNU Emacs 22 now has a check which would throw an error
+	here.
+	(c-emacs-features): Use (point-min) and (point) rather than
+	hard-coded 1, in case the buffer is narrowed.
+
+	* cc-awk.el (c-awk-after-change): Protect the match data with
+	save-match-data.  It was being corrupted when Font Lock was not
+	enabled.
+
+2006-01-25  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* ChangeLog: Update for release 5.31.2.
+
 2006-01-25  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Release 5.31.2
