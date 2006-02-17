@@ -804,7 +804,7 @@
 (defun c-awk-end-of-change-region (beg end old-len)
   ;; Find the end of the region which needs to be font-locked after a change.
   ;; This is the end of the logical line on which the change happened, either
-  ;; as it was before the change, or as it is now, which ever is later.
+  ;; as it was before the change, or as it is now, whichever is later.
   ;; N.B. point is left undefined.
   ;;
   ;; This function might do hidden buffer changes.
