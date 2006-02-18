@@ -1,6 +1,17 @@
-2006-02-17  Alan Mackenzie  <bug-cc-mode@gnu.org>
+2006-02-18  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* ChangeLog: Update for release 5.31.3.
+
+2006-02-18  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Release 5.31.3
+
+2006-02-18  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el (c-postprocess-file-styles): bind inhibit-read-only
+	to t, around the call to
+	c-remove-any-local-eval-or-mode-variables, so that it works on a
+	RO file.
 
 2006-02-17  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
