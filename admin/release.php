@@ -4,8 +4,8 @@
   include ("header.h");
 ?>
 
-<p>The current release is 5.31. <a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.31.tar.gz">Download</a>
+<p>The current release is 5.31.3. <a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.31.3.tar.gz">Download</a>
 the source package to upgrade the version that came with your Emacs or
 XEmacs dist.  Installation instructions are available in the <a
 href="src/README">README</a> file in the tarball and <a

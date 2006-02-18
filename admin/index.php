@@ -15,7 +15,7 @@ took over of BOCM (Boring Old C Mode) back in 1992 and revamped it to
 CC Mode.
 
 <p>The current release available for <a
-href="release.php">download</a> is 5.31.  There is a detailed list
+href="release.php">download</a> is 5.31.3.  There is a detailed list
 of <a href="changes-531.php">user visible changes</a>, as well as <a
 href="installation.php">installation instructions</a> and Emacs/XEmacs
 <a href="compat.php">compatibility details</a>.
