@@ -1,7 +1,7 @@
 ;;; cc-mode.el --- major mode for editing C and similar languages
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005 Free Software Foundation,
-;; Inc.
+;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
+;; Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -703,7 +703,7 @@ Note that the style variables are always made local to the buffer."
     ;; this.  There are no guarantees this will work properly, particularly as
     ;; we have no control over what the other hook functions on
     ;; `hack-local-variables-hook' would have done.  We now (2006/2/1) remove
-    ;; any `eval' or `mode' expressions before we evaluated again (see below).
+    ;; any `eval' or `mode' expressions before we evaluate again (see below).
     ;; ACM, 2005/11/2.
     ;;
     ;; Problem (bug reported by Gustav Broberg): if one of the variables is

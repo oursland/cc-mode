@@ -1,6 +1,7 @@
 ;;; cc-lobotomy.el --- excise portions of cc-mode's brain... for speed
 
-;; Copyright (C) 1985,1987,1992-2003, 2005 Free Software Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-2003, 2005, 2006 Free Software Foundation,
+;; Inc.
 
 ;; Author:     1995 Barry A. Warsaw
 ;; Maintainer: Unmaintained
