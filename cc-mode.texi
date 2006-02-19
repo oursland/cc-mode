@@ -158,7 +158,7 @@ CC Mode
 
 @copying
 Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-2003, 2004, 2005 Free Software Foundation, Inc.
+2003, 2004, 2005, 2006 Free Software Foundation, Inc.
 
 This manual is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.242 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.243 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -441,7 +441,7 @@ depending on your needs.  It describes the @ccmode{} style system and
 lists the standard styles that @ccmode{} supplies.
 
 @item
-The next few chapters, describe in detail how to customize the various
+The next few chapters describe in detail how to customize the various
 features of @ccmode{}.
 
 @item
@@ -519,7 +519,7 @@ Normally, when you type ``punctuation'' characters such as @samp{;} or
 be disconcerting until you get used to it.  To disable @dfn{electric
 indentation} in the current buffer, type @kbd{C-c C-l}.  Type the same
 thing to enable it again.  To have electric indentation disabled by
-default, put the following into your @file{.emacs} mode@footnote{There
+default, put the following into your @file{.emacs} file@footnote{There
 is no ``easy customization'' facility for making this change.}:
 
 @example
