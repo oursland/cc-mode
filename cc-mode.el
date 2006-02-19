@@ -714,8 +714,8 @@ Note that the style variables are always made local to the buffer."
     ;; We prevent this by temporarily removing `mode' from the Local Variables
     ;; section.
     (if (or c-file-style c-file-offsets)
-	(c-tentative-buffer-changes
-	  (let ((hack-local-variables-hook nil))
+	(let ((hack-local-variables-hook nil) (inhibit-read-only t))
+	  (c-tentative-buffer-changes
 	    (c-remove-any-local-eval-or-mode-variables)
 	    (hack-local-variables))
 	  nil))))
