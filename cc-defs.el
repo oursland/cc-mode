@@ -1401,9 +1401,9 @@ non-nil, a caret is prepended to invert the set."
 	(insert "<()>")
 	(c-mark-<-as-paren (point-min))
 	(c-mark->-as-paren (+ 3 (point-min)))
-	(goto-char 1)
+	(goto-char (point-min))
 	(c-forward-sexp)
-	(if (= (point) 5)
+	(if (= (point) (+ 4 (point-min)))
 	    (setq list (cons 'syntax-properties list))
 	  (error (concat
 		  "CC Mode is incompatible with this version of Emacs - "
