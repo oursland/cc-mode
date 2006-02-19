@@ -120,9 +120,11 @@ in REGEXP."
 ;; havoc when what the function is compiling is font-lock-SYNTACTIC-keywords,
 ;; hence....
 (eval-after-load "font-lock"
-  '(when (let (font-lock-keywords)
-           (font-lock-compile-keywords '("\\<\\>"))
-           font-lock-keywords)        ; did the previous call foul this up?
+  '(when (and (featurep 'xemacs) ; There is now (2005/12) code in GNU Emacs CVS
+				 ; to make the call to f-l-c-k throw an error.
+	      (let (font-lock-keywords)
+		(font-lock-compile-keywords '("\\<\\>"))
+		font-lock-keywords))	; did the previous call foul this up?
      (defun font-lock-compile-keywords (keywords)
        "Compile KEYWORDS (a list) and return the list of compiled keywords.
 Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
