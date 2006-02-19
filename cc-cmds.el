@@ -372,9 +372,9 @@ inside a literal then the function in the variable
 	    arg
 	    (c-in-literal)))
       (funcall c-backspace-function (prefix-numeric-value arg))
-    (c-hungry-backspace)))
+    (c-hungry-delete-backwards)))
 
-(defun c-hungry-backspace ()
+(defun c-hungry-delete-backwards ()
   "Delete the preceding character or all preceding whitespace
 back to the previous non-whitespace character.
 See also \\[c-hungry-delete-forward]."
@@ -384,6 +384,8 @@ See also \\[c-hungry-delete-forward]."
     (if (/= (point) here)
 	(delete-region (point) here)
       (funcall c-backspace-function 1))))
+
+(defalias 'c-hungry-backspace 'c-hungry-delete-backwards)
 
 (defun c-electric-delete-forward (arg)
   "Delete the following character or whitespace.
@@ -403,7 +405,7 @@ is called."
 (defun c-hungry-delete-forward ()
   "Delete the following character or all following whitespace
 up to the next non-whitespace character.
-See also \\[c-hungry-backspace]."
+See also \\[c-hungry-delete-backwards]."
   (interactive)
   (let ((here (point)))
     (c-skip-ws-forward)
@@ -443,7 +445,7 @@ function to control that."
   (if (and (fboundp 'delete-forward-p)
 	   (delete-forward-p))
       (c-hungry-delete-forward)
-    (c-hungry-backspace)))
+    (c-hungry-delete-backwards)))
 
 (defun c-electric-pound (arg)
   "Insert a \"#\".

@@ -27,7 +27,10 @@ This binding has been taken over by c-hungry-delete-forwards.
 *** c-toggle-auto-state (C-c C-t) has been renamed to c-toggle-auto-newline.
 c-toggle-auto-state remains as an alias.
 
-*** c-hungry-backspace and c-hungry-delete-forwards
+*** c-hungry-backspace has been renamed to c-hungry-delete-backwards.
+c-hungry-backspace remains as an alias.
+
+*** c-hungry-delete-backwards and c-hungry-delete-forwards
 now have permanent key bindings, respectively C-c C-DEL (or C-c DEL, for
 the benefit of TTYs) and C-c C-d (or C-c C-<delete> or C-c <delete>).
 These commands delete entire blocks of whitespace with a single

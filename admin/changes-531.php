@@ -47,7 +47,10 @@ internal improvements.
        <p><li><code>c-toggle-auto-state</code> (<code>C-c C-t</code>) has been renamed to c-toggle-auto-newline.
        <br><code>c-toggle-auto-state</code> remains as an alias.
 
-       <p><li><code>c-hungry-backspace</code> and
+       <p><li><code>c-hungry-backspace</code> has been renamed to c-hungry-delete-backwards.
+       <br><code>c-hungry-backspace</code> remains as an alias.
+
+       <p><li><code>c-hungry-delete-backwards</code> and
        <code>c-hungry-delete-forwards</code> now have permanent key
        bindings, respectively <code>C-c C-DEL</code> (or <code>C-c
        DEL</code>, for the benefit of TTYs) and <code>C-c C-d</code>
