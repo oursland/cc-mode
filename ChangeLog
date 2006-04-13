@@ -115,7 +115,7 @@
 	* cc-engine.el: Concatenate the minor mode indicators directly
 	onto mode-name, removing c-submode-indicators.  Sometimes, c-s-i
 	got separated from the mode name on the mode line.
-	(c-beginning-of-statment): Distinguish real labels ("case 1:" or
+	(c-beginning-of-statment-1): Distinguish real labels ("case 1:" or
 	"foo:") from non-labels ("public:").
 	(c-forward-objc-directive): Replace c-forward-token-2 with crude
 	coding; c-f-t-2 doesn't move over a token at EOB.
