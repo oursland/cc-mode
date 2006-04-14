@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.245 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.246 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -681,7 +681,7 @@ that begins at the line's left margin.
 @item
 When it's @code{nil}, the command indents the line by an extra
 @code{c-basic-offset} columns.  A prefix argument acts as a
-multiplier.  A bare prefix (@kbd{C-u @key{TAB}} is equivalent to -1,
+multiplier.  A bare prefix (@kbd{C-u @key{TAB}}) is equivalent to -1,
 removing @code{c-basic-offset} columns from the indentation.
 @end itemize
 
@@ -1689,6 +1689,25 @@ buffers by typing @kbd{M-x c-subword-mode}.
 Here are the various other commands that didn't fit anywhere else:
 
 @table @asis
+@item @kbd{C-c .} (@code{c-set-style})
+@kindex C-c .
+@findex c-set-style
+@findex set-style (c-)
+Switch to the specified style in the current buffer.  Use like this:
+
+@example
+@kbd{C-c . @var{style-name} @key{RET}}
+@end example
+
+You can use the @key{TAB} in the normal way to do completion on the
+style name.  Note that all style names are case insensitive, even the
+ones you define yourself.
+
+Setting a style in this way does @emph{not} automatically reindent your
+file.  For commands that you can use to view the effect of your changes,
+see @ref{Indentation Commands} and @ref{Filling and Breaking}.
+
+For details of the @ccmode{} style system, see @ref{Styles}.
 @item @kbd{C-c :} (@code{c-scope-operator})
 @kindex C-c :
 @findex c-scope-operator
@@ -2455,6 +2474,11 @@ Commas});@*
 @cindex styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+By @dfn{style} we mean the layout of the code---things like how many
+columns to indent a block of code, whether an opening brace gets
+indented to the level of the code it encloses, or of the construct
+that introduces it, or ``hangs'' at the end of a line.
+
 Most people only need to edit code formatted in just a few well-defined
 and consistent styles.  For example, their organization might impose a
 ``blessed'' style that all its programmers must conform to.  Similarly,
@@ -2556,34 +2580,17 @@ afterwards.
 @subsection Choosing a Style
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Use @kbd{C-c .} to choose a style interactively:
-
-@deffn Command c-set-style style-name
-@findex set-style (c-)
-@kindex C-c .
-Switch to the specified style in the current buffer.  Use
-interactively like this:
-
-@example
-@kbd{C-c . @var{style-name} @key{RET}}
-@end example
-
-You can use the @key{TAB} in the normal way to do completion on the
-style name.  Note that all style names are case insensitive, even the
-ones you define yourself.
-
-Setting a style in this way does @emph{not} automatically reindent your
-file.  For commands that you can use to view the effect of your changes,
-see @ref{Indentation Commands} and @ref{Filling and Breaking}.
-@end deffn
-
-The default style in all newly created buffers is @code{gnu}, except
-in Java and AWK modes where it's @code{java} and @code{awk}.
+When you create a new buffer, its style will be set from
+@code{c-default-style}.  The factory default is the style @code{gnu},
+except in Java and AWK modes where it's @code{java} and @code{awk}.
 
 Remember that if you set a style variable with the Customization
 interface or at the top level of your @file{.emacs} file before the
 style system is initialised (@pxref{Config Basics}), this setting will
 override the one that the style system would have given the variable.
+
+To set a buffer's style interactively, use the command @kbd{C-c .}
+(@pxref{Other Commands}).
 
 @defopt c-default-style
 @vindex default-style (c-)
@@ -5161,7 +5168,7 @@ If an offset specification evaluates to @code{nil}, then a relative
 offset of 0 (zero) is used@footnote{There is however a variable
 @code{c-strict-syntax-p} that when set to non-@code{nil} will cause an
 error to be signaled in that case.  It's now considered obsolete since
-it doesn't work well with some of the alignment functions that returns
+it doesn't work well with some of the alignment functions that return
 @code{nil} instead of zero.  You should therefore leave
 @code{c-strict-syntax-p} set to @code{nil}.}.
 
