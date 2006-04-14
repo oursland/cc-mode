@@ -52,6 +52,7 @@ distdir:
 
 docs: distdir info html dvi ps
 	tar cf - cc-mode.info* | gzip -c > dist/cc-mode.info.tar.gz
+	tar cf - cc-mode.XEMACS.info* | gzip -c > dist/cc-mode.XEMACS.info.tar.gz
 	version=$(VERSION) && \
 	cd html && \
 	$(RM) -r cc-mode-$$version && \
