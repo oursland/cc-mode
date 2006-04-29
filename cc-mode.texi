@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.5 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.6 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -480,7 +480,7 @@ work just fine right out of the box.  Note however that you might not
 have the latest @ccmode{} release and might want to upgrade your copy
 (see below).
 
-You should probably start by reading the entire chapter
+You should probably start by skimming through the entire chapter
 @ref{Commands} to get an overview of @ccmode{}'s capabilities.
 
 After trying out some commands, you may dislike some aspects of
@@ -874,29 +874,28 @@ lines.
 @ccmode{} contains some useful commands for moving around in C code.
 
 @table @asis
-@item @kbd{M-x c-beginning-of-defun}
-@itemx @kbd{M-x c-end-of-defun}
+@item @kbd{C-M-a}
+@itemx @kbd{C-M-e}
 @findex c-beginning-of-defun
 @findex c-end-of-defun
-@findex beginning-of-defun (c-)
-@findex end-of-defun (c-)
-@findex beginning-of-defun
-@findex end-of-defun
-Move to the start or end of the current top-level definition.  This is
-the outermost brace pair which encloses point, together with the
-function header or similar preamble which precedes the opening brace.
+
+Move to the beginning or end of the current or next function.  Other
+constructs (such as a structs or classes) which have a brace block
+also count as ``functions'' here.  To move over several functions, you
+can give these commands a repeat count.
+
+The start of a function is at its header.  The end of the function is
+after its closing brace, or after the semicolon of a construct (such
+as a @code{struct}) which doesn't end at the brace.  These two
+commands try to leave point at the beginning of a line near the actual
+start or end of the function.  This occasionally causes point not to
+move at all.
+
 These functions are analogous to the Emacs built-in commands
 @code{beginning-of-defun} and @code{end-of-defun}, except they
 eliminate the constraint that the top-level opening brace of the defun
 must be in column zero.  See @ref{Defuns,,,@emacsman{},
 @emacsmantitle{}}, for more information.
-
-Depending on the coding style you're using, you might prefer these two
-commands to the standard Emacs ones.  If so, consider binding them to
-@kbd{C-M-a} and @kbd{C-M-e}.  @xref{Sample .emacs File}.  This
-customization won't affect the special bindings for these key
-sequences in force in AWK Mode.  For backwards compatibility reasons,
-the default bindings for @kbd{C-M-a} and @kbd{C-M-e} remain in effect.
 
 @item @kbd{C-M-a} (AWK Mode) (@code{c-awk-beginning-of-defun})
 @itemx @kbd{C-M-e} (AWK Mode) (@code{c-awk-end-of-defun})
@@ -906,11 +905,9 @@ the default bindings for @kbd{C-M-a} and @kbd{C-M-e} remain in effect.
 @findex awk-beginning-of-defun (c-)
 @findex c-awk-end-of-defun
 @findex awk-end-of-defun (c-)
-Move back to the beginning or forward to the end of the current AWK
-defun.  These functions are bound to @kbd{C-M-a} and @kbd{C-M-e} by
-default in AWK Mode.  They can take prefix-arguments, their
-functionality being entirely equivalent to @code{beginning-of-defun}
-and @code{end-of-defun}.
+Move to the beginning or end of the current or next AWK defun.  These
+commands can take prefix-arguments, their functionality being entirely
+equivalent to @code{beginning-of-defun} and @code{end-of-defun}.
 
 AWK Mode @dfn{defuns} are either pattern/action pairs (either of which
 might be implicit) or user defined functions.  Having the @samp{@{} and
@@ -3647,10 +3644,11 @@ it's only an empty parenthesis pair.  I.e. you will get @samp{signal
 closing parenthesis is typed.
 
 @item comment-close-slash
-When inside a block comment, terminate the comment when you type a
-slash at the beginning of a line (i.e. immediately after the comment
-prefix).  This clean-up removes whitespace preceding the slash and if
-needed, inserts a star to complete the token @samp{*/}.
+When inside a block comment, terminate the comment when you type a slash
+at the beginning of a line (i.e. immediately after the comment prefix).
+This clean-up removes whitespace preceding the slash and if needed,
+inserts a star to complete the token @samp{*/}.  Type @kbd{C-q /} in this
+situation if you just want a literal @samp{/} inserted.
 @end table
 
 
@@ -6535,18 +6533,16 @@ anchoring position to indent the line in that case.
 @appendix Sample .emacs File
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@verbatim
-;; Here's a sample .emacs file fragment that might help you along the
-;; way.  Just copy this region and paste it into your .emacs file.
-;; You might want to change some of the actual values.
+Here's a sample .emacs file fragment that might help you along the way.
+Just copy this region and paste it into your .emacs file.  You might want
+to change some of the actual values.
 
-;; Make some non-standard key bindings.  We can put these in
+@verbatim
+;; Make a non-standard key binding.  We can put this in
 ;; c-mode-base-map because c-mode-map, c++-mode-map, and so on,
 ;; inherit from it.
 (defun my-c-initialization-hook ()
-  (define-key c-mode-base-map "\C-m" 'c-context-line-break)
-  (define-key c-mode-base-map [?\C-\M-a] 'c-beginning-of-defun)
-  (define-key c-mode-base-map [?\C-\M-e] 'c-end-of-defun)
+  (define-key c-mode-base-map "\C-m" 'c-context-line-break))
 (add-hook 'c-initialization-hook 'my-c-initialization-hook)
 
 ;; offset customizations not in my-c-style
@@ -6633,9 +6629,6 @@ embodied in the @code{beginning-of-defun} function.  @ccmode now
 caches syntactic information much better, so that the delay caused by
 searching for such a brace when it's not in column 0 is minimal,
 except perhaps when you've just moved a long way inside the file.
-Don't forget to rebind @kbd{C-M-a} and @kbd{C-M-e} to the @ccmode{}
-functions @code{beginning-of-defun} and @code{end-of-defun} if you're
-going to be hanging your braces! @xref{Sample .emacs File}.
 
 @findex defun-prompt-regexp
 @vindex c-Java-defun-prompt-regexp
