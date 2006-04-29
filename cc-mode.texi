@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.246 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.247 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -2590,7 +2590,8 @@ style system is initialised (@pxref{Config Basics}), this setting will
 override the one that the style system would have given the variable.
 
 To set a buffer's style interactively, use the command @kbd{C-c .}
-(@pxref{Other Commands}).
+(@pxref{Other Commands}).  To set it from a file's local variable
+list, @ref{File Styles}.
 
 @defopt c-default-style
 @vindex default-style (c-)

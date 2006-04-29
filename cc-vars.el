@@ -1600,7 +1600,8 @@ statically (e.g. with `setq').")
 
 (defvar c-indentation-style nil
   "Name of the currently installed style.
-Don't change this directly; call `c-set-style' instead.")
+Don't change this directly; call `c-set-style' instead, or set the variable
+`c-file-style' in the file's Local Variable list.")
 
 (defvar c-current-comment-prefix nil
   "The current comment prefix regexp.
