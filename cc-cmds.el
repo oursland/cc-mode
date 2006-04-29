@@ -1511,23 +1511,25 @@ defun."
     (setq where (c-where-wrt-brace-construct))
 
     (if (< arg 0)
-	;; Move forward to the beginning of a function.
+	;; Move forward to the closing brace of a function.
 	(progn
 	  (if (or (eq where 'at-function-end) (eq where 'outwith-function))
 	      (setq arg (1+ arg)))
 	  (if (< arg 0)
 	      (setq arg (c-forward-to-nth-EOF-} (- arg) where)))
+	  ;; Move forward to the next opening brace....
 	  (when (and (= arg 0)
 		     (c-syntactic-re-search-forward "{" nil t))
 	    (backward-char)
+	    ;; ... and backward to the function header.
 	    (c-beginning-of-decl-1)
 	    t))
 
-      ;; Move backward to the beginning of a function.
+      ;; Move backward to the opening brace of a function.
       (when (and (> arg 0)
 		 (eq (setq arg (c-backward-to-nth-BOF-{ arg where)) 0))
 
-	;; Go backward to the desired function header.
+	;; Go backward to this function's header.
 	(c-beginning-of-decl-1)
 
 	(setq pos (point))
@@ -3756,9 +3758,12 @@ command to conveniently insert and align the necessary backslashes."
     ;; Restore point on undo.  It's necessary since we do a lot of
     ;; hidden inserts and deletes below that should be as transparent
     ;; as possible.
-    (if (and buffer-undo-list (not (eq buffer-undo-list t)))
+      (if (and buffer-undo-list (not (eq buffer-undo-list t)))
 	(setq buffer-undo-list (cons (point) buffer-undo-list)))
 
+    ;; Determine the limits and type of the containing literal (if any):
+    ;; C-LIT-LIMITS, C-LIT-TYPE;  and the limits of the current paragraph:
+    ;; BEG and END.
     (c-save-buffer-state ()
       (save-restriction
 	;; Widen to catch comment limits correctly.
@@ -3786,6 +3791,13 @@ command to conveniently insert and align the necessary backslashes."
 
     (unwind-protect
 	(progn
+	  ;; For each of the possible types of text (string, C comment ...)
+	  ;; determine BEG and END, the region we will narrow to.  If we're in
+	  ;; a literal, constrain BEG and END to the limits of this literal.
+	  ;;
+	  ;; For some of these text types, particularly a block comment, we
+	  ;; may need to massage whitespace near literal delimiters, so that
+	  ;; these don't get filled inappropriately.
 	  (cond
 
 	   ((eq c-lit-type 'c++)	; Line comment.
@@ -3810,21 +3822,27 @@ command to conveniently insert and align the necessary backslashes."
 
 	   ((eq c-lit-type 'c)		; Block comment.
 	    (when (>= end (cdr c-lit-limits))
-	      ;; The region includes the comment ender which we might
-	      ;; want to keep together with the last word.
-	      (unless (save-excursion
-			(goto-char (cdr c-lit-limits))
-			(beginning-of-line)
-			(and (looking-at (concat "[ \t]*\\("
-						 c-current-comment-prefix
-						 "\\)\\*/"))
-			     (eq (cdr c-lit-limits) (match-end 0))
-			     ;; The comment ender is on a line of its
-			     ;; own.  Keep it that way.
-			     (set-marker end (point))))
+	      ;; The region includes the comment ender.  If it's on its own
+	      ;; line, it stays on its own line.  If it's got company on the
+	      ;; line, it keeps (at least one word of) it.  "=====*/" counts
+	      ;; as a comment ender here, but "===== */" doesn't and "foo*/"
+	      ;; doesn't.
+	      (unless
+		  (save-excursion
+		    (goto-char (cdr c-lit-limits))
+		    (beginning-of-line)
+		    (and (search-forward-regexp
+			  (concat "\\=[ \t]*\\(" c-current-comment-prefix "\\)")
+			  (- (cdr c-lit-limits) 2) t)
+			 (not (search-forward-regexp
+			       "\\(\\s \\|\\sw\\)"
+			       (- (cdr c-lit-limits) 2) 'limit))
+			     ;; The comment ender IS on its own line.  Exclude
+			     ;; this line from the filling.
+			 (set-marker end (c-point 'bol))))
 
-		;; The comment ender should hang.  Replace all space between
-		;; it and the last word either by one or two 'x's (when
+		;; The comment ender is hanging.  Replace all space between it
+		;; and the last word either by one or two 'x's (when
 		;; FILL-PARAGRAPH is non-nil), or a row of x's the same width
 		;; as the whitespace (when auto filling), and include it in
 		;; the region.  We'll change them back to whitespace
@@ -3841,23 +3859,26 @@ command to conveniently insert and align the necessary backslashes."
 		       spaces)
 
 		  (save-excursion
+		    ;; Insert a CR after the "*/", adjust END
 		    (goto-char (cdr c-lit-limits))
 		    (setq tmp-post (point-marker))
 		    (insert ?\n)
 		    (set-marker end (point))
+
 		    (forward-line -1)	; last line of the comment
 		    (if (and (looking-at (concat "[ \t]*\\(\\("
 						 c-current-comment-prefix
 						 "\\)[ \t]*\\)"))
 			     (eq ender-start (match-end 0)))
-			;; The comment ender is prefixed by nothing
-			;; but a comment line prefix.  Remove it
-			;; along with surrounding ws.
+			;; The comment ender is prefixed by nothing but a
+			;; comment line prefix.  IS THIS POSSIBLE?  (ACM,
+			;; 2006/4/28).  Remove it along with surrounding ws.
 			(setq spaces (- (match-end 1) (match-end 2)))
 		      (goto-char ender-start))
 		    (skip-chars-backward " \t\r\n") ; Surely this can be
 					; " \t"? "*/" is NOT alone on the line (ACM, 2005/8/18)
 
+		    ;; What's being tested here?  2006/4/20.  FIXME!!!
 		    (if (/= (point) ender-start)
 			(progn
 			  (if (<= here (point))
