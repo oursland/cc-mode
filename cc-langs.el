@@ -872,7 +872,7 @@ form\".  See also `c-op-identitier-prefix'."
 (c-lang-defvar c-overloadable-operators-regexp
   (c-lang-const c-overloadable-operators-regexp))
 
-(c-lang-defconst c-opt-op-identitier-prefix
+(c-lang-defconst c-opt-op-identifier-prefix
   "Regexp matching the token before the ones in
 `c-overloadable-operators' when operators are specified in their
 \"identifier form\".  This typically matches \"operator\" in C++ where
@@ -883,8 +883,15 @@ identifier is listed in `c-overloadable-operators'.
 This regexp is assumed to not match any non-operator identifier."
   t   nil
   c++ (c-make-keywords-re t '("operator")))
-(c-lang-defvar c-opt-op-identitier-prefix
-  (c-lang-const c-opt-op-identitier-prefix))
+(c-lang-defvar c-opt-op-identifier-prefix
+  (c-lang-const c-opt-op-identifier-prefix))
+
+;; Note: the following alias is an old name which was a mis-spelling.  It has
+;; been corrected above and throughout cc-engine.el.  It will be removed at
+;; some release very shortly in the future.  ACM, 2006-04-14.
+(defalias 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix)
+(make-obsolete-variable 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix
+			"CC Mode 5.31.4, 2006-04-14")
 
 (c-lang-defconst c-other-op-syntax-tokens
   "List of the tokens made up of characters in the punctuation or
