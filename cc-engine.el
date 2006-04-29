@@ -2440,14 +2440,14 @@ comment at the start of cc-engine.el for more info."
 		(= (c-backward-token-2 0) 0))
 
        (cond ((and (looking-at c-overloadable-operators-regexp)
-		   (or (not c-opt-op-identitier-prefix)
+		   (or (not c-opt-op-identifier-prefix)
 		       (and (= (c-backward-token-2 1) 0)
-			    (looking-at c-opt-op-identitier-prefix))))
+			    (looking-at c-opt-op-identifier-prefix))))
 	      (point))
 
 	     ((save-excursion
-		(and c-opt-op-identitier-prefix
-		     (looking-at c-opt-op-identitier-prefix)
+		(and c-opt-op-identifier-prefix
+		     (looking-at c-opt-op-identifier-prefix)
 		     (= (c-forward-token-2 1) 0)
 		     (looking-at c-overloadable-operators-regexp)))
 	      (point))))
@@ -6189,8 +6189,8 @@ comment at the start of cc-engine.el for more info."
 	      ;; so that we don't get stuck on that instead of the
 	      ;; function arglist.
 	      (c-forward-sexp))
-	     ((and c-opt-op-identitier-prefix
-		   (looking-at c-opt-op-identitier-prefix))
+	     ((and c-opt-op-identifier-prefix
+		   (looking-at c-opt-op-identifier-prefix))
 	      ;; Don't trip up on "operator ()".
 	      (c-forward-token-2 2 t)))
        (and (< (point) beg)
@@ -6307,10 +6307,10 @@ comment at the start of cc-engine.el for more info."
     (and c-overloadable-operators-regexp
 	 (zerop (c-backward-token-2 1 nil lim))
 	 (looking-at c-overloadable-operators-regexp)
-	 (or (not c-opt-op-identitier-prefix)
+	 (or (not c-opt-op-identifier-prefix)
 	     (and
 	      (zerop (c-backward-token-2 1 nil lim))
-	      (looking-at c-opt-op-identitier-prefix)))
+	      (looking-at c-opt-op-identifier-prefix)))
 	 (point))))
 
 (defsubst c-backward-to-block-anchor (&optional lim)
@@ -6358,7 +6358,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; operator token preceded by "operator".
 		 (save-excursion
 		   (and (c-safe (c-backward-sexp) t)
-			(looking-at c-opt-op-identitier-prefix)))
+			(looking-at c-opt-op-identifier-prefix)))
 		 (and (eq (char-before) ?<)
 		      (c-with-syntax-table c++-template-syntax-table
 			(if (c-safe (goto-char (c-up-list-forward (point))))
@@ -6467,12 +6467,12 @@ comment at the start of cc-engine.el for more info."
 			  (and (c-syntactic-re-search-forward "[;={]" start t t t)
 			       (eq (char-before) ?=)
 			       c-overloadable-operators-regexp
-			       c-opt-op-identitier-prefix
+			       c-opt-op-identifier-prefix
 			       (save-excursion
 				 (eq (c-backward-token-2) 0)
 				 (looking-at c-overloadable-operators-regexp)
 				 (eq (c-backward-token-2) 0)
-				 (looking-at c-opt-op-identitier-prefix))))
+				 (looking-at c-opt-op-identifier-prefix))))
 		      (eq (char-before) ?=))
 		    (c-syntactic-re-search-forward "[;{]" start t t)
 		    (eq (char-before) ?{)
@@ -6787,8 +6787,8 @@ comment at the start of cc-engine.el for more info."
 			(setq braceassignp
 			      (cond
 			       ;; Check for operator =
-			       ((and c-opt-op-identitier-prefix
-				     (looking-at c-opt-op-identitier-prefix))
+			       ((and c-opt-op-identifier-prefix
+				     (looking-at c-opt-op-identifier-prefix))
 				nil)
 			       ;; Check for `<opchar>= in Pike.
 			       ((and (c-major-mode-is 'pike-mode)
