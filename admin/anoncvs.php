@@ -8,7 +8,7 @@
 development version and also (since version 5.30) the fixes that have
 been incorporated into the latest release, i.e. what will become
 5.31.1, 5.31.2 and so on.  You can browse the CVS repository <a
-href="http://cvs.sf.net/viewcvs.py/cc-mode">here</a>.
+href="http://cc-mode.cvs.sourceforge.net/cc-mode/cc-mode">here</a>.
 
 <p>To get the latest release with only bug fixes and no new features,
 check out the patch branch, which is called <i>Branch_5_31</i>:
