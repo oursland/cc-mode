@@ -8,18 +8,18 @@
 development version and also (since version 5.30) the fixes that have
 been incorporated into the latest release, i.e. what will become
 5.31.1, 5.31.2 and so on.  You can browse the CVS repository <a
-href="http://cvs.sf.net/viewcvs.py/cc-mode">here</a>.
+href="http://cc-mode.cvs.sourceforge.net/cc-mode/cc-mode">here</a>.
 
 <p>To get the latest release with only bug fixes and no new features,
 check out the patch branch, which is called <i>Branch_5_31</i>:
 
 <pre>
-cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/cc-mode login</pre>
+cvs -d:pserver:anonymous@cc-mode.cvs.sorceforge.net:/cvsroot/cc-mode login</pre>
 
 <p>Just press Enter at the password prompt. Then:
 
 <pre>
-cvs -z3 -d:pserver:anonymous@cvs.sf.net:/cvsroot/cc-mode co -rBranch_5_31 cc-mode</pre>
+cvs -z3 -d:pserver:anonymous@cc-mode.cvs.sourceforge.net:/cvsroot/cc-mode co -rBranch_5_31 cc-mode</pre>
 
 <p>It should always be safe to use the latest version on this branch.
 Please report any problems.
@@ -29,7 +29,7 @@ Please report any problems.
 <p>The development version is on the main trunk in cvs:
 
 <pre>
-cvs -z3 -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode co cc-mode</pre>
+cvs -z3 -d:pserver:anonymous@cc-mode.cvs.sourceforge.net:/cvsroot/cc-mode co cc-mode</pre>
 
 <p>Being under development, there are of course no guarantees that
 this version will work all the time, or at all.  That said, it usually
