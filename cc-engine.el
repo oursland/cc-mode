@@ -4532,41 +4532,42 @@ comment at the start of cc-engine.el for more info."
 	  (goto-char start)
 	  nil)
 
-      (while (and
+      (while (progn
 	      (c-syntactic-skip-backward "^<;{}" limit t)
 
-	      (if (eq (char-before) ?<)
-		  t
-		;; Stopped at bob or a char that isn't allowed in an
-		;; arglist, so we've failed.
-		(goto-char start)
-		nil)
+	      (and
+	       (if (eq (char-before) ?<)
+		   t
+		 ;; Stopped at bob or a char that isn't allowed in an
+		 ;; arglist, so we've failed.
+		 (goto-char start)
+		 nil)
 
-	      (if (> (point)
-		     (progn (c-beginning-of-current-token)
-			    (point)))
-		  ;; If we moved then the "<" was part of some
-		  ;; multicharacter token.
-		  t
+	       (if (> (point)
+		      (progn (c-beginning-of-current-token)
+			     (point)))
+		   ;; If we moved then the "<" was part of some
+		   ;; multicharacter token.
+		   t
 
-		(backward-char)
-		(let ((beg-pos (point)))
-		  (if (c-forward-<>-arglist all-types)
-		      (cond ((= (point) start)
-			     ;; Matched the arglist.  Break the while.
-			     (goto-char beg-pos)
-			     nil)
-			    ((> (point) start)
-			     ;; We started from a non-paren ">" inside an
-			     ;; arglist.
-			     (goto-char start)
-			     nil)
-			    (t
-			     ;; Matched a shorter arglist.  Can be a nested
-			     ;; one so continue looking.
-			     (goto-char beg-pos)
-			     t))
-		    t)))))
+		 (backward-char)
+		 (let ((beg-pos (point)))
+		   (if (c-forward-<>-arglist all-types)
+		       (cond ((= (point) start)
+			      ;; Matched the arglist.  Break the while.
+			      (goto-char beg-pos)
+			      nil)
+			     ((> (point) start)
+			      ;; We started from a non-paren ">" inside an
+			      ;; arglist.
+			      (goto-char start)
+			      nil)
+			     (t
+			      ;; Matched a shorter arglist.  Can be a nested
+			      ;; one so continue looking.
+			      (goto-char beg-pos)
+			      t))
+		     t))))))
 
       (/= (point) start))))
 
