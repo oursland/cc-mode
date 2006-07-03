@@ -5909,7 +5909,8 @@ y	  ;; True if there's a suffix match outside the outermost
 		 (save-excursion
 		   (goto-char (1- preceding-token-end))
 		   (c-beginning-of-current-token)
-		   (looking-at c-label-prefix-re))
+		   (or (looking-at c-label-prefix-re)
+		       (looking-at c-block-stmt-1-key)))
 
 		 (and (eq (char-before preceding-token-end) ?\))
 		      (c-after-conditional)))
@@ -5918,7 +5919,8 @@ y	  ;; True if there's a suffix match outside the outermost
 	       (save-excursion
 		 (goto-char (1- preceding-token-end))
 		 (c-beginning-of-current-token)
-		 (looking-at c-label-prefix-re))
+		 (or (looking-at c-label-prefix-re)
+		     (looking-at c-block-stmt-1-key)))
 
 	       (cond
 		((eq (char-before preceding-token-end) ?\))
