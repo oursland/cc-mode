@@ -4364,10 +4364,16 @@ C++-style line comment doesn't count as inside it."
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
       (let ((col (save-excursion
-		   (forward-line -1)
-		   (while (and (looking-at "[ \t]*\\\\?$")
-			       (= (forward-line -1) 0)))
-		   (current-indentation))))
+		   (backward-char)
+		   ;; In an open string, the new line mustn't be indented
+		   (if (and (eq c-lit-type 'string)
+			    (< (skip-chars-backward "\\\\") 0)
+			    (looking-at "\\(\\\\\\\\\\)*\\\\$")) ; odd number of \s.
+		       0
+		     (forward-line 0)
+		     (while (and (looking-at "[ \t]*\\\\?$")
+				 (= (forward-line -1) 0)))
+		     (current-indentation)))))
 	(indent-to col))
 
       (indent-according-to-mode))))
