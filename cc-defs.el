@@ -1615,7 +1615,7 @@ itself is evaluated."
 
 (defmacro c-lang-defconst (name &rest args)
   "Set the language specific values of the language constant NAME.
-The second argument can be an optional docstring.  The rest of the
+The second argument can optionally be a docstring.  The rest of the
 arguments are one or more repetitions of LANG VAL where LANG specifies
 the language(s) that VAL applies to.  LANG is the name of the
 language, i.e. the mode name without the \"-mode\" suffix, or a list
@@ -1712,7 +1712,7 @@ constant.  A file is identified by its base name."
 	;; Emacs has a weird bug where it seems to fail to read
 	;; backquote lists from byte compiled files correctly (,@
 	;; forms, to be specific), so make sure the bindings in the
-	;; expansion below doesn't contain any backquote stuff.
+	;; expansion below don't contain any backquote stuff.
 	;; (XEmacs handles it correctly and doesn't need this for that
 	;; reason, but we also use this expansion handle
 	;; `c-lang-defconst-eval-immediately' and to register
