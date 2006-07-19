@@ -4328,55 +4328,63 @@ it.
 When point is inside a comment, continue it with the appropriate
 comment prefix (see the `c-comment-prefix-regexp' and
 `c-block-comment-prefix' variables for details).  The end of a
-C++-style line comment doesn't count as inside it."
+C++-style line comment doesn't count as inside it.
+
+When point is inside a string, only insert a backslash when it is also
+inside a preprocessor directive."
 
   (interactive "*")
   (let* (c-lit-limits c-lit-type
 	 (c-macro-start c-macro-start))
 
-    (if (c-save-buffer-state ()
-	  (setq c-lit-limits (c-literal-limits nil nil t)
-		c-lit-type (c-literal-type c-lit-limits))
-	  (or (eq c-lit-type 'c)
-	      (and (eq c-lit-type 'c++)
-		   (< (save-excursion
-			(skip-chars-forward " \t")
-			(point))
-		      (1- (cdr (setq c-lit-limits (c-collect-line-comments
-						   c-lit-limits))))))
-	      (and (or (not (looking-at "\\s *$"))
-		       (eq (char-before) ?\\))
-		   (c-query-and-set-macro-start)
-		   (<= (save-excursion
-			 (goto-char c-macro-start)
-			 (if (looking-at c-opt-cpp-start)
-			     (goto-char (match-end 0)))
-			 (point))
-		       (point)))))
+    (c-save-buffer-state ()
+      (setq c-lit-limits (c-literal-limits nil nil t)
+	    c-lit-type (c-literal-type c-lit-limits))
+      (when (eq c-lit-type 'c++)
+	(setq c-lit-limits (c-collect-line-comments c-lit-limits)))
+      (c-query-and-set-macro-start))
 
-	(let ((comment-multi-line t)
-	      (fill-prefix nil))
-	  (c-indent-new-comment-line nil t))
+    (cond
+     ((or (eq c-lit-type 'c)
+	  (and (eq c-lit-type 'c++) ; C++ comment, but not at the very end of it.
+	       (< (save-excursion
+		    (skip-chars-forward " \t")
+		    (point))
+		  (1- (cdr c-lit-limits))))
+	  (and (numberp c-macro-start)	; Macro, but not at the very end of
+					; it, not in a string, and not in the
+					; cpp keyword.
+	       (not (eq c-lit-type 'string))
+	       (or (not (looking-at "\\s *$"))
+		   (eq (char-before) ?\\))
+	       (<= (save-excursion
+		     (goto-char c-macro-start)
+		     (if (looking-at c-opt-cpp-start)
+			 (goto-char (match-end 0)))
+		     (point))
+		   (point))))
+      (let ((comment-multi-line t)
+	    (fill-prefix nil))
+	(c-indent-new-comment-line nil t)))
 
-      (delete-horizontal-space)
-      (newline)
+     ((eq c-lit-type 'string)
+      (if (and (numberp c-macro-start)
+	       (not (eq (char-before) ?\\)))
+	  (insert ?\\))
+      (newline))
 
+     (t (delete-horizontal-space)
+	(newline)
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
-      (let ((col (save-excursion
-		   (backward-char)
-		   ;; In an open string, the new line mustn't be indented
-		   (if (and (eq c-lit-type 'string)
-			    (< (skip-chars-backward "\\\\") 0)
-			    (looking-at "\\(\\\\\\\\\\)*\\\\$")) ; odd number of \s.
-		       0
+	(let ((col (save-excursion
+		     (backward-char)
 		     (forward-line 0)
 		     (while (and (looking-at "[ \t]*\\\\?$")
 				 (= (forward-line -1) 0)))
-		     (current-indentation)))))
-	(indent-to col))
-
-      (indent-according-to-mode))))
+		     (current-indentation))))
+	  (indent-to col))
+     (indent-according-to-mode)))))
 
 (defun c-context-open-line ()
   "Insert a line break suitable to the context and leave point before it.
