@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.7 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.8 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -1085,7 +1085,10 @@ prefix like @code{c-indent-new-comment-line}.  In normal code it's
 indented like @code{newline-and-indent} would do.  In macros it acts
 like @code{newline-and-indent} but additionally inserts and optionally
 aligns the line ending backslash so that the macro remains unbroken.
-@xref{Custom Macros}, for details about the backslash alignment.
+@xref{Custom Macros}, for details about the backslash alignment.  In a
+string, a backslash is inserted only if the string is within a
+macro@footnote{In GCC, unescaped line breaks within strings are
+valid.}.
 
 This function is not bound to a key by default, but it's intended to be
 used on the @kbd{RET} key.  If you like the behavior of
@@ -2358,7 +2361,7 @@ last thing when you enter that language mode.
 @end defvar
 
 Although these hooks are variables defined in @ccmode{}, you can give
-them values before @ccmode{}'s code is loaded - indeed, this is the
+them values before @ccmode{}'s code is loaded---indeed, this is the
 only way to use @code{c-initialization-hook}.  Their values aren't
 overwritten when @ccmode{} gets loaded.
 
