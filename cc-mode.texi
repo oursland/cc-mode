@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.8 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.9 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -3234,8 +3234,8 @@ the proper functioning of @ccmode{}.
 
 This variable is also bound in three other circumstances:
 (i)@tie{}when calling a c-hanging-semi&comma-criteria function
-(@pxref{Hanging Semicolons and Commas}; (ii)@tie{}when calling a
-line-up function (@pxref{Custom Line-Up}; (iii)@tie{}when calling a
+(@pxref{Hanging Semicolons and Commas}); (ii)@tie{}when calling a
+line-up function (@pxref{Custom Line-Up}); (iii)@tie{}when calling a
 c-special-indent-hook function (@pxref{Other Indentation}).
 @end defvar
 
@@ -6709,6 +6709,12 @@ more info.
 
 @itemize @bullet
 @item
+@ccmode{} doesn't support trigraphs.  (These are character sequences
+such as @samp{??(}, which represents @samp{[}.  They date from a time
+when some character sets didn't have all the characters that C needs,
+and are now utterly obsolete.)
+
+@item
 There is no way to apply auto newline settings (@pxref{Auto-newlines})
 on already typed lines.  That's only a feature to ease interactive
 editing.
@@ -6730,6 +6736,25 @@ When a non-nested template is used in a declaration, @ccmode{} indents
 it and font-locks it OK.  Templates used in expressions, and nested
 templates do not fare so well.  Sometimes a workaround is to refontify
 the expression after typing the closing @samp{>}.
+
+@item
+On loading @ccmode{}, sometimes this error message appears:
+
+@example
+File mode specification error: (void-variable c-font-lock-keywords-3)
+@end example
+
+This is due to a bug in the function @code{eval-after-load} in some
+versions of (X)Emacs.  It can manifest itself when there is a symbolic
+link in the path of the directory which contains (X)Emacs.  As a
+workaround, put the following into your @file{.emacs} file, fairly
+early on:
+
+@example
+(defun my-load-cc-fonts ()
+  (require "cc-fonts"))
+(add-hook 'c-initialization-hook 'my-load-cc-fonts)
+@end example
 @end itemize
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
