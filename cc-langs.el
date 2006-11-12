@@ -677,6 +677,16 @@ definition, or nil if the language doesn't have any."
 (c-lang-defvar c-opt-cpp-macro-define-start
   (c-lang-const c-opt-cpp-macro-define-start))
 
+(c-lang-defconst c-opt-cpp-macro-define-id
+  ;; Regexp matching everything up to the end of the identifier defined
+  ;; by a cpp define.
+  t (if (c-lang-const c-opt-cpp-macro-define)
+	(concat (c-lang-const c-opt-cpp-prefix)	; #
+		(c-lang-const c-opt-cpp-macro-define) ; define
+		"[ \t]+\\(\\sw\\|_\\)+")))
+(c-lang-defvar c-opt-cpp-macro-define-id
+  (c-lang-const c-opt-cpp-macro-define-id))
+
 (c-lang-defconst c-cpp-expr-directives
   "List if cpp directives (without the prefix) that are followed by an
 expression."
