@@ -703,8 +703,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
   ;; Called before any of the matchers in `c-complex-decl-matchers'.
-  ;; Nil is always returned.
   ;;
   ;; This function does hidden buffer changes.
 
@@ -741,10 +746,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
   ;; Fontify types and references in names containing angle bracket
   ;; arglists from the point to LIMIT.  Note that
-  ;; `c-font-lock-declarations' already has handled many of them.  Nil
-  ;; is always returned.
+  ;; `c-font-lock-declarations' already has handled many of them.
   ;;
   ;; This function might do hidden buffer changes.
 
@@ -966,9 +976,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	font-lock-keyword-face))
 
 (defun c-font-lock-declarations (limit)
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
   ;; Fontify all the declarations, casts and labels from the point to LIMIT.
-  ;; Assumes that strings and comments have been fontified already.  Nil is
-  ;; always returned.
+  ;; Assumes that strings and comments have been fontified already.
   ;;
   ;; This function might do hidden buffer changes.
 
@@ -1262,6 +1277,14 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   "Complex font lock matchers for types and declarations.  Used on level
 3 and higher."
 
+  ;; Note: This code in this form dumps a number of funtions into the
+  ;; resulting constant, `c-matchers-3'.  At run time, font lock will call
+  ;; each of them as a "FUNCTION" (see Elisp page "Search-based
+  ;; Fontification").  The font lock region is delimited by POINT and the
+  ;; single parameter, LIMIT.  Each of these functions returns NIL (thus
+  ;; inhibiting spurious font-lock-keyword-face highlighting and another
+  ;; call).
+
   t `(;; Initialize some things before the search functions below.
       c-font-lock-complex-decl-prepare
 
@@ -1374,6 +1397,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify the type in C++ "new" expressions.
       ,@(when (c-major-mode-is 'c++-mode)
+	  ;; This pattern is a probably a "(MATCHER . ANCHORED-HIGHLIGHTER)"
+	  ;; (see Elisp page "Search-based Fontification").
 	  `(("\\<new\\>"
 	     (c-font-lock-c++-new))))
       ))
@@ -1613,6 +1638,10 @@ need for `c-font-lock-extra-types'.")
 ;;; C++.
 
 (defun c-font-lock-c++-new (limit)
+  ;; FIXME!!!  Put in a comment about the context of this function's
+  ;; invocation.  I think it's called as an ANCHORED-MATCHER within an
+  ;; ANCHORED-HIGHLIGHTER.  (2007/2/10).
+  ;; 
   ;; Assuming point is after a "new" word, check that it isn't inside
   ;; a string or comment, and if so try to fontify the type in the
   ;; allocation expression.  Nil is always returned.
