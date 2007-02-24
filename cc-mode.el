@@ -1,7 +1,8 @@
 ;;; cc-mode.el --- major mode for editing C and similar languages
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
+;;   Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -410,6 +411,8 @@ preferably use the `c-mode-menu' language constant directly."
 ;; temporary changes in some font lock support modes, causing extra
 ;; unnecessary work and font lock glitches due to interactions between
 ;; various text properties.
+;; 
+;; (2007-02-12): The macro `combine-after-change-calls' ISN'T used any more.
 
 (defun c-after-change (beg end len)
   ;; Function put on `after-change-functions' to adjust various caches
@@ -529,10 +532,10 @@ that requires a literal mode spec at compile time."
   ;; In Emacs 21 and later it's possible to turn off the ad-hoc
   ;; heuristic that open parens in column 0 are defun starters.  Since
   ;; we have c-state-cache, that heuristic isn't useful and only causes
-  ;; trouble, so turn it off.
-  (when (memq 'col-0-paren c-emacs-features)
-    (make-local-variable 'open-paren-in-column-0-is-defun-start)
-    (setq open-paren-in-column-0-is-defun-start nil))
+  ;; trouble, so turn it off. 
+;;   (when (memq 'col-0-paren c-emacs-features)
+;;     (make-local-variable 'open-paren-in-column-0-is-defun-start)
+;;     (setq open-paren-in-column-0-is-defun-start nil))
 
   (c-clear-found-types)
 
