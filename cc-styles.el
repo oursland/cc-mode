@@ -1,9 +1,11 @@
 ;;; cc-styles.el --- support for styles in CC Mode
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
+;;   Foundation, Inc.
 
-;; Authors:    1998- Martin Stjernholm
+;; Authors:    2004- Alan Mackenzie
+;;             1998- Martin Stjernholm
 ;;             1992-1999 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman
@@ -267,7 +269,7 @@ element of the list is added with `add-hook'.
 Do not change this variable directly.  Use the function `c-add-style'
 to add new styles or modify existing styles (it is not a good idea to
 modify existing styles -- you should create a new style that inherits
-the existing style.")
+the existing style.)")
 
 
 ;; Functions that manipulate styles

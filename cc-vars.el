@@ -1,9 +1,11 @@
 ;;; cc-vars.el --- user customization variables for CC Mode
 
-;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
+;;   Foundation, Inc.
 
-;; Authors:    1998- Martin Stjernholm
+;; Authors:    2002- Alan Mackenzie
+;;             1998- Martin Stjernholm
 ;;             1992-1999 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman
@@ -620,10 +622,10 @@ name:
  empty-defun-braces  -- Clean up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
                         the defun closing brace is typed.
- one-liner-defun     -- If the code inside a function body is a single
-                        line then remove any newlines between that
-                        line and the defun braces so that the whole
-                        body becomes a single line.
+ one-liner-defun     -- If the code inside a function body can fit in
+                        a single line, then remove any newlines
+                        between that line and the defun braces so that
+                        the whole body becomes a single line.
                         `c-max-one-liner-length' gives the maximum
                         length allowed for the resulting line.  Clean
                         up occurs when the closing brace is typed.
@@ -808,7 +810,7 @@ then no newline is inserted."
 This is used by the functions that automatically insert or align the
 line continuation backslashes in multiline macros.  If any line in the
 macro exceeds this column then the next tab stop from that line is
-used as alignment column instead."
+used as alignment column instead.  See also `c-backslash-max-column'."
   :type 'integer
   :group 'c)
 
