@@ -1,9 +1,11 @@
 ;;; cc-cmds.el --- user level commands for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2003, 2004, 2005, 2006 Free Software
-;; Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
+;;   Foundation, Inc.
 
-;; Authors:    1998- Martin Stjernholm
+;; Authors:    2003- Alan Mackenzie
+;;             1998- Martin Stjernholm
 ;;             1992-1999 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman
@@ -52,6 +54,7 @@
 (cc-bytecomp-defun c-forward-subword)
 (cc-bytecomp-defun c-backward-subword)
 
+;; Indentation / Display syntax functions
 (defvar c-fix-backslashes t)
 
 (defun c-indent-line (&optional syntax quiet ignore-point-pos)
@@ -75,8 +78,10 @@ indentation change \(in columns)."
 	       (save-excursion
 		 (beginning-of-line)
 		 (looking-at (if line-cont-backslash
-				 "\\(\\s *\\)\\\\$"
-			       "\\(\\s *\\)$")))
+				 ;; Don't use "\\s " - ^L doesn't count as WS
+				 ;; here
+				 "\\([ \t]*\\)\\\\$"
+			       "\\([ \t]*\\)$")))
 	       (<= (point) (match-end 1)))
       ;; Delete all whitespace after point if there's only whitespace
       ;; on the line, so that any code that does back-to-indentation
@@ -251,6 +256,7 @@ With universal argument, inserts the analysis as a comment on that line."
 	(forward-line)))))
 
 
+;; Minor mode functions.
 (defun c-update-modeline ()
   (let ((fmt (format "/%s%s%s%s"
 		     (if c-electric-flag "l" "")
@@ -271,7 +277,7 @@ With universal argument, inserts the analysis as a comment on that line."
 ;; 	      fmt))
     (setq mode-name
 	  (if (> (length fmt) 1)
-	      (concat bare-mode-name fmt) 
+	      (concat bare-mode-name fmt)
 	bare-mode-name))
     (force-mode-line-update)))
 
@@ -536,7 +542,7 @@ inside a literal or a macro, nothing special happens."
        ;; shut this up too
        (c-echo-syntactic-information-p nil)
        symb-newlines)		     ; e.g. (substatement-open . (after))
-    
+
     (setq symb-newlines
 	  ;; Do not try to insert newlines around a special
 	  ;; (Pike-style) brace list.
@@ -853,7 +859,7 @@ is inhibited."
       (kill-region (progn (forward-line 0) (point))
 		   (progn (end-of-line) (point)))
       (insert-char ?* 1)) ; the / comes later. ; Do I need a t (retain sticky properties) here?
-      
+
     (setq indentp (and (not arg)
 		       c-syntactic-indentation
 		       c-electric-flag
@@ -1315,6 +1321,7 @@ keyword on the line, the keyword is not inserted inside a literal, and
 	(delete-char -2)))))
 
 
+;; "nomenclature" functions + c-scope-operator.
 (defun c-forward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-forward-subword'."
   (interactive "p")
@@ -1336,6 +1343,7 @@ No indentation or other \"electric\" behavior is performed."
   (insert-and-inherit "::"))
 
 
+;; Movement (etc.) by defuns.
 (defun c-in-function-trailer-p (&optional lim)
   ;; Return non-nil if point is between the closing brace and the semicolon of
   ;; a brace construct which needs a semicolon, e.g. within the "variables"
@@ -1374,11 +1382,10 @@ No indentation or other \"electric\" behavior is performed."
   ;;                   terminates the function.
   ;; outwith-function: we're not at or in any function.  Being inside a
   ;;                   non-brace construct also counts as 'outwith-function'.
-  ;;                  
+  ;;
   ;; This function might do hidden buffer changes.
   (save-excursion
-    (let* (pos
-	   kluge-start
+    (let* (kluge-start
 	   decl-result brace-decl-p
 	   (start (point))
 	   (paren-state (c-parse-state))
@@ -1411,11 +1418,12 @@ No indentation or other \"electric\" behavior is performed."
 	(setq kluge-start (point))
 	(setq decl-result
 	      (car (c-beginning-of-decl-1
+		    ;; NOTE: If we're in a K&R region, this might be the start
+		    ;; of a parameter declaration, not the actual function.
 		    (and least-enclosing ; LIMIT for c-b-of-decl-1
 			 (c-safe-position least-enclosing paren-state)))))
 
 	;; Has the declaration we've gone back to got braces?
-	(setq pos (point))	      ; the search limit for c-recognize-knr-p
 	(setq brace-decl-p
 	      (save-excursion
 		    (and (c-syntactic-re-search-forward "[;{]" nil t t)
@@ -1425,7 +1433,7 @@ No indentation or other \"electric\" behavior is performed."
 				  ;; ';' in a K&R argdecl.  In
 				  ;; that case the declaration
 				  ;; should contain a block.
-				  (c-in-knr-argdecl pos))))))
+				  (c-in-knr-argdecl))))))
 
 	(cond
 	 ((= (point) kluge-start)	; might be BOB or unbalanced parens.
@@ -1449,7 +1457,7 @@ No indentation or other \"electric\" behavior is performed."
   ;; Skip to the opening brace of the Nth function before point.  If
   ;; point is inside a function, this counts as the first.  Point must be
   ;; outside any comment/string or macro.
-  ;; 
+  ;;
   ;; N must be strictly positive.
   ;; WHERE describes the position of point, one of the symbols `at-header',
   ;; `in-header', `in-block', `in-trailer', `at-function-end',
@@ -1469,14 +1477,13 @@ No indentation or other \"electric\" behavior is performed."
     (c-syntactic-re-search-forward "{")
     (backward-char)
     (setq n (1- n)))
-   ((or (eq where 'at-header) (eq where 'outwith-function)
-	(eq where 'at-function-end) (eq where 'in-trailer))
+   ((memq where '(at-header outwith-function at-function-end in-trailer))
     (c-syntactic-skip-backward "^}")
     (when (eq (char-before) ?\})
       (backward-sexp)
       (setq n (1- n))))
    (t (error "Unknown `where' %s in c-backward-to-nth-EOF-{" where)))
-      
+
    ;; Each time round the loop, go back to a "{" at the outermost level.
   (while (and (> n 0) (not (bobp)))
     (c-parse-state)		       ; This call speeds up the following one
@@ -1517,7 +1524,7 @@ defun."
     (if (< arg 0)
 	;; Move forward to the closing brace of a function.
 	(progn
-	  (if (or (eq where 'at-function-end) (eq where 'outwith-function))
+	  (if (memq where '(at-function-end outwith-function))
 	      (setq arg (1+ arg)))
 	  (if (< arg 0)
 	      (setq arg (c-forward-to-nth-EOF-} (- arg) where)))
@@ -1546,7 +1553,7 @@ defun."
 		    (c-backward-single-comment)))
 	(if (/= (point) (c-point 'boi))
 	    (goto-char pos)))
-	  
+
       (c-keep-region-active)
       (= arg 0))))
 
@@ -1554,7 +1561,7 @@ defun."
   ;; Skip to the closing brace of the Nth function after point.  If
   ;; point is inside a function, this counts as the first.  Point must be
   ;; outside any comment/string or macro.
-  ;; 
+  ;;
   ;; N must be strictly positive.
   ;; WHERE describes the position of point, one of the symbols `at-header',
   ;; `in-header', `in-block', `in-trailer', `at-function-end',
@@ -1577,14 +1584,13 @@ defun."
    ((eq where 'in-trailer)
     (c-syntactic-skip-backward "^}")
     (setq n (1- n)))
-   ((or (eq where 'at-function-end) (eq where 'outwith-function)
-	(eq where 'at-header) (eq where 'in-header))
+   ((memq where '(at-function-end outwith-function at-header in-header))
     (c-syntactic-re-search-forward "{")
     (backward-char)
     (forward-sexp)
     (setq n (1- n)))
    (t (error "c-forward-to-nth-EOF-}: `where' is %s" where)))
-      
+
   ;; Each time round the loop, go forward to a "}" at the outermost level.
   (while (and (> n 0) (not (eobp)))
 					;(c-parse-state)	; This call speeds up the following one by a factor
@@ -1609,7 +1615,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (c-save-buffer-state
       ((start (point))
        where paren-state pos)
-    
+
     ;; Move back out of any macro/comment/string we happen to be in.
     (c-beginning-of-macro)
     (setq pos (c-literal-limits))
@@ -1620,7 +1626,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
     (if (< arg 0)
 	;; Move backwards to the } of a function
 	(progn
-	  (if (or (eq where 'at-header) (eq where 'outwith-function))
+	  (if (memq where '(at-header outwith-function))
 	      (setq arg (1+ arg)))
 	  (if (< arg 0)
 	      (setq arg (c-backward-to-nth-BOF-{ (- arg) where)))
@@ -1632,7 +1638,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
       ;; Move forward to the } of a function
       (if (> arg 0)
 	  (setq arg (c-forward-to-nth-EOF-} arg where))))
-	
+
     ;; Do we need to move forward from the brace to the semicolon?
     (when (eq arg 0)
       (if (c-in-function-trailer-p)	; after "}" of struct/enum, etc.
@@ -1787,6 +1793,7 @@ function does not require the declaration to contain a brace block."
       (push-mark (cdr decl-limits) nil t))))
 
 
+;; Movement by statements.
 (defun c-in-comment-line-prefix-p ()
   ;; Point is within a comment.  Is it also within a comment-prefix?
   ;; Space at BOL which precedes a comment-prefix counts as part of it.
@@ -1803,12 +1810,12 @@ function does not require the declaration to contain a brace block."
 (defun c-narrow-to-comment-innards (range)
   ;; Narrow to the "inside" of the comment (block) defined by range, as
   ;; follows:
-  ;; 
+  ;;
   ;; A c-style block comment has its opening "/*" and its closing "*/" (if
   ;; present) removed.  A c++-style line comment retains its opening "//" but
   ;; has any final NL removed.  If POINT is currently outwith these innards,
   ;; move it to the appropriate boundary.
-  ;; 
+  ;;
   ;; This narrowing simplifies the sentence movement functions, since it
   ;; eliminates awkward things at the boundaries of the comment (block).
   ;;
@@ -1836,7 +1843,7 @@ function does not require the declaration to contain a brace block."
   ;; of the comment and return T.
   ;;
   ;; The BOS is either text which follows a regexp match of sentence-end,
-  ;; or text which is a beginning of "paragraph".  
+  ;; or text which is a beginning of "paragraph".
   ;; Comment-prefixes are treated like WS when calculating BOSes or BOPs.
   ;;
   ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
@@ -2246,7 +2253,7 @@ function does not require the declaration to contain a brace block."
 	   ((looking-at c-string-limit-regexp) ; Just gone back over a string terminator?
 	    (goto-char last)
 	    (throw 'done '(t . literal)))
-	 
+
 	   ;; Nothing special: go back word characters.
 	   (t (skip-syntax-backward "w_")) ; Speedup only.
 	   ))))))
@@ -2278,7 +2285,7 @@ function does not require the declaration to contain a brace block."
   ;; As a clarification of "after the end-of-statement", if a comment or
   ;; whitespace follows a completed AWK statement, that statement is treated
   ;; as ending just after the last non-ws character before the comment.
-  ;; 
+  ;;
   ;; Note that this function moves within either preprocessor commands
   ;; (macros) or normal code, but not both within the same invocation.
   ;;
@@ -2569,7 +2576,7 @@ sentence motion in or near comments and multiline strings."
 
 	(if (/= count 0) (setq count (1- count))))
       (c-keep-region-active))))
-			       
+
 
 
 ;; set up electric character functions to work with pending-del,
@@ -2596,6 +2603,7 @@ sentence motion in or near comments and multiline strings."
 (put 'c-electric-delete-forward 'pending-delete   'supersede) ; pending-del
 
 
+;; Inserting/indenting comments
 (defun c-calc-comment-indent (entry)
   ;; This function might do hidden buffer changes.
   (if (symbolp entry)
@@ -2691,6 +2699,7 @@ See `c-indent-comment-alist' for a description."
       (current-column))))
 
 
+;; Movement by CPP conditionals.
 (defun c-up-conditional (count)
   "Move back to the containing preprocessor conditional, leaving mark behind.
 A prefix argument acts as a repeat count.  With a negative argument,
@@ -2702,7 +2711,7 @@ forward."
   (interactive "p")
   (c-forward-conditional (- count) -1)
   (c-keep-region-active))
-  
+
 (defun c-up-conditional-with-else (count)
   "Move back to the containing preprocessor conditional, including \"#else\".
 Just like `c-up-conditional', except it also stops at \"#else\"
@@ -2924,7 +2933,7 @@ prefix argument is equivalent to -1.
 
 (defun c-indent-exp (&optional shutup-p)
   "Indent each line in the balanced expression following point syntactically.
-If optional SHUTUP-P is non-nil, no errors are signalled if no
+If optional SHUTUP-P is non-nil, no errors are signaled if no
 balanced expression is found."
   (interactive "*P")
   (let ((here (point-marker))
@@ -3739,7 +3748,7 @@ command to conveniently insert and align the necessary backslashes."
   ;; Note that this function does not do any hidden buffer changes.
 
   (let (fill
-	;; beg and end limits the region to narrow.  end is a marker.
+	;; beg and end limit the region to narrow.  end is a marker.
 	beg end
 	;; tmp-pre and tmp-post mark strings that are temporarily
 	;; inserted at the start and end of the region.  tmp-pre is a
@@ -3753,7 +3762,7 @@ command to conveniently insert and align the necessary backslashes."
 	hang-ender-stuck
 	;; auto-fill-spaces is the exact sequence of whitespace between a
 	;; comment's last word and the comment ender, temporarily replaced
-	;; with 'x's before calling FUN when FILL-PARAGRAPH is nil.  
+	;; with 'x's before calling FUN when FILL-PARAGRAPH is nil.
 	auto-fill-spaces
 	(here (point))
 	(c-lit-limits c-lit-limits)
@@ -3825,12 +3834,18 @@ command to conveniently insert and align the necessary backslashes."
 	    (setq apply-outside-literal t))
 
 	   ((eq c-lit-type 'c)		; Block comment.
-	    (when (>= end (cdr c-lit-limits))
-	      ;; The region includes the comment ender.  If it's on its own
-	      ;; line, it stays on its own line.  If it's got company on the
-	      ;; line, it keeps (at least one word of) it.  "=====*/" counts
-	      ;; as a comment ender here, but "===== */" doesn't and "foo*/"
-	      ;; doesn't.
+	    (when
+		(or (> end (cdr c-lit-limits))
+		    (and (= end (cdr c-lit-limits))
+			 (eq (char-before end) ?/)
+			 (eq (char-before (1- end)) ?*)
+			 ;; disallow "/*/"
+			 (> (- (cdr c-lit-limits) (car c-lit-limits)) 3)))
+	      ;; There is a comment ender, and the region includes it.  If
+	      ;; it's on its own line, it stays on its own line.  If it's got
+	      ;; company on the line, it keeps (at least one word of) it.
+	      ;; "=====*/" counts as a comment ender here, but "===== */"
+	      ;; doesn't and "foo*/" doesn't.
 	      (unless
 		  (save-excursion
 		    (goto-char (cdr c-lit-limits))
@@ -4218,6 +4233,7 @@ If a fill prefix is specified, it overrides all the above."
 				    (c-collect-line-comments c-lit-limits))
 			      c-lit-type)))
 		     (pos (point))
+		     (start-col (current-column))
 		     (comment-text-end
 		      (or (and (eq c-lit-type 'c)
 			       (save-excursion
@@ -4234,6 +4250,11 @@ If a fill prefix is specified, it overrides all the above."
 		 ;;
 		 ;; If point is on the 'B' then the line will be
 		 ;; broken after "Bla b".
+		 ;;
+		 ;; If we have an empty comment, /*   */, the next
+		 ;; lot of code pushes point to the */.  We fix
+		 ;; this by never allowing point to end up to the
+		 ;; right of where it started.
 		 (while (and (< (current-column) (cdr fill))
 			     (not (eolp)))
 		   (forward-char 1))
@@ -4256,7 +4277,10 @@ If a fill prefix is specified, it overrides all the above."
 			 ((< (point) (+ (car c-lit-limits) 2))
 			  (goto-char (+ (car c-lit-limits) 2))))
 		   (funcall do-line-break)
-		   (insert-and-inherit (car fill))))
+		   (insert-and-inherit (car fill))
+		   (if (> (current-column) start-col)
+		       (move-to-column start-col)))) ; can this hit the
+					             ; middle of a TAB?
 	     ;; Inside a comment that should be broken.
 	     (let ((comment-start comment-start)
 		   (comment-end comment-end)
