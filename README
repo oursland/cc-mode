@@ -61,6 +61,9 @@ INSTALLATION
     information on installing CC Mode, please see the CC Mode web site
     given above.
 
+    If you're using XEmacs, make sure you've got the "advice" package
+    installed.
+
   Byte Compiling
 
     It is highly recommended that you byte-compile CC Mode for
