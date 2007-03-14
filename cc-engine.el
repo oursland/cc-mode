@@ -3841,7 +3841,7 @@ comment at the start of cc-engine.el for more info."
 	;; good start position for the search, so do it.
 	(c-find-decl-prefix-search)))
 
-    ;; Now loop.  We already got the first match.
+    ;; Now loop.  Round what?  (ACM, 2006/7/5).  We already got the first match.
 
     (while (progn
 	     (while (and
@@ -7065,6 +7065,11 @@ comment at the start of cc-engine.el for more info."
 			  stop-at-boi-only
 			  containing-sexp
 			  paren-state)
+  ;; Add the indicated SYNTAX-SYMBOL to `c-syntactic-context', extending it as
+  ;; needed with further syntax elements of the types `substatement',
+  ;; `inexpr-statement', `arglist-cont-nonempty', `statement-block-intro', and
+  ;; `defun-block-intro'.
+  ;; 
   ;; Do the generic processing to anchor the given syntax symbol on
   ;; the preceding statement: Skip over any labels and containing
   ;; statements on the same line, and then search backward until we
@@ -8150,7 +8155,9 @@ comment at the start of cc-engine.el for more info."
 	      (and (eq (char-before) ?})
 		   (save-excursion
 		     (let ((start (point)))
-		       (if c-state-cache
+		       (if (and c-state-cache
+				(consp (car c-state-cache))
+				(eq (cdar c-state-cache) (point)))
 			   ;; Speed up the backward search a bit.
 			   (goto-char (caar c-state-cache)))
 		       (c-beginning-of-decl-1 containing-sexp)
@@ -8168,26 +8175,30 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
-	   ((save-excursion
-	      (setq placeholder (point))
-	      (or (memq char-before-ip '(?\; ?{ ?} nil))
-		  (c-at-vsemi-p before-ws-ip)
-		  (when (and (eq char-before-ip ?:)
-			     (eq (c-beginning-of-statement-1 lim)
-				 'label))
-		    (c-backward-syntactic-ws lim)
-		    (setq placeholder (point)))
-		  (and (c-major-mode-is 'objc-mode)
-		       (catch 'not-in-directive
-			 (c-beginning-of-statement-1 lim)
-			 (setq placeholder (point))
-			 (while (and (c-forward-objc-directive)
-				     (< (point) indent-point))
-			   (c-forward-syntactic-ws)
-			   (if (>= (point) indent-point)
-			       (throw 'not-in-directive t))
-			   (setq placeholder (point)))
-			 nil))))
+	   ((and
+	     ;; A macro continuation line is never at top level.
+	     (not (and macro-start
+		       (> indent-point macro-start)))
+	     (save-excursion
+	       (setq placeholder (point))
+	       (or (memq char-before-ip '(?\; ?{ ?} nil))
+		   (c-at-vsemi-p before-ws-ip)
+		   (when (and (eq char-before-ip ?:)
+			      (eq (c-beginning-of-statement-1 lim)
+				  'label))
+		     (c-backward-syntactic-ws lim)
+		     (setq placeholder (point)))
+		   (and (c-major-mode-is 'objc-mode)
+			(catch 'not-in-directive
+			  (c-beginning-of-statement-1 lim)
+			  (setq placeholder (point))
+			  (while (and (c-forward-objc-directive)
+				      (< (point) indent-point))
+			    (c-forward-syntactic-ws)
+			    (if (>= (point) indent-point)
+				(throw 'not-in-directive t))
+			    (setq placeholder (point)))
+			  nil)))))
 	    ;; For historic reasons we anchor at bol of the last
 	    ;; line of the previous declaration.  That's clearly
 	    ;; highly bogus and useless, and it makes our lives hard
@@ -8241,6 +8252,11 @@ comment at the start of cc-engine.el for more info."
 			   (c-after-special-operator-id lim))))
 	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
+
+	   ;; CASE 5Q: we are at a statement within a macro.
+	   (macro-start
+	    (c-beginning-of-statement-1 containing-sexp)
+	    (c-add-stmt-syntax 'statement nil t containing-sexp paren-state))
 
 	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
