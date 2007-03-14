@@ -253,6 +253,18 @@ comment at the start of cc-engine.el for more info."
 	     (forward-char)
 	     t))))
 
+(defun c-forward-over-cpp-define-id ()
+  ;; Assuming point is at the "#" that introduces a preprocessor
+  ;; directive, it's moved forward to the end of the identifier which is
+  ;; "#define"d (or whatever c-opt-cpp-macro-define specifies).  Non-nil
+  ;; is returned in this case, in all other cases nil is returned and
+  ;; point isn't moved.
+  ;;
+  ;; This function might do hidden buffer changes.
+  (when (and c-opt-cpp-macro-define-id
+	     (looking-at c-opt-cpp-macro-define-id))
+    (goto-char (match-end 0))))
+
 (defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
   ;; directive, it's moved forward to the start of the definition body
