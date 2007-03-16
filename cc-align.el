@@ -1,11 +1,9 @@
 ;;; cc-align.el --- custom indentation functions for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
-;;   Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-2003, 2004, 2005, 2006 Free Software
+;; Foundation, Inc.
 
-;; Authors:    2004- Alan Mackenzie
-;;             1998- Martin Stjernholm
+;; Authors:    1998- Martin Stjernholm
 ;;             1992-1999 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman
@@ -90,6 +88,29 @@ Works with: topmost-intro-cont."
 	     (not (and c-overloadable-operators-regexp
 		       (c-after-special-operator-id))))
 	c-basic-offset)))
+
+(defun c-lineup-gnu-DEFUN-intro-cont (langelem)
+  "Line up the continuation lines of a DEFUN macro in the Emacs C source.
+These lines are indented as though they were `knr-argdecl-intro' lines.
+Return nil when we're not in such a construct.
+
+This function is for historical compatibility with how previous CC Modes (5.28
+and earlier) indented such lines.
+
+Here is an example:
+
+DEFUN (\"forward-char\", Fforward_char, Sforward_char, 0, 1, \"p\",
+       doc: /* Move point right N characters (left if N is negative).
+On reaching end of buffer, stop and signal error.  */)
+     (n)                      <- c-lineup-gnu-DEFUN-into-cont
+     Lisp_Object n;           <- c-lineup-gnu-DEFUN-into-cont
+
+Works with: topmost-intro-cont."
+  (save-excursion
+    (let (case-fold-search)
+      (goto-char (c-langelem-pos langelem))
+      (if (looking-at "\\<DEFUN\\>")
+	  (c-calc-offset '(knr-argdecl-intro))))))
 
 (defun c-block-in-arglist-dwim (arglist-start)
   ;; This function implements the DWIM to avoid far indentation of
