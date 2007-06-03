@@ -9,7 +9,7 @@ href="http://lists.sourceforge.net/mailman/listinfo/cc-mode-announce">join</a>
 the announcement only mailing list.
 
 <p>You can also <a
-href="http://sourceforge.net/mailarchive/forum.php?forum_id=6827">browse</a>
+href="https://sourceforge.net/mailarchive/forum.php?forum_name=cc-mode-help">browse</a>
 or <a
 href="http://lists.sourceforge.net/mailman/listinfo/cc-mode-help">join</a>
 the general mailing list for CC Mode, which gets all the bug reports,
