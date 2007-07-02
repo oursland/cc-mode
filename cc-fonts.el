@@ -1019,6 +1019,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; `c-forward-decl-or-cast-1' and `c-forward-label' for
 	  ;; later fontification.
 	  (c-record-type-identifiers t)
+	  label-type
 	  c-record-ref-identifiers
 	  ;; Make `c-forward-type' calls mark up template arglists if
 	  ;; it finds any.  That's necessary so that we later will
@@ -1184,18 +1185,28 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      (c-fontify-recorded-types-and-refs)
 	      nil))
 
-	  ;; It was a false alarm.  Check if we're in a label instead.
+	  ;; It was a false alarm.  Check if we're in a label (or other
+	  ;; construct with `:' except bitfield) instead.
 	  (goto-char start-pos)
-	  (when (c-forward-label t match-pos nil)
+	  (when (setq label-type (c-forward-label t match-pos nil))
 	    ;; Can't use `c-fontify-types-and-refs' here since we
-	    ;; should use the label face.
-	    (let (elem)
-	      (while c-record-ref-identifiers
-		(setq elem (car c-record-ref-identifiers)
-		      c-record-ref-identifiers (cdr c-record-ref-identifiers))
-		(c-put-font-lock-face (car elem) (cdr elem)
-				      c-label-face-name)))
-	    ;; `c-forward-label' probably has added a `c-decl-end'
+	    ;; use the label face at times.
+	    (cond ((eq label-type 'goto-target)
+		   (c-put-font-lock-face (caar c-record-ref-identifiers)
+					 (cdar c-record-ref-identifiers)
+					 c-label-face-name))
+		  ((eq label-type 'qt-1kwd-colon)
+		   (c-put-font-lock-face (caar c-record-ref-identifiers)
+					 (cdar c-record-ref-identifiers)
+					 'font-lock-keyword-face))
+		  ((eq label-type 'qt-2kwds-colon)
+		   (mapc
+		    (lambda (kwd)
+		      (c-put-font-lock-face (car kwd) (cdr kwd)
+					    'font-lock-keyword-face))
+		    c-record-ref-identifiers)))
+	    (setq c-record-ref-identifiers nil)
+	    ;; `c-forward-label' has probably added a `c-decl-end'
 	    ;; marker, so return t to `c-find-decl-spots' to signal
 	    ;; that.
 	    t))))
