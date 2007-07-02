@@ -888,7 +888,8 @@ Only currently supported behavior is `alignleft'."
 
 (defcustom c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
-This hook gets called after a line is indented by the mode."
+This hook gets called after each line is indented by the mode.  It is only
+called when `c-syntactic-indentation' is non-nil."
   :type 'hook
   :group 'c)
 
