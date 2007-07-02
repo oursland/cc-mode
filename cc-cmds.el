@@ -1494,6 +1494,24 @@ No indentation or other \"electric\" behavior is performed."
       (setq n (1- n))))
    n)
 
+;;;; 2007-03-29: Inserted the following from an older version of cc-cmds.el.
+;;;; TEST IT.  FIXME!!!
+(defun c-narrow-to-most-enclosing-decl-block ()
+  ;; If we are inside a decl-block (in the sense of c-looking-at-decl-block),
+  ;; i.e. something like namespace{} or extern{}, narrow to the insides of
+  ;; that block (NOT including the enclosing braces).  If the closing brace is
+  ;; missing, (point-max) is used instead.
+  (let ((paren-state (c-parse-state))
+	encl-decl)
+    (setq encl-decl (and paren-state (c-most-enclosing-decl-block paren-state)))
+    (if encl-decl
+	(narrow-to-region (1+ encl-decl)
+			  (save-excursion
+			    (goto-char encl-decl)
+			    (or (c-safe (forward-list)
+					(1- (point)))
+				(point-max)))))))
+
 (defun c-beginning-of-defun (&optional arg)
   "Move backward to the beginning of a defun.
 Every top level declaration that contains a brace paren block is
@@ -1514,6 +1532,11 @@ defun."
       ((start (point))
        where paren-state pos)
 
+;;;; NEW STOUGH, 2007-03-29
+    (save-restriction
+      (if (eq c-defun-tactic 'respect-enclosure)
+	  (c-narrow-to-most-enclosing-decl-block)) ; e.g. class, namespace
+
     ;; Move back out of any macro/comment/string we happen to be in.
     (c-beginning-of-macro)
     (setq pos (c-literal-limits))
@@ -1530,7 +1553,7 @@ defun."
 	      (setq arg (c-forward-to-nth-EOF-} (- arg) where)))
 	  ;; Move forward to the next opening brace....
 	  (when (and (= arg 0)
-		     (c-syntactic-re-search-forward "{" nil t))
+		     (c-syntactic-re-search-forward "{" nil 'eob))
 	    (backward-char)
 	    ;; ... and backward to the function header.
 	    (c-beginning-of-decl-1)
@@ -1555,7 +1578,7 @@ defun."
 	    (goto-char pos)))
 
       (c-keep-region-active)
-      (= arg 0))))
+      (= arg 0)))))
 
 (defun c-forward-to-nth-EOF-} (n where)
   ;; Skip to the closing brace of the Nth function after point.  If
@@ -1585,10 +1608,10 @@ defun."
     (c-syntactic-skip-backward "^}")
     (setq n (1- n)))
    ((memq where '(at-function-end outwith-function at-header in-header))
-    (c-syntactic-re-search-forward "{")
-    (backward-char)
-    (forward-sexp)
-    (setq n (1- n)))
+    (when (c-syntactic-re-search-forward "{" nil 'eob)
+      (backward-char)
+      (forward-sexp)
+      (setq n (1- n))))
    (t (error "c-forward-to-nth-EOF-}: `where' is %s" where)))
 
   ;; Each time round the loop, go forward to a "}" at the outermost level.
@@ -1615,6 +1638,11 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (c-save-buffer-state
       ((start (point))
        where paren-state pos)
+
+;;;; NEW STOUGH, 2007-03-29
+    (save-restriction
+      (if (eq c-defun-tactic 'respect-enclosure)
+	  (c-narrow-to-most-enclosing-decl-block)) ; e.g. class, namespace
 
     ;; Move back out of any macro/comment/string we happen to be in.
     (c-beginning-of-macro)
@@ -1659,7 +1687,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	     (goto-char pos))))
 
     (c-keep-region-active)
-    (= arg 0)))
+    (= arg 0))))
 
 (defun c-declaration-limits (near)
   ;; Return a cons of the beginning and end positions of the current
