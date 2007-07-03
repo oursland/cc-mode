@@ -785,7 +785,7 @@ be after it."
 ;;
 ;; The macro `c-vsemi-status-unknown-p' will typically check the cacheing
 ;; scheme used by the `c-at-vsemi-p-fn', hence the name - the status is
-;; "unknown" if there is no cache entry current for the line. 
+;; "unknown" if there is no cache entry current for the line.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro c-at-vsemi-p (&optional pos)
