@@ -413,9 +413,7 @@ in that case, i.e. as if \\[c-indent-command] was used instead."
     `(set ,@(mapcar
 	     (lambda (elt)
 	       `(cons :format "%v"
-		      (c-const-symbol :format "%v: "
-				      :size 20
-				      :value ,elt)
+		      ,(c-constant-symbol elt 20)
 		      (choice
 		       :format "%[Choice%] %v"
 		       :value (column . nil)
