@@ -5090,7 +5090,8 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;;   The point is left at the first token after the first complete
   ;;   declarator, if there is one.  The return value is a cons where
-  ;;   the car is the position of the first token in the declarator.
+  ;;   the car is the position of the first token in the declarator.  (See
+  ;;   below for the cdr.)
   ;;   Some examples:
   ;;
   ;; 	 void foo (int a, char *b) stuff ...
@@ -5114,9 +5115,9 @@ comment at the start of cc-engine.el for more info."
   ;;     Foo::Foo (int b) : Base (b) {}
   ;; car ^                ^ point
   ;;
-  ;;   The cdr of the return value is non-nil iff a
-  ;;   `c-typedef-decl-kwds' specifier is found in the declaration,
-  ;;   i.e. the declared identifier(s) are types.
+  ;;   The cdr of the return value is non-nil iff a `c-typedef-decl-kwds'
+  ;;   specifier (e.g. class, struct, enum, typedef) is found in the
+  ;;   declaration, i.e. the declared identifier(s) are types.
   ;;
   ;; If a cast is parsed:
   ;;
@@ -5131,7 +5132,7 @@ comment at the start of cc-engine.el for more info."
   ;; the first token in (the visible part of) the buffer.
   ;;
   ;; CONTEXT is a symbol that describes the context at the point:
-  ;; 'decl     In a comma-separatded declaration context (typically
+  ;; 'decl     In a comma-separated declaration context (typically
   ;;           inside a function declaration arglist).
   ;; '<>       In an angle bracket arglist.
   ;; 'arglist  Some other type of arglist.
@@ -5369,7 +5370,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; True if there's a prefix match outside the outermost
 	  ;; paren pair that surrounds the declarator.
 	  got-prefix-before-parens
-y	  ;; True if there's a suffix match outside the outermost
+	  ;; True if there's a suffix match outside the outermost
 	  ;; paren pair that surrounds the declarator.  The value is
 	  ;; the position of the first suffix match.
 	  got-suffix-after-parens
@@ -5889,7 +5890,7 @@ y	  ;; True if there's a suffix match outside the outermost
   ;;   "private:"/"protected:"/"public:"/"more:" looking like "public slots:".
   ;;   Returns the symbol `qt-2kwds-colon'.
   ;; (v) QT's construct "signals:".  Returns the symbol `qt-1kwd-colon'.
-  ;; (v) One of the keywords matched by `c-opt-extra-label-key' (without any
+  ;; (vi) One of the keywords matched by `c-opt-extra-label-key' (without any
   ;;   colon).  Currently (2006-03), this applies only to Objective C's
   ;;   keywords "@private", "@protected", and "@public".  Returns t.
   ;;
