@@ -1345,7 +1345,7 @@ properly."
 (c-lang-defconst c-at-vsemi-p-fn
   "Contains a function \"Is there a virtual semicolon at POS or point?\".
 Such a function takes one optional parameter, a buffer position (defaults to
-point), and returns NIL or t.  This variable contains NIL for languages which
+point), and returns nil or t.  This variable contains nil for languages which
 don't have EOL terminated statements. "
   t nil
   awk 'c-awk-at-vsemi-p)
@@ -1356,13 +1356,33 @@ don't have EOL terminated statements. "
 The (admittedly kludgey) purpose of such a function is to prevent an infinite
 recursion in c-beginning-of-statement-1 when point starts at a `while' token.
 The function MUST NOT UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1,
-even indirectly.  This variable contains NIL for languages which don't have
+even indirectly.  This variable contains nil for languages which don't have
 EOL terminated statements."
   t nil
   awk 'c-awk-vsemi-status-unknown-p)
 (c-lang-defvar c-vsemi-status-unknown-p-fn
   (c-lang-const c-vsemi-status-unknown-p-fn))
 
+
+;;; Defun functions
+
+;; The Emacs variables beginning-of-defun-function and
+;; end-of-defun-function will be set so that commands like
+;; `mark-defun' and `narrow-to-defun' work right.  The key sequences
+;; C-M-a and C-M-e are, however, bound directly to the CC Mode
+;; functions, allowing optimisation for large n.
+(c-lang-defconst beginning-of-defun-function
+  "Function to which beginning-of-defun-function will be set."
+  t 'c-beginning-of-defun
+  awk 'c-awk-beginning-of-defun)
+(c-lang-setvar beginning-of-defun-function
+	       (c-lang-const beginning-of-defun-function))
+
+(c-lang-defconst end-of-defun-function
+  "Function to which end-of-defun-function will be set."
+  t 'c-end-of-defun
+  awk 'c-awk-end-of-defun)
+(c-lang-setvar end-of-defun-function (c-lang-const end-of-defun-function))
 
 ;;; In-comment text handling.
 

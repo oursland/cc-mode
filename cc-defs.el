@@ -707,7 +707,8 @@ be after it."
 	    ;; c-parse-state to between 3 and 60 times faster when
 	    ;; braces are hung.  It can also degrade performance by
 	    ;; about as much when braces are not hung.
-	    '(let (pos)
+	    '(let (beginning-of-defun-function end-of-defun-function
+					       pos)
 	       (while (not pos)
 		 (save-restriction
 		   (widen)
@@ -730,7 +731,8 @@ be after it."
 		  ))
 	       (goto-char pos)))
        ;; Emacs, which doesn't have buffer-syntactic-context-depth
-       (beginning-of-defun))
+       (let (beginning-of-defun-function end-of-defun-function)
+	 (beginning-of-defun)))
      ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
      ;; open brace.
      (and defun-prompt-regexp
@@ -739,7 +741,7 @@ be after it."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; V i r t u a l   S e m i c o l o n s 
+;; V i r t u a l   S e m i c o l o n s
 ;;
 ;; In most CC Mode languages, statements are terminated explicitly by
 ;; semicolons or closing braces.  In some of the CC modes (currently only AWK
