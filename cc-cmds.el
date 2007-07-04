@@ -1604,10 +1604,10 @@ defun."
     (c-syntactic-skip-backward "^}")
     (setq n (1- n)))
    ((memq where '(at-function-end outwith-function at-header in-header))
-    (c-syntactic-re-search-forward "{")
-    (backward-char)
-    (forward-sexp)
-    (setq n (1- n)))
+    (when (c-syntactic-re-search-forward "{" nil 'eob)
+      (backward-char)
+      (forward-sexp)
+      (setq n (1- n))))
    (t (error "c-forward-to-nth-EOF-}: `where' is %s" where)))
 
   ;; Each time round the loop, go forward to a "}" at the outermost level.
