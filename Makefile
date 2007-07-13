@@ -69,7 +69,11 @@ info:
 	makeinfo cc-mode.texi
 	makeinfo -DXEMACS -o cc-mode.XEMACS.info cc-mode.texi
 
-html:
+# "html:" fixes broken links to the Emacs/Elisp manual in "html-raw:" by
+# pointing them into http://www.gnu.org/.
+html: html-raw
+	./2www.gnu.org.sh html
+html-raw:
 	makeinfo --html -o html cc-mode.texi
 
 dvi:
