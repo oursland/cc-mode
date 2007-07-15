@@ -158,7 +158,7 @@ CC Mode
 
 @copying
 Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+2003, 2004, 2005, 2006, 2007  Free Software Foundation, Inc.
 
 This manual is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.251 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.252 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -6680,7 +6680,7 @@ this hack can degrade performance by about as much.  Thus this variable
 is set to @code{nil} by default, since the Emacs-friendly styles should
 be more common (and encouraged!).  Note that this variable has no effect
 in Emacs since the necessary built-in functions don't exist (in Emacs
-21.3 as of this writing in May 2003).
+22.1 as of this writing in February 2007).
 
 Text properties are used to speed up skipping over syntactic whitespace,
 i.e. comments and preprocessor directives.  Indenting a line after a
@@ -6729,6 +6729,11 @@ the exception of some functions like @code{c-indent-region}, it's only
 geared to be used interactively to edit new code.  There's currently no
 intention to change this goal.
 
+@c WARNING!!!!
+@c If you change the way the following reference to GNU indent gets
+@c compiled into the HTML version of the manual, make sure that
+@c 2www.gnu.org.sh still strips out the broken pointer, amending the
+@c script if necessary.
 If you want to reformat old code, you're probably better off using some
 other tool instead, e.g. @ref{Top, , GNU indent, indent, The `indent'
 Manual}, which has more powerful reformatting capabilities than
