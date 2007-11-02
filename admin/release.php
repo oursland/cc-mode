@@ -12,6 +12,9 @@ href="src/README">README</a> file in the tarball and <a
 href="installation.php">on-line</a>.  Older releases can be found <a
 href="http://prdownloads.sourceforge.net/cc-mode/">here</a>.
 
+<p>[Note: "5.31.4" denotes the version of CC Mode contained in GNU Emacs 22.1.
+  Version 5.31.4 has not been released as a stand-alone version here.]
+
 <p>You can also browse the <a href="src/">individual files</a>.
 
 <p>The documentation is also available in several forms.  You can
