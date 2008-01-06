@@ -6,8 +6,8 @@
 ;; everything is fine.  If it fails, I run the test in the current
 ;; session until I fix the breakage.
 
-;; To run in the current session, make sure you have all the latests
-;; definitions of any function you've changed.  Then load this file
+;; To run in the current session, make sure you have all the latest
+;; definitions of any functions you've changed.  Then load this file
 ;; and type:
 ;;
 ;;    M-x do-all-tests RET
@@ -23,7 +23,11 @@
 ;;    % cd .../cc-mode/tests
 ;;    % xemacs -batch -l 000tests.el -f do-all-tests
 ;;
-;; Obviously replacing `xemacs' with `emacs' if necessary.
+;; Obviously replacing `xemacs' with `emacs' if necessary.  To test a single
+;; file in batch mode, do this:
+;;
+;;    % cd .../cc-mode/tests
+;;    % xemacs -batch -l 000tests.el --eval '(do-one-test "statement-7.c")'
 
 ;; The tests stop if any regression is found.  With in-session
 ;; testing, you can restart the tests from where it left off by just
@@ -731,7 +735,9 @@ to be set as a file local variable.")
 	(save-buf (current-buffer))
 	(save-point (point))
 	(font-lock-maximum-decoration t)
-	(font-lock-global-modes nil))
+	(font-lock-global-modes nil)
+	(enable-local-variables
+	 (if (> emacs-major-version 21) ':all t))) ; disable Emacs 22's "safety" features.
 
     (if (and collect-tests
 	     (member filename cc-test-finished-tests))
@@ -1084,7 +1090,8 @@ to be set as a file local variable.")
 	(signal-hook-function (if cc-test-dump-backtraces
 				  'cc-test-signal
 				(if (boundp 'signal-hook-function)
-				    (symbol-value 'signal-hook-function)))))
+				    (symbol-value 'signal-hook-function))))
+	(enable-local-variables ':all))	; for Emacs 22's safety features.
     (unwind-protect
 	(progn
 	  (unless noninteractive
