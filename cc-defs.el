@@ -424,6 +424,8 @@ The return value is the value of the last form in BODY."
 	  (inhibit-read-only t) (inhibit-point-motion-hooks t)
 	  before-change-functions after-change-functions
 	  deactivate-mark
+	  buffer-file-name buffer-file-truename ; Prevent primitives checking
+						; for file modification
 	  ,@varlist)
      (unwind-protect
 	 (progn ,@body)
@@ -1512,7 +1514,7 @@ might be present:
 		    (i.e. the syntax class `|').
 'pps-extended-state `parse-partial-sexp' returns a list with at least 10
 		    elements, i.e. it contains the position of the start of
-		    the last comment or string. It's always set - CC Mode no
+		    the last comment or string.  It's always set - CC Mode no
 		    longer works in emacsen without this feature.
 'posix-char-classes The regexp engine understands POSIX character classes.
 'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
