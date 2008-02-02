@@ -209,11 +209,11 @@ the evaluated constant value at compile time."
 
   (defun c-filter-ops (ops opgroup-filter op-filter &optional xlate)
     ;; Extract a subset of the operators in the list OPS in a DWIM:ey
-    ;; way.  The return value is a plain list of operators:  
-    ;; 
+    ;; way.  The return value is a plain list of operators:
+    ;;
     ;; OPS either has the structure of `c-operators', is a single
     ;; group in `c-operators', or is a plain list of operators.
-    ;; 
+    ;;
     ;; OPGROUP-FILTER specifies how to select the operator groups.  It
     ;; can be t to choose all groups, a list of group type symbols
     ;; (such as 'prefix) to accept, or a function which will be called
@@ -1764,11 +1764,13 @@ one of `c-type-list-kwds', `c-ref-list-kwds',
 (c-lang-defvar c-prefix-spec-kwds-re (c-lang-const c-prefix-spec-kwds-re))
 
 (c-lang-defconst c-specifier-key
-  ;; Adorned regexp of the keywords in `c-prefix-spec-kwds' that
-  ;; aren't ambiguous with types or type prefixes.
+  ;; Adorned regexp of the keywords in `c-prefix-spec-kwds' that aren't
+  ;; ambiguous with types or type prefixes.  These are the keywords (like
+  ;; extern, namespace, but NOT template) that can modify a declaration.
   t (c-make-keywords-re t
       (set-difference (c-lang-const c-prefix-spec-kwds)
-		      (c-lang-const c-type-start-kwds)
+		      (append (c-lang-const c-type-start-kwds)
+			      (c-lang-const c-<>-arglist-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
