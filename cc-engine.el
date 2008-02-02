@@ -603,7 +603,7 @@ comment at the start of cc-engine.el for more info."
   ;;         (e.g. if).
   ;;
   ;;
-  ;; The following diagram briefly outlines the PDA.  
+  ;; The following diagram briefly outlines the PDA.
   ;;
   ;; Common state:
   ;;   "else": Push state, goto state `else'.
@@ -1078,7 +1078,7 @@ single `?' is found, then `c-maybe-labelp' is cleared.
 
 For AWK, a statement which is terminated by an EOL (not a \; or a }) is
 regarded as having a \"virtual semicolon\" immediately after the last token on
-the line.  If this virtual semicolon is _at_ from, the function recognises it.
+the line.  If this virtual semicolon is _at_ from, the function recognizes it.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
@@ -1915,7 +1915,7 @@ comment at the start of cc-engine.el for more info."
 (defun c-partial-ws-p (beg end)
   ;; Is the region (beg end) WS, and is there WS (or BOB/EOB) next to the
   ;; region?  This is a "heuristic" function.  .....
-  ;; 
+  ;;
   ;; The motivation for the second bit is to check whether removing this
   ;; region would coalesce two symbols.
   ;;
@@ -3290,7 +3290,7 @@ comment at the start of cc-engine.el for more info."
 ;; The workaround for this is for the AWK Mode initialisation to switch the
 ;; defalias for c-in-literal to c-slow-in-literal.  This will slow down other
 ;; cc-modes in Xemacs whenever an awk-buffer has been initialised.
-;; 
+;;
 ;; (Alan Mackenzie, 2003/4/30).
 
 (defun c-fast-in-literal (&optional lim detect-cpp)
@@ -3405,7 +3405,7 @@ comment at the start of cc-engine.el for more info."
 	(if (and (consp range) (progn
 				 (goto-char (car range))
 				 (looking-at c-line-comment-starter)))
-	    (let ((col (current-column)) 
+	    (let ((col (current-column))
 		  (beg (point))
 		  (bopl (c-point 'bopl))
 		  (end (cdr range)))
@@ -4041,7 +4041,7 @@ comment at the start of cc-engine.el for more info."
   ;; example, this happens to "foo" when "foo \n bar();" becomes
   ;; "foo(); \n bar();".  Such stale types, if not removed, foul up
   ;; the fontification.
-  ;; 
+  ;;
   ;; Have we, perhaps, added non-ws characters to the front/back of a found
   ;; type?
   (when (> end beg)
@@ -4060,7 +4060,7 @@ comment at the start of cc-engine.el for more info."
 			(c-beginning-of-current-token)))
 	    (c-unfind-type (buffer-substring-no-properties
 			    (point) beg))))))
-	    
+
   (if c-maybe-stale-found-type ; e.g. (c-decl-id-start "foo" 97 107 " (* ooka) " "o")
       (cond
        ;; Changing the amount of (already existing) whitespace - don't do anything.
@@ -5926,7 +5926,7 @@ comment at the start of cc-engine.el for more info."
 	macro-start			; if we're in one.
 	label-type)
     (cond
-     ;; "case" or "default" (Doesn't apply to AWK). 
+     ;; "case" or "default" (Doesn't apply to AWK).
      ((looking-at c-label-kwds-regexp)
       (let ((kwd-end (match-end 1)))
 	;; Record only the keyword itself for fontification, since in
@@ -6045,7 +6045,7 @@ comment at the start of cc-engine.el for more info."
 			 (c-forward-label nil pte start))))))))))
 
 	   ;; Point is still at the beginning of the possible label construct.
-	   ;; 
+	   ;;
 	   ;; Check that the next nonsymbol token is ":", or that we're in one
 	   ;; of QT's "slots" declarations.  Allow '(' for the sake of macro
 	   ;; arguments.  FIXME: Should build this regexp from the language
@@ -6071,7 +6071,7 @@ comment at the start of cc-engine.el for more info."
 		     (and (c-major-mode-is 'c++-mode)
 			  (string-match
 			   "\\(p\\(r\\(ivate\\|otected\\)\\|ublic\\)\\|more\\)\\>"
-			   (buffer-substring start (point)))))  
+			   (buffer-substring start (point)))))
 	       (c-forward-syntactic-ws limit)
 	       (cond
 		((looking-at ":\\([^:]\\|\\'\\)") ; A single colon.
@@ -7235,7 +7235,7 @@ comment at the start of cc-engine.el for more info."
   ;; needed with further syntax elements of the types `substatement',
   ;; `inexpr-statement', `arglist-cont-nonempty', `statement-block-intro', and
   ;; `defun-block-intro'.
-  ;; 
+  ;;
   ;; Do the generic processing to anchor the given syntax symbol on
   ;; the preceding statement: Skip over any labels and containing
   ;; statements on the same line, and then search backward until we
@@ -7421,7 +7421,7 @@ comment at the start of cc-engine.el for more info."
 				 c-other-decl-block-key-in-symbols-alist))
 		     (max (c-point 'boi paren-pos) (point))))
 		   (t (c-add-syntax 'defun-block-intro nil))))
-			     
+
 		 (c-add-syntax 'statement-block-intro nil)))
 
 	  (if (= paren-pos boi)
@@ -8029,12 +8029,15 @@ comment at the start of cc-engine.el for more info."
 
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
-	      (goto-char placeholder)
-	      (if (or containing-decl-open macro-start)
-		  (c-add-syntax 'defun-open (c-point 'boi))
-		;; Bogus to use bol here, but it's the legacy.
-		(c-add-syntax 'defun-open (c-point 'bol)))
-	      )))
+	      (save-excursion
+		(c-beginning-of-decl-1 lim)
+		(while (looking-at c-specifier-key)
+		  (goto-char (match-end 1))
+		  (c-forward-syntactic-ws indent-point))
+		(c-add-syntax 'defun-open (c-point 'boi))
+		;; Bogus to use bol here, but it's the legacy.  (Resolved,
+		;; 2007-11-09)
+		))))
 
 	   ;; CASE 5B: After a function header but before the body (or
 	   ;; the ending semicolon if there's no body).
@@ -8261,7 +8264,7 @@ comment at the start of cc-engine.el for more info."
 		 'statement-cont)
 	       nil nil containing-sexp paren-state))
 	     ))
-	   
+
 	   ;; CASE 5F: Close of a non-class declaration level block.
 	   ((and (eq char-after-ip ?})
 		 (c-keyword-member containing-decl-kwd
@@ -8293,6 +8296,7 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
+		 (not containing-sexp)	; can't be knr inside braces.
 		 (not (eq char-before-ip ?}))
 		 (save-excursion
 		   (setq placeholder (cdr (c-beginning-of-decl-1 lim)))
