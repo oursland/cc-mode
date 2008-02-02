@@ -1242,13 +1242,14 @@ Notably, null elements in LIST are ignored."
 
 (defun c-make-keywords-re (adorn list &optional mode)
   "Make a regexp that matches all the strings the list.
-Duplicates and nil elements in the list are removed.  The resulting
-regexp may contain zero or more submatch expressions.
+Duplicates and nil elements in the list are removed.  The
+resulting regexp may contain zero or more submatch expressions.
 
-If ADORN is t there will be at least one submatch and the first
-surrounds the matched alternative, and the regexp will also not match
-a prefix of any identifier.  Adorned regexps cannot be appended.  The
-language variable `c-nonsymbol-key' is used to make the adornment.
+If ADORN is t there will be at least one submatch, and the first
+one surrounds the matched alternative.  The regexp will also not
+match a prefix of any identifier.  Adorned regexps cannot be
+appended to.  The language variable `c-nonsymbol-key' is used to
+make the adornment.
 
 A value 'appendable for ADORN is like above, but all alternatives in
 the list that end with a word constituent char will have \\> appended

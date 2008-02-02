@@ -861,7 +861,7 @@ is inhibited."
 		   (back-to-indentation)
 		   (looking-at (concat c-current-comment-prefix "[ \t]*$")))))
       (delete-region (progn (forward-line 0) (point))
-		   (progn (end-of-line) (point)))
+		     (progn (end-of-line) (point)))
       (insert-char ?* 1)) ; the / comes later. ; Do I need a t (retain sticky properties) here?
 
     (setq indentp (and (not arg)
@@ -935,8 +935,15 @@ settings of `c-cleanup-list'."
 	;; do all cleanups and newline insertions if c-auto-newline is on.
 	(if (or (not c-auto-newline)
 		(not (looking-at "[ \t]*\\\\?$")))
-	    (if c-syntactic-indentation
-		(c-indent-line))
+	    (when c-syntactic-indentation
+		(let ((syntax (c-guess-basic-syntax)))
+		  (c-indent-line syntax)
+		  ;; Guard against the C hacker inserting a statement before a
+		  ;; non-compound statement in an if/while/for.
+		  (if (eq (caar syntax) 'substatement)
+		      (save-excursion
+			(if (eq 0 (forward-line))
+			    (c-indent-line))))))
 	  ;; clean ups: list-close-comma or defun-close-semi
 	  (let ((pos (- (point-max) (point))))
 	    (if (c-save-buffer-state ()
