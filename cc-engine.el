@@ -81,8 +81,9 @@
 ;; assume that these text properties are used as described here.
 ;;
 ;; 'syntax-table
-;;   Used to modify the syntax of some characters.  Currently used to
-;;   mark the "<" and ">" of angle bracket parens with paren syntax.
+;;   Used to modify the syntax of some characters.  It is used to
+;;   mark the "<" and ">" of angle bracket parens with paren syntax, and
+;;   to "hide" obtrusive characters in preprocessor lines.
 ;;
 ;;   This property is used on single characters and is therefore
 ;;   always treated as front and rear nonsticky (or start and end open
@@ -5873,7 +5874,7 @@ comment at the start of cc-engine.el for more info."
       (setq c-record-type-identifiers save-rec-type-ids
 	    c-record-ref-identifiers save-rec-ref-ids)
       nil))))
-
+
 (defun c-forward-label (&optional assume-markup preceding-token-end limit)
   ;; Assuming that point is at the beginning of a token, check if it starts a
   ;; label and if so move over it and return non-nil (t in default situations,
