@@ -720,7 +720,7 @@ be after it."
 		  ((bobp) (setq pos (point-min)))
 		  ((not pos)
 		   (let ((distance (skip-chars-backward "^{")))
-		     ;; unbalanced parenthesis, while illegal C code,
+		     ;; unbalanced parenthesis, while invalid C code,
 		     ;; shouldn't cause an infloop!  See unbal.c
 		     (when (zerop distance)
 		       ;; Punt!
@@ -1027,6 +1027,39 @@ MODE is either a mode symbol or a list of mode symbols."
     ;; Emacs.
     `(remove-text-properties ,from ,to '(,property nil))))
 
+(defun c-clear-char-property-with-value-function (from to property value)
+  "Remove all text-properties PROPERTY from the region (FROM, TO)
+which have the value VALUE, as tested by `equal'.  These
+properties are assumed to be over individual characters, having
+been put there by c-put-char-property.  POINT remains unchanged."
+  (let ((place from) end-place)
+    (while			  ; loop round occurrances of (PROPERTY VALUE)
+	(progn
+	  (while	   ; loop round changes in PROPERTY till we find VALUE
+	      (and
+	       (< place to)
+	       (not (equal (get-text-property place property) value)))
+	    (setq place (next-single-property-change place property nil to)))
+	  (< place to))
+      (setq end-place (next-single-property-change place property nil to))
+      (put-text-property place end-place property nil)
+      ;; Do we have to do anything with stickiness here?
+      (setq place end-place))))
+
+(defmacro c-clear-char-property-with-value (from to property value)
+  "Remove all text-properties PROPERTY from the region [FROM, TO)
+which have the value VALUE, as tested by `equal'.  These
+properties are assumed to be over individual characters, having
+been put there by c-put-char-property.  POINT remains unchanged."
+  (if c-use-extents
+    ;; XEmacs
+      `(let ((-property- ,property))
+	 (map-extents (lambda (ext val)
+			(if (equal (extent-property ext -property-) val)
+			    (delete-extent ext)))
+		      nil ,from ,to ,value nil -property-))
+  ;; Gnu Emacs
+    `(c-clear-char-property-with-value-function ,from ,to ,property ,value)))
 
 ;; Macros to put overlays (Emacs) or extents (XEmacs) on buffer text.
 ;; For our purposes, these are characterized by being possible to
@@ -1245,11 +1278,10 @@ Notably, null elements in LIST are ignored."
 Duplicates and nil elements in the list are removed.  The
 resulting regexp may contain zero or more submatch expressions.
 
-If ADORN is t there will be at least one submatch, and the first
-one surrounds the matched alternative.  The regexp will also not
-match a prefix of any identifier.  Adorned regexps cannot be
-appended to.  The language variable `c-nonsymbol-key' is used to
-make the adornment.
+If ADORN is t there will be at least one submatch and the first
+surrounds the matched alternative, and the regexp will also not match
+a prefix of any identifier.  Adorned regexps cannot be appended.  The
+language variable `c-nonsymbol-key' is used to make the adornment.
 
 A value 'appendable for ADORN is like above, but all alternatives in
 the list that end with a word constituent char will have \\> appended
@@ -1515,8 +1547,8 @@ might be present:
 		    (i.e. the syntax class `|').
 'pps-extended-state `parse-partial-sexp' returns a list with at least 10
 		    elements, i.e. it contains the position of the start of
-		    the last comment or string.  It's always set - CC Mode no
-		    longer works in emacsen without this feature.
+		    the last comment or string.  It's always set - CC Mode
+                    no longer works in emacsen without this feature.
 'posix-char-classes The regexp engine understands POSIX character classes.
 'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
 		    in column zero is the start of a defun.
