@@ -74,22 +74,23 @@ Useful as last item in a `choice' widget."
       :value 'other))
 
 ;; The next defun will supersede c-const-symbol.
-(defun c-constant-symbol (sym len)
-  "Create an uneditable symbol for customization buffers.
+(eval-and-compile
+  (defun c-constant-symbol (sym len)
+    "Create an uneditable symbol for customization buffers.
 SYM is the name of the symbol, LEN the length of the field (in
 characters) the symbol will be displayed in.  LEN must be big
 enough.
 
 This returns a (const ....) structure, suitable for embedding
 within a customization type."
-  (or (symbolp sym) (error "c-constant-symbol: %s is not a symbol" sym))
-  (let* ((name (symbol-name sym))
-	 (l (length name))
-	 (disp (concat name ":" (make-string (- len l 1) ?\ ))))
-    `(const
-      :size ,len
-      :format ,disp
-      :value ,sym)))
+    (or (symbolp sym) (error "c-constant-symbol: %s is not a symbol" sym))
+    (let* ((name (symbol-name sym))
+	   (l (length name))
+	   (disp (concat name ":" (make-string (- len l 1) ?\ ))))
+      `(const
+	:size ,len
+	:format ,disp
+	:value ,sym))))
 
 (define-widget 'c-const-symbol 'item
   "An uneditable lisp symbol.  This is obsolete -
@@ -215,7 +216,7 @@ the value set here overrides the style system (there is a variable
         ,@(plist-put args :type aggregate)))))
 
 (defun c-valid-offset (offset)
-  "Return non-nil iff OFFSET is a valid offset for a syntactic symbol.
+  "Return non-nil if OFFSET is a valid offset for a syntactic symbol.
 See `c-offsets-alist'."
   (or (eq offset '+)
       (eq offset '-)
@@ -1191,7 +1192,7 @@ OFFSET can specify an offset in several different ways:
   If OFFSET is a symbol with a value binding then that value, which
   must be an integer, is used as relative offset.
 
-  If OFFSET is a vector then it's first element, which must be an
+  If OFFSET is a vector then its first element, which must be an
   integer, is used as an absolute indentation column.  This overrides
   the previous base indentation and the relative offsets applied to
   it, and it becomes the new base indentation.
