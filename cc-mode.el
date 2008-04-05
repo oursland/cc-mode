@@ -783,28 +783,30 @@ Note that the style variables are always made local to the buffer."
   (setq c-old-EOM (point)))
 
 (defun c-neutralize-CPP-line (beg end)
-  ;; BEG and END bound a preprocessor line.  Put a "punctuation" syntax-table
-  ;; property on syntactically obtrusive characters, ones which would interact
-  ;; syntactically with stuff outside the CPP line.
+  ;; BEG and END bound a region, typically a preprocessor line.  Put a
+  ;; "punctuation" syntax-table property on syntactically obtrusive
+  ;; characters, ones which would interact syntactically with stuff outside
+  ;; this region.
   ;;
   ;; These are unmatched string delimiters, or unmatched
   ;; parens/brackets/braces.  An unclosed comment is regarded as valid, NOT
   ;; obtrusive.
-  (let (s)
-    (while
-	(progn
-	  (setq s (parse-partial-sexp beg end -1))
-	  (cond
-	   ((< (nth 0 s) 0)		; found an unmated ),},]
-	    (c-put-char-property (1- (point)) 'syntax-table '(1))
-	    t)
-	   ((nth 3 s)			; In a string
-	    (c-put-char-property (nth 8 s) 'syntax-table '(1))
-	    t)
-	   ((> (nth 0 s) 0)		; In a (,{,[
-	    (c-put-char-property (nth 1 s) 'syntax-table '(1))
-	    t)
-	   (t nil))))))
+  (save-excursion
+    (let (s)
+      (while
+	  (progn
+	    (setq s (parse-partial-sexp beg end -1))
+	    (cond
+	     ((< (nth 0 s) 0)		; found an unmated ),},]
+	      (c-put-char-property (1- (point)) 'syntax-table '(1))
+	      t)
+	     ((nth 3 s)			; In a string
+	      (c-put-char-property (nth 8 s) 'syntax-table '(1))
+	      t)
+	     ((> (nth 0 s) 0)		; In a (,{,[
+	      (c-put-char-property (nth 1 s) 'syntax-table '(1))
+	      t)
+	     (t nil)))))))
 
 (defun c-neutralize-syntax-in-CPP (begg endd old-len)
   ;; "Neutralize" every preprocessor line wholly or partially in the changed
@@ -844,7 +846,7 @@ Note that the style variables are always made local to the buffer."
 	  (goto-char (cdr limits))
 	(setq mbeg+1 (point))
 	(c-end-of-macro)	  ; Do we need to go forward 1 char here?  No!
-	(c-neutralize-CPP-line mbeg+1 (point))))))) ; We might still be in a comment - this is OK.
+	(c-neutralize-CPP-line mbeg+1 (point)))))) ; We might still be in a comment - this is OK.
 
 (defun c-before-change (beg end)
   ;; Function to be put on `before-change-function'.  Primarily, this calls
