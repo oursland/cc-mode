@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.253 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.254 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -527,7 +527,7 @@ is no ``easy customization'' facility for making this change.}:
 @end example
 
 @noindent
-Details of of this and other similar ``Minor Modes'' appear in the
+Details of this and other similar ``Minor Modes'' appear in the
 section @ref{Minor Modes}.
 
 @item Making the @key{RET} key indent the new line
@@ -845,7 +845,7 @@ actions describing how they should be handled.  If a certain line type
 isn't present on the list then the line is indented to the column
 specified by @code{comment-column}.
 
-See the documentation string for for a full description of this
+See the documentation string for a full description of this
 variable (use @kbd{C-h v c-indent-comment-alist}).
 @end defopt
 
@@ -1221,7 +1221,7 @@ reindenting the line.  This reindentation saves you from having to
 reindent a line manually after typing, say, a @samp{@}}.  A few
 keywords, such as @code{else}, also trigger electric action.
 
-You can inhibit the electric behaviour described here by disabling
+You can inhibit the electric behavior described here by disabling
 electric minor mode (@pxref{Minor Modes}).
 
 Common to all these keys is that they only behave electrically when
@@ -1274,7 +1274,7 @@ whitespace before it).
 Additionally, you can configure @ccmode{} so that typing a slash at
 the start of a line within a block comment will terminate the
 comment.  You don't need to have electric minor mode enabled to get
-this behaviour.  @xref{Clean-ups}.
+this behavior.  @xref{Clean-ups}.
 
 In AWK mode, @samp{*} and @samp{/} do not delimit comments and are not
 electric.
@@ -2391,7 +2391,7 @@ The variables that @ccmode{}'s style system control are called
 @dfn{style variables}.  Note that style variables are ordinary Lisp
 variables, which the style system initializes; you can change their
 values at any time (e.g. in a hook function).  The style system can
-also also set other variables, to some extent.  @xref{Styles}.
+also set other variables, to some extent.  @xref{Styles}.
 
 @dfn{Style variables} are handled specially in several ways:
 
@@ -6440,7 +6440,7 @@ functions to this hook, not remove them.  @xref{Style Variables}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Normally, the lines in a multi-line macro are indented relative to
-each other as though they were code.  You can suppress this behaviour
+each other as though they were code.  You can suppress this behavior
 by setting the following user option:
 
 @defopt c-syntactic-indentation-in-macros
@@ -6745,6 +6745,14 @@ When a non-nested template is used in a declaration, @ccmode{} indents
 it and font-locks it OK.  Templates used in expressions, and nested
 templates do not fare so well.  Sometimes a workaround is to refontify
 the expression after typing the closing @samp{>}.
+
+@item
+In a @dfn{k&r region} (the part of an old-fashioned C function
+declaration which specifies the types of its parameters, coming
+between the parameter list and the opening brace), there should be at
+most 20 top-level parenthesis and bracket pairs.  This limit has been
+imposed for performance reasons.  If it is violated, the source file
+might be incorrectly indented or fontified.
 
 @item
 On loading @ccmode{}, sometimes this error message appears:
