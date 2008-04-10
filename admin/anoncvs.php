@@ -14,7 +14,7 @@ href="http://cc-mode.cvs.sourceforge.net/cc-mode/cc-mode">here</a>.
 check out the patch branch, which is called <i>Branch_5_31</i>:
 
 <pre>
-cvs -d:pserver:anonymous@cc-mode.cvs.sorceforge.net:/cvsroot/cc-mode login</pre>
+cvs -d:pserver:anonymous@cc-mode.cvs.sourceforge.net:/cvsroot/cc-mode login</pre>
 
 <p>Just press Enter at the password prompt. Then:
 
