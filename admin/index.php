@@ -8,14 +8,14 @@ languages with similar syntax; currently C++, Objective-C, Java,
 CORBA's IDL, Pike, and AWK. It's a standard package in both Emacs and
 XEmacs.</strong>
 
-<p>CC Mode is maintained by Martin Stjernholm and Alan Mackenzie, with
-numerous contributions from other people. Several people before them
-have helped make CC Mode what it is today, notably Barry Warsaw who
-took over of BOCM (Boring Old C Mode) back in 1992 and revamped it to
-CC Mode.
+<p>CC Mode is maintained by Alan Mackenzie, with numerous
+contributions from other people. Several other people have helped make
+CC Mode what it is today, notably Barry Warsaw who took over BOCM
+(Boring Old C Mode) back in 1992 and revamped it to CC Mode, and
+Martin Stjernholm, CC Mode's maintainer from 2000 to 2005.
 
 <p>The current release available for <a
-href="release.php">download</a> is 5.31.  There is a detailed list
+href="release.php">download</a> is 5.31.3.  There is a detailed list
 of <a href="changes-531.php">user visible changes</a>, as well as <a
 href="installation.php">installation instructions</a> and Emacs/XEmacs
 <a href="compat.php">compatibility details</a>.

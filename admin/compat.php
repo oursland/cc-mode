@@ -22,7 +22,6 @@ README in the CC Mode distribution tells you how to configure your
 then the file <code>cc-fix.el(c)</code> is needed and will be loaded
 automatically.  It corrects for some bugs in those versions, and also
 contains compatibility glue for missing functions in older
-versions. <code>cc-fix.el(c)</code> is not needed for later versions
-(when they become available, in the case of Emacs).
+versions. <code>cc-fix.el(c)</code> is not needed for later versions.
 
 <?php include ("footer.h"); ?>

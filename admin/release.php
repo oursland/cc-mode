@@ -4,16 +4,17 @@
   include ("header.h");
 ?>
 
-<p>The current release is 5.31. <a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.31.tar.gz">Download</a>
+<p>The current release is 5.31.3. <a
+href="http://prdownloads.sourceforge.net/cc-mode/cc-mode-5.31.3.tar.gz">Download</a>
 the source package to upgrade the version that came with your Emacs or
 XEmacs dist.  Installation instructions are available in the <a
 href="src/README">README</a> file in the tarball and <a
 href="installation.php">on-line</a>.  Older releases can be found <a
 href="http://prdownloads.sourceforge.net/cc-mode/">here</a>.
 
-<p>[Note: "5.31.4" denotes the version of CC Mode contained in GNU Emacs 22.1.
-  Version 5.31.4 has not been released as a stand-alone version here.]
+<p>[Note: "5.31.4" and "5.31.5" denote the versions of CC Mode contained in
+  GNU Emacs 22.1 and 22.2.  These versions have not been released as
+  stand-alone versions here.]
 
 <p>You can also browse the <a href="src/">individual files</a>.
 
