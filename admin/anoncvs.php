@@ -31,12 +31,12 @@ Please report any problems.
 <pre>
 cvs -z3 -d:pserver:anonymous@cc-mode.cvs.sourceforge.net:/cvsroot/cc-mode co cc-mode</pre>
 
-<p>Being under development, there are of course no guarantees that
-this version will work all the time, or at all.  That said, it usually
-works well; at least I (Martin) use it all the time in my daily work,
-not only when I hack on it.  It might not be entirely compatible with
-user settings, but it can get more advanced fixes that are considered
-too risky to be allowed into the patch branch.
+<p>Being under development, there are of course no guarantees that this
+version will work all the time, or at all.  That said, it usually works well;
+at least I (Alan) use it in my daily work, not only when I hack on it.  It
+might not be entirely compatible with user settings, but it can get more
+advanced fixes that are considered too risky to be allowed into the patch
+branch.
 
 <p>You are especially welcome to report bugs, opinions and patches
 regarding the development version.  However if you've found a bug,
