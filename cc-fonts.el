@@ -721,12 +721,22 @@ casts and declarations are fontified.  Used on level 2 and higher."
   (when (bobp)
     (c-clear-found-types))
 
-  ;; Clear the c-type char properties in the region to recalculate
-  ;; them properly. This is necessary e.g. to handle constructs that
-  ;; might been required as declarations temporarily during editing.
-  ;; The interesting properties are anyway those put on the closest
-  ;; token before the region.
-  (c-clear-char-properties (point) limit 'c-type)
+  ;; Clear the c-type char properties which mark the region, to recalculate
+  ;; them properly.  The most interesting properties are those put on the
+  ;; closest token before the region.
+  (save-excursion
+    (let ((pos (point)))
+      (c-backward-syntactic-ws)
+      (c-clear-char-properties
+       (if (and (not (bobp))
+		(memq (c-get-char-property (1- (point)) 'c-type)
+		      '(c-decl-arg-start
+			c-decl-end
+			c-decl-id-start
+			c-decl-type-start)))
+	   (1- (point))
+	 pos)
+       limit 'c-type)))
 
   ;; Update `c-state-cache' to the beginning of the region.  This will
   ;; make `c-beginning-of-syntax' go faster when it's used later on,
@@ -828,9 +838,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 (defun c-font-lock-declarators (limit list types)
   ;; Assuming the point is at the start of a declarator in a
-  ;; declaration, fontify it.  If LIST is non-nil, fontify also all
+  ;; declaration, fontify it.  If LIST is non-nil, also fontify all
   ;; following declarators in a comma separated list (e.g.  "foo" and
-  ;; "bar" in "int foo = 17, bar;").  Stop at LIMIT.  If TYPES is
+  ;; "*bar" in "int foo = 17, *bar;").  Stop at LIMIT.  If TYPES is
   ;; non-nil, fontify all identifiers as types.  Nil is always
   ;; returned.
   ;;
@@ -850,8 +860,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	    (let (got-identifier)
 	      (setq paren-depth 0)
-	      ;; Skip over type decl prefix operators.  (Note similar
-	      ;; code in `c-forward-decl-or-cast-1'.)
+	      ;; Skip over type decl prefix operators, one for each iteration
+	      ;; of the while.  These are, e.g. "*" in "int *foo" or "(" and
+	      ;; "*" in "int (*foo) (void)" (Note similar code in
+	      ;; `c-forward-decl-or-cast-1'.)
 	      (while (and (looking-at c-type-decl-prefix-key)
 			  (if (and (c-major-mode-is 'c++-mode)
 				   (match-beginning 2))
