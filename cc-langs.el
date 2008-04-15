@@ -453,6 +453,15 @@ parameters \(point-min), \(point-max) and <buffer size>."
 
 ;;; Lexer-level syntax (identifiers, tokens etc).
 
+(c-lang-defconst c-modified-constant
+  "Regexp that matches a \"modified\" constant literal such as \"L'a'\",
+a \"long character\".  In particular, this recognizes forms of constant
+which c-backward-sexp needs to be called twice to move backwards over."
+  t nil
+  (c c++ objc) "L'\\([^\\'\t\f\n\r]\\|\\\\.\\)'")
+;; FIXME!!!  Extend this to cover strings, if needed.  2008-04-11
+(c-lang-defvar c-modified-constant (c-lang-const c-modified-constant))
+
 (c-lang-defconst c-symbol-start
   "Regexp that matches the start of a symbol, i.e. any identifier or
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
@@ -2566,7 +2575,7 @@ possible for good performance."
 (c-lang-defvar c-block-prefix-charset (c-lang-const c-block-prefix-charset))
 
 (c-lang-defconst c-type-decl-prefix-key
-  "Regexp matching the declarator operators that might precede the
+  "Regexp matching any declarator operator that might precede the
 identifier in a declaration, e.g. the \"*\" in \"char *argv\".  This
 regexp should match \"(\" if parentheses are valid in declarators.
 The end of the first submatch is taken as the end of the operator.

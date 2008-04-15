@@ -992,6 +992,10 @@ comment at the start of cc-engine.el for more info."
 		  (if (or (not (looking-at c-nonlabel-token-key)) ; proper label
 			  (save-excursion ; e.g. "case 'a':" ?
 			    (and (c-safe (c-backward-sexp) t)
+				 (if (and c-modified-constant ; e.g. "case L'a':"
+					  (looking-at c-modified-constant))
+				     (c-safe (c-backward-sexp) t)
+				   t)
 				 (looking-at "\\<case\\>")))) ; FIXME!!! this is
 					; wrong for AWK.  2006/1/14.
 		      (progn
