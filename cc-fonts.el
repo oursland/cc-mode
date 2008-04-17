@@ -866,8 +866,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      ;; `c-forward-decl-or-cast-1'.)
 	      (while (and (looking-at c-type-decl-prefix-key)
 			  (if (and (c-major-mode-is 'c++-mode)
-				   (match-beginning 2))
-			      ;; If the second submatch matches in C++ then
+				   (match-beginning 3))
+			      ;; If the third submatch matches in C++ then
 			      ;; we're looking at an identifier that's a
 			      ;; prefix only if it specifies a member pointer.
 			      (progn
@@ -988,27 +988,28 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	font-lock-keyword-face))
 
 (defun c-font-lock-declarations (limit)
+  ;; Fontify all the declarations, casts and labels from the point to LIMIT.
+  ;; Assumes that strings and comments have been fontified already.
+  ;;
   ;; This function will be called from font-lock for a region bounded by POINT
   ;; and LIMIT, as though it were to identify a keyword for
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; Fontification".
   ;;
-  ;; Fontify all the declarations, casts and labels from the point to LIMIT.
-  ;; Assumes that strings and comments have been fontified already.
-  ;;
   ;; This function might do hidden buffer changes.
 
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
 
   (save-restriction
-    (let (;; The position where `c-find-decl-spots' stopped.
+    (let (;; The position where `c-find-decl-spots' last stopped.
 	  start-pos
-	  ;; 'decl if we're in an arglist containing declarations (but
-	  ;; if `c-recognize-paren-inits' is set it might also be an
-	  ;; initializer arglist), '<> if the arglist is of angle
-	  ;; bracket type, 'arglist if it's some other arglist, or nil
-	  ;; if not in an arglist at all.
+	  ;; o - 'decl if we're in an arglist containing declarations
+	  ;;   (but if `c-recognize-paren-inits' is set it might also be
+	  ;;   an initializer arglist);
+	  ;; o - '<> if the arglist is of angle bracket type;
+	  ;; o - 'arglist if it's some other arglist;
+	  ;; o - nil, if not in an arglist at all.
 	  context
 	  ;; The position of the next token after the closing paren of
 	  ;; the last detected cast.
