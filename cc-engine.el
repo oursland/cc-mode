@@ -3586,8 +3586,17 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-find-decl-spots (cfd-limit cfd-decl-re cfd-face-checklist cfd-fun)
   ;; Call CFD-FUN for each possible spot for a declaration, cast or
-  ;; label from the point to CFD-LIMIT.  Such a spot is:
+  ;; label from the point to CFD-LIMIT.
   ;;
+  ;; CFD-FUN is called with point at the start of the spot.  It's
+  ;; passed two arguments: The first is the end position of the token
+  ;; preceding the spot, or 0 for the implicit match at bob.  The
+  ;; second is a flag that is t when the match is inside a macro.  If
+  ;; CFD-FUN adds `c-decl-end' properties somewhere below the current
+  ;; spot, it should return non-nil to ensure that the next search
+  ;; will find them.
+  ;;
+  ;; Such a spot is:
   ;; o  The first token after bob.
   ;; o  The first token after the end of submatch 1 in
   ;;    `c-decl-prefix-or-start-re' when that submatch matches.
@@ -3606,14 +3615,6 @@ comment at the start of cc-engine.el for more info."
   ;; without matching something that begins inside a macro and ends
   ;; outside it.  It's to avoid this work that the CFD-DECL-RE and
   ;; CFD-FACE-CHECKLIST checks exist.
-  ;;
-  ;; CFD-FUN is called with point at the start of the spot.  It's
-  ;; passed two arguments: The first is the end position of the token
-  ;; preceding the spot, or 0 for the implicit match at bob.  The
-  ;; second is a flag that is t when the match is inside a macro.  If
-  ;; CFD-FUN adds `c-decl-end' properties somewhere below the current
-  ;; spot, it should return non-nil to ensure that the next search
-  ;; will find them.
   ;;
   ;; The spots are visited approximately in order from top to bottom.
   ;; It's however the positions where `c-decl-prefix-or-start-re'
@@ -5399,8 +5400,8 @@ comment at the start of cc-engine.el for more info."
       ;; `c-font-lock-declarators'.)
       (while (and (looking-at c-type-decl-prefix-key)
 		  (if (and (c-major-mode-is 'c++-mode)
-			   (match-beginning 2))
-		      ;; If the second submatch matches in C++ then
+			   (match-beginning 3))
+		      ;; If the third submatch matches in C++ then
 		      ;; we're looking at an identifier that's a
 		      ;; prefix only if it specifies a member pointer.
 		      (when (setq got-identifier (c-forward-name))
@@ -5681,7 +5682,10 @@ comment at the start of cc-engine.el for more info."
 	;; uncommon (e.g. some placements of "const" in C++) it's not worth
 	;; the effort to look for them.)
 
-	(unless (or at-decl-end (looking-at "=[^=]"))
+;;; 2008-04-16: commented out the next form, to allow the function to recognise
+;;; "foo (int bar)" in CC (an implicit type (in class foo) without a semicolon)
+;;; as a(n almost complete) declaration, enabling it to be fontified.
+;;	(unless (or at-decl-end (looking-at "=[^=]"))
 	  ;; If this is a declaration it should end here or its initializer(*)
 	  ;; should start here, so check for allowed separation tokens.  Note
 	  ;; that this rule doesn't work e.g. with a K&R arglist after a
@@ -5693,7 +5697,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; If `at-decl-or-cast' is then we've found some other sign that
 	  ;; it's a declaration or cast, so then it's probably an
 	  ;; invalid/unfinished one.
-	  (throw 'at-decl-or-cast at-decl-or-cast))
+;;	  (throw 'at-decl-or-cast at-decl-or-cast))
 
 	;; Below are tests that only should be applied when we're certain to
 	;; not have parsed halfway through an expression.
