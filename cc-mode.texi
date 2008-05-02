@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.14 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.15 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -4212,7 +4212,7 @@ Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
 
 @noindent
 The primary syntactic symbol for this line is @code{access-label} as
-this a label keyword that specifies access protection in C++.  However,
+this is a label keyword that specifies access protection in C++.  However,
 because this line is also a top-level construct inside a class
 definition, the analysis actually shows two syntactic symbols.  The
 other syntactic symbol assigned to this line is @code{inclass}.
