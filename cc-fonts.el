@@ -717,7 +717,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   ;; Clear the list of found types if we start from the start of the
   ;; buffer, to make it easier to get rid of misspelled types and
-  ;; variables that has gotten recognized as types in malformed code.
+  ;; variables that have gotten recognized as types in malformed code.
   (when (bobp)
     (c-clear-found-types))
 
@@ -837,12 +837,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
   nil)
 
 (defun c-font-lock-declarators (limit list types)
-  ;; Assuming the point is at the start of a declarator in a
-  ;; declaration, fontify it.  If LIST is non-nil, also fontify all
-  ;; following declarators in a comma separated list (e.g.  "foo" and
-  ;; "*bar" in "int foo = 17, *bar;").  Stop at LIMIT.  If TYPES is
-  ;; non-nil, fontify all identifiers as types.  Nil is always
-  ;; returned.
+  ;; Assuming the point is at the start of a declarator in a declaration,
+  ;; fontify the identifier it declares.  (If TYPES is set, it does this via
+  ;; the macro `c-fontify-types-and-refs'.)
+  ;;
+  ;; If LIST is non-nil, also fontify the ids in any following declarators in
+  ;; a comma separated list (e.g.  "foo" and "*bar" in "int foo = 17, *bar;");
+  ;; additionally, mark the commas with c-type property 'c-decl-id-start or
+  ;; 'c-decl-type-start (according to TYPES).  Stop at LIMIT.
+  ;;
+  ;; If TYPES is non-nil, fontify all identifiers as types.
+  ;;
+  ;; Nil is always returned.  The function leaves point at the delimiter after
+  ;; the last declarator it processes.
   ;;
   ;; This function might do hidden buffer changes.
 
@@ -854,10 +861,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
        c-last-identifier-range
        (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
 
-    (while (and
+    ;; The following `while' fontifies a single declarator id each time round.
+    ;; It loops only when LIST is non-nil.
+    (while
+	;; Inside the following "condition form", we move forward over the
+	;; declarator's identifier up as far as any opening bracket (for array
+	;; size) or paren (for parameters of function-type) or brace (for
+	;; array/struct initialisation) or "=" or terminating delimiter
+	;; (e.g. "," or ";" or "}").
+	(and
 	    pos
 	    (< (point) limit)
 
+	    ;; The following form moves forward over the declarator's
+	    ;; identifier (and what precedes it), returning t.  If there
+	    ;; wasn't one, it returns nil, terminating the `while'.
 	    (let (got-identifier)
 	      (setq paren-depth 0)
 	      ;; Skip over type decl prefix operators, one for each iteration
@@ -890,7 +908,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (goto-char (match-end 1)))
 		(c-forward-syntactic-ws))
 
-	      ;; If we didn't pass the identifier above already, do it now.
+	      ;; If we haven't passed the identifier already, do it now.
 	      (unless got-identifier
 		(setq id-start (point))
 		(c-forward-name))
@@ -898,12 +916,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	      (/= id-end pos))
 
-	    ;; Skip out of the parens surrounding the identifier.
+	    ;; Skip out of the parens surrounding the identifier.  If closing
+	    ;; parens are missing, this form returns nil.
 	    (or (= paren-depth 0)
 		(c-safe (goto-char (scan-lists (point) 1 paren-depth))))
 
 	    (<= (point) limit)
 
+	    ;; Skip over any trailing bit, such as "__attribute__".
 	    (progn
 	      (when (looking-at c-decl-hangon-key)
 		(c-forward-keyword-clause 1))
@@ -940,19 +960,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				id-face)))
 
       (goto-char next-pos)
-      (setq pos nil)
+      (setq pos nil)	      ; So as to terminate the enclosing `while' form.
       (when list
 	;; Jump past any initializer or function prototype to see if
 	;; there's a ',' to continue at.
-
 	(cond ((eq id-face 'font-lock-function-name-face)
 	       ;; Skip a parenthesized initializer (C++) or a function
 	       ;; prototype.
-	       (if (c-safe (c-forward-sexp 1) t)
+	       (if (c-safe (c-forward-sexp 1) t) ; over the parameter list.
 		   (c-forward-syntactic-ws limit)
-		 (goto-char limit)))
+		 (goto-char limit)))	; unbalanced parens
 
-	      (got-init
+	      (got-init	; "=" sign OR opening "(", "[", or "{"
 	       ;; Skip an initializer expression.  If we're at a '='
 	       ;; then accept a brace list directly after it to cope
 	       ;; with array initializers.  Otherwise stop at braces
@@ -960,7 +979,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       (and (if (and (eq got-init ?=)
 			     (= (c-forward-token-2 1 nil limit) 0)
 			     (looking-at "{"))
-			(c-safe (c-forward-sexp) t)
+			(c-safe (c-forward-sexp) t) ; over { .... }
 		      t)
 		    ;; FIXME: Should look for c-decl-end markers here;
 		    ;; we might go far into the following declarations
@@ -975,7 +994,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (c-put-char-property (point) 'c-type separator-prop)
 	  (forward-char)
 	  (c-forward-syntactic-ws limit)
-	  (setq pos (point))))))
+	  (setq pos (point))))))     ; acts to make the `while' form continue.
   nil)
 
 (defconst c-font-lock-maybe-decl-faces
@@ -1088,8 +1107,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      t
 
 	    ;; Set `context'.  Look for "<" for the sake of C++-style template
-	    ;; arglists.
-	    (if (memq (char-before match-pos) '(?\( ?, ?\[ ?<))
+	    ;; arglists.  Ignore "(" when it's part of a control flow
+	    ;; construct (e.g. "for (").
+	    (if (or (memq (char-before match-pos) '(?, ?\[ ?<))
+		    (and (eq (char-before match-pos) ?\()
+			 (save-excursion
+			   (goto-char match-pos)
+			   (backward-char)
+			   (c-backward-token-2)
+			   (not (looking-at c-block-stmt-2-key)))))
 
 		;; Find out the type of the arglist.
 		(if (<= match-pos (point-min))
