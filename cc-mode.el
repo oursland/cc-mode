@@ -761,7 +761,7 @@ Note that the style variables are always made local to the buffer."
 ;; change, when a macro straddles, respectively, the BEG or END (or both) of
 ;; the change region.  Otherwise these have the values BEG/END.
 (defvar c-old-BOM 0)
-
+(make-variable-buffer-local 'c-old-BOM)
 (defvar c-old-EOM 0)
 (make-variable-buffer-local 'c-old-EOM)
 
