@@ -8268,13 +8268,6 @@ comment at the start of cc-engine.el for more info."
 			    (eq (char-before) ?}))
 			  (< (point) placeholder)))
 	      (c-add-stmt-syntax
-;; 	       (if (eq char-before-ip ?,)
-;; 		   ;; A preceding comma at the top level means that a
-;; 		   ;; new variable declaration starts here.  Use
-;; 		   ;; topmost-intro-cont for it, for consistency with
-;; 		   ;; the first variable declaration.  C.f. case 5N.
-;; 		   'topmost-intro-cont
-;; 		 'statement-cont)
 	       (cond
 		((eq (point) placeholder) 'statement) ; unrecognised construct
 		   ;; A preceding comma at the top level means that a
