@@ -1424,13 +1424,14 @@ EOL terminated statements."
   (c-lang-const c-vsemi-status-unknown-p-fn))
 
 
-;;; Defun functions
+;;; Defun handling.
 
-;; The Emacs variables beginning-of-defun-function and
-;; end-of-defun-function will be set so that commands like
-;; `mark-defun' and `narrow-to-defun' work right.  The key sequences
-;; C-M-a and C-M-e are, however, bound directly to the CC Mode
-;; functions, allowing optimisation for large n.
+;; The Emacs variables beginning-of-defun-function and end-of-defun-function
+;; will be set so that commands like `mark-defun' and `narrow-to-defun' work
+;; right.  In older Emacsen, the key sequences C-M-a and C-M-e are, however,
+;; bound directly to the CC Mode functions, allowing optimisation for large n.
+;; From Emacs 23, this isn't necessary any more, since n is passed to the two
+;; functions.
 (c-lang-defconst beginning-of-defun-function
   "Function to which beginning-of-defun-function will be set."
   t 'c-beginning-of-defun
@@ -1443,6 +1444,25 @@ EOL terminated statements."
   t 'c-end-of-defun
   awk 'c-awk-end-of-defun)
 (c-lang-setvar end-of-defun-function (c-lang-const end-of-defun-function))
+
+(c-lang-defconst c-defun-tactic
+  "Defines beginnings/ends of defuns in languages with nested declaration scopes.
+\(These are introduced by keywords like \"namespace\" and \"class\" in C++).
+
+The following values are under consideration, but this list is
+tentative.  Currently (2008-06), only 'respect-enclosure is
+recognized, all other values being equivalent to t
+
+nil			Column-0 or top-level brace is BOD.
+t			Function (struct, etc.) header preceding Column-0 or
+			top-level brace.
+'respect-enclosure 	Seek BOD (\"beginning of defun\") directly inside the
+			currently enclosing declaration scope.  Do not look in
+			any other decl scopes enclosed by this one.
+'any-level		Seek BOD regardless of level of nesting."
+  t t
+  (c++ java objc pike) 'respect-enclosure)
+(c-lang-defvar c-defun-tactic (c-lang-const c-defun-tactic))
 
 ;;; In-comment text handling.
 
