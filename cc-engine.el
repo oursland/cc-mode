@@ -530,6 +530,10 @@ the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
 move into or out of sexps (not even normal expression parentheses).
 
+If point is already at the earliest statment within braces or parens,
+this function doesn't move back into any whitespace preceding it; it
+returns 'same in this case.
+
 Stop at statement continuation tokens like \"else\", \"catch\",
 \"finally\" and the \"while\" in \"do ... while\" if the start point
 is within the continuation.  If starting at such a token, move to the
@@ -549,12 +553,16 @@ of the content in the macro, i.e. the expression of an \"#if\" or the
 start of the definition in a \"#define\".  Also stop at start of
 macros before leaving them.
 
-Return 'label if stopped at a label, 'same if stopped at the beginning
-of the current statement, 'up if stepped to a containing statement,
-'previous if stepped to a preceding statement, 'beginning if stepped
-from a statement continuation clause to its start clause, or 'macro if
-stepped to a macro start.  Note that 'same and not 'label is returned
-if stopped at the same label without crossing the colon character.
+Return:
+'label          if stopped at a label;
+'same           if stopped at the beginning of the current statement;
+'up             if stepped to a containing statement;
+'previous       if stepped to a preceding statement;
+'beginning      if stepped from a statement continuation clause to
+                its start clause; or
+'macro          if stepped to a macro start.
+Note that 'same and not 'label is returned if stopped at the same
+label without crossing the colon character.
 
 LIM may be given to limit the search.  If the search hits the limit,
 point will be left at the closest following token, or at the start
