@@ -25,4 +25,7 @@
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
 
-DEFAULT $CVSROOT/CVSROOT/syncmail %{sVv} cc-mode-checkins@lists.sourceforge.net
+#DEFAULT $CVSROOT/CVSROOT/syncmail %{sVv} cc-mode-checkins@lists.sourceforge.net
+# Change to the following, Sunday 2008-10-05, following a bug and bug report
+# concerning the sending of confirmation mails to the mailing list.
+DEFAULT /cvsroot/sitedocs/CVSROOT/cvstools/syncmail %{sVv} cc-mode-checkins@lists.sourceforge.net
