@@ -2522,7 +2522,7 @@ comment at the start of cc-engine.el for more info."
   ;; Move to the beginning of the current token.  Do not move if not
   ;; in the middle of one.  BACK-LIMIT may be used to bound the
   ;; backward search; if given it's assumed to be at the boundary
-  ;; between two tokens.  Return non-nil if the point is move, nil
+  ;; between two tokens.  Return non-nil if the point is moved, nil
   ;; otherwise.
   ;;
   ;; This function might do hidden buffer changes.
@@ -3332,7 +3332,7 @@ literal next to point is returned.  \"Next to\" means there's only
 spaces and tabs between point and the literal.  The search for such a
 literal is done first in forward direction.  If NOT-IN-DELIMITER is
 non-nil, the case when point is inside a starting delimiter won't be
-recognized.  This only has effect for comments, which have starting
+recognized.  This only has effect for comments which have starting
 delimiters with more than one character.
 
 Note that this function might do hidden buffer changes.  See the
@@ -3357,7 +3357,7 @@ comment at the start of cc-engine.el for more info."
 	    ((and (not not-in-delimiter)
 		  (not (elt state 5))
 		  (eq (char-before) ?/)
-		  (looking-at "[/*]"))
+		  (looking-at "[/*]")) ; FIXME!!! use c-line/block-comment-starter.  2008-09-28.
 	     ;; We're standing in a comment starter.
 	     (backward-char 1)
 	     (cons (point) (progn (c-forward-single-comment) (point))))
@@ -3442,9 +3442,10 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-literal-type (range)
   "Convenience function that given the result of `c-literal-limits',
-returns nil or the type of literal that the range surrounds.  It's
-much faster than using `c-in-literal' and is intended to be used when
-you need both the type of a literal and its limits.
+returns nil or the type of literal that the range surrounds, one
+of the symbols 'c, 'c++ or 'string.  It's much faster than using
+`c-in-literal' and is intended to be used when you need both the
+type of a literal and its limits.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
@@ -5150,7 +5151,8 @@ comment at the start of cc-engine.el for more info."
   ;;           inside a function declaration arglist).
   ;; '<>       In an angle bracket arglist.
   ;; 'arglist  Some other type of arglist.
-  ;; nil       Some other context or unknown context.
+  ;; nil       Some other context or unknown context.  Includes
+  ;;           within the parens of an if, for, ... construct.
   ;;
   ;; LAST-CAST-END is the first token after the closing paren of a
   ;; preceding cast, or nil if none is known.  If
@@ -5498,6 +5500,7 @@ comment at the start of cc-engine.el for more info."
        at-decl-or-cast
        (catch 'at-decl-or-cast
 
+	 ;; CASE 1
 	(when (> paren-depth 0)
 	  ;; Encountered something inside parens that isn't matched by
 	  ;; the `c-type-decl-*' regexps, so it's not a type decl
@@ -5521,6 +5524,7 @@ comment at the start of cc-engine.el for more info."
 	(if got-identifier
 	    (progn
 
+	      ;; CASE 2
 	      (when (and (or at-type maybe-typeless)
 			 (not (or got-prefix got-parens)))
 		;; Got another identifier directly after the type, so it's a
@@ -5547,6 +5551,7 @@ comment at the start of cc-engine.el for more info."
 	  (if backup-at-type
 	      (progn
 
+		;; CASE 3
 		(when (= (point) start)
 		  ;; Got a plain list of identifiers.  If a colon follows it's
 		  ;; a valid label.  Otherwise the last one probably is the
@@ -5559,6 +5564,7 @@ comment at the start of cc-engine.el for more info."
 		    (setq backup-if-not-cast t)
 		    (throw 'at-decl-or-cast t)))
 
+		;; CASE 4
 		(when (and got-suffix
 			   (not got-prefix)
 			   (not got-parens))
@@ -5569,6 +5575,7 @@ comment at the start of cc-engine.el for more info."
 		  (setq backup-if-not-cast t)
 		  (throw 'at-decl-or-cast t)))
 
+	    ;; CASE 5
 	    (when (eq at-type t)
 	      ;; If the type is known we know that there can't be any
 	      ;; identifier somewhere else, and it's only in declarations in
@@ -5578,6 +5585,7 @@ comment at the start of cc-engine.el for more info."
 
 	    (when (= (point) start)
 	      ;; Only got a single identifier (parsed as a type so far).
+	      ;; CASE 6
 	      (if (and
 		   ;; Check that the identifier isn't at the start of an
 		   ;; expression.
@@ -5598,6 +5606,7 @@ comment at the start of cc-engine.el for more info."
 		     ;; constants in C++.
 		     (memq at-type '(known found)))))
 		  (throw 'at-decl-or-cast t)
+		;; CASE 7
 		;; Can't be a valid declaration or cast, but if we've found a
 		;; specifier it can't be anything else either, so treat it as
 		;; an invalid/unfinished declaration or cast.
@@ -5631,7 +5640,7 @@ comment at the start of cc-engine.el for more info."
 	      (c-fdoc-shift-type-backward)
 
 	    ;; Still no identifier.
-
+	    ;; CASE 8
 	    (when (and got-prefix (or got-parens got-suffix))
 	      ;; Require `got-prefix' together with either `got-parens' or
 	      ;; `got-suffix' to recognize it as an abstract declarator:
@@ -5644,6 +5653,7 @@ comment at the start of cc-engine.el for more info."
 	      ;; the point when the fontification was invoked.
 	      (throw 'at-decl-or-cast t))
 
+	    ;; CASE 9
 	    (when (and at-type
 		       (not got-prefix)
 		       (not got-parens)
@@ -5654,11 +5664,13 @@ comment at the start of cc-engine.el for more info."
 	      ;; instantiation expression).
 	      (throw 'at-decl-or-cast nil))))
 
+	;; CASE 10
 	(when at-decl-or-cast
 	  ;; By now we've located the type in the declaration that we know
 	  ;; we're in.
 	  (throw 'at-decl-or-cast t))
 
+	;; CASE 11
 	(when (and got-identifier
 		   (not context)
 		   (looking-at c-after-suffixed-type-decl-key)
@@ -5677,6 +5689,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; A declaration according to `c-after-suffixed-type-decl-key'.
 	  (throw 'at-decl-or-cast t))
 
+	;; CASE 12
 	(when (and (or got-prefix (not got-parens))
 		   (memq at-type '(t known)))
 	  ;; It's a declaration if a known type precedes it and it can't be a
@@ -5693,6 +5706,7 @@ comment at the start of cc-engine.el for more info."
 ;;; 2008-04-16: commented out the next form, to allow the function to recognise
 ;;; "foo (int bar)" in CC (an implicit type (in class foo) without a semicolon)
 ;;; as a(n almost complete) declaration, enabling it to be fontified.
+	;; CASE 13
 ;;	(unless (or at-decl-end (looking-at "=[^=]"))
 	  ;; If this is a declaration it should end here or its initializer(*)
 	  ;; should start here, so check for allowed separation tokens.  Note
@@ -5710,11 +5724,13 @@ comment at the start of cc-engine.el for more info."
 	;; Below are tests that only should be applied when we're certain to
 	;; not have parsed halfway through an expression.
 
+	;; CASE 14
 	(when (memq at-type '(t known))
 	  ;; The expression starts with a known type so treat it as a
 	  ;; declaration.
 	  (throw 'at-decl-or-cast t))
 
+	;; CASE 15
 	(when (and (c-major-mode-is 'c++-mode)
 		   ;; In C++ we check if the identifier is a known type, since
 		   ;; (con|de)structors use the class name as identifier.
@@ -5748,6 +5764,7 @@ comment at the start of cc-engine.el for more info."
 
 	(if got-identifier
 	    (progn
+	      ;; CASE 16
 	      (when (and got-prefix-before-parens
 			 at-type
 			 (or at-decl-end (looking-at "=[^=]"))
@@ -5760,6 +5777,7 @@ comment at the start of cc-engine.el for more info."
 		;; be a function call.
 		(throw 'at-decl-or-cast t))
 
+	      ;; CASE 17
 	      (when (and (or got-suffix-after-parens
 			     (looking-at "=[^=]"))
 			 (eq at-type 'found)
@@ -5770,6 +5788,7 @@ comment at the start of cc-engine.el for more info."
 		;; somewhere else (if it's a known type we won't get here).
 		(throw 'at-decl-or-cast t)))
 
+	  ;; CASE 18
 	  (when (and context
 		     (or got-prefix
 			 (and (eq context 'decl)
@@ -6259,10 +6278,14 @@ comment at the start of cc-engine.el for more info."
 	 (looking-at c-opt-asm-stmt-key))))
 
 (defun c-at-toplevel-p ()
-  "Return a determination as to whether point is at the `top-level'.
-Being at the top-level means that point is either outside any
-enclosing block (such function definition), or only inside a class,
-namespace or other block that contains another declaration level.
+  "Return a determination as to whether point is \"at the top level\".
+Informally, \"at the top level\" is anywhere where you can write
+a function.
+
+More precisely, being at the top-level means that point is either
+outside any enclosing block (such as a function definition), or
+directly inside a class, namespace or other block that contains
+another declaration level.
 
 If point is not at the top-level (e.g. it is inside a method
 definition), then nil is returned.  Otherwise, if point is at a
@@ -8192,7 +8215,7 @@ comment at the start of cc-engine.el for more info."
 	   ;; member init list continuation, or a template argument
 	   ;; list continuation.
 	   ((save-excursion
-	      ;; Note: We use the fact that lim always is after any
+	      ;; Note: We use the fact that lim is always after any
 	      ;; preceding brace sexp.
 	      (if c-recognize-<>-arglists
 		  (while (and
