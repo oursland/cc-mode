@@ -646,6 +646,26 @@ compatible with old code; callers should always specify it."
       (make-local-variable 'require-final-newline)
       (setq require-final-newline (cdr rfn)))))
 
+(defun c-before-hack-hook ()
+  "Set the CC Mode style and \"offsets\" when in the buffer's local variables.
+They are set only when, respectively, the pseudo variables
+`c-file-style' and `c-file-offsets' are present in the list.
+
+This function is called from the hook `before-hack-local-variables-hook'."
+  (when c-buffer-is-cc-mode
+    (let ((stile (cdr (assq 'c-file-style hack-local-variables-alist)))
+	  (offsets (cdr (assq 'c-file-offsets hack-local-variables-alist))))
+      (when stile
+	(or (stringp stile) (error "c-file-style is not a string"))
+	(c-set-style stile))
+      (when offsets
+	(mapc
+	 (lambda (langentry)
+	   (let ((langelem (car langentry))
+		 (offset (cdr langentry)))
+	     (c-set-offset langelem offset)))
+	 offsets)))))
+
 (defun c-remove-any-local-eval-or-mode-variables ()
   ;; If the buffer specifies `mode' or `eval' in its File Local Variable list
   ;; or on the first line, remove all occurrences.  See
@@ -737,11 +757,13 @@ Note that the style variables are always made local to the buffer."
 	    (hack-local-variables))
 	  nil))))
 
-(add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
+(if (boundp 'before-hack-local-variables-hook)
+    (add-hook 'before-hack-local-variables-hook 'c-before-hack-hook)
+  (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles))
 
 (defmacro c-run-mode-hooks (&rest hooks)
   ;; Emacs 21.1 has introduced a system with delayed mode hooks that
-  ;; require the use of the new function `run-mode-hooks'.
+  ;; requires the use of the new function `run-mode-hooks'.
   (if (cc-bytecomp-fboundp 'run-mode-hooks)
       `(run-mode-hooks ,@hooks)
     `(progn ,@(mapcar (lambda (hook) `(run-hooks ,hook)) hooks))))
@@ -869,7 +891,7 @@ Note that the style variables are always made local to the buffer."
 	  (setq pps-position (point))))))) ; no need to update pps-state.
 
 (defun c-before-change (beg end)
-  ;; Function to be put on `before-change-function'.  Primarily, this calls
+  ;; Function to be put in `before-change-functions'.  Primarily, this calls
   ;; the language dependent `c-get-state-before-change-function'.  It is
   ;; otherwise used only to remove stale entries from the `c-found-types'
   ;; cache, and to record entries which a `c-after-change' function might
