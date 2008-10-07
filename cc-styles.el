@@ -164,16 +164,15 @@
     ("ellemtel"
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
-     (c-hanging-braces-alist     . ((substatement-open before after)))
+     (c-hanging-braces-alist     . ((substatement-open before after)
+				    (arglist-cont-nonempty)))
      (c-offsets-alist . ((topmost-intro        . 0)
 			 (substatement         . +)
 			 (substatement-open    . 0)
                          (case-label           . +)
                          (access-label         . -)
-                         (inclass              . ++)
-			 (inline-open          . 0)
-			 (arglist-cont-nonempty))))
-
+			 (inclass              . +)
+			 (inline-open          . 0))))
     ("linux"
      (c-basic-offset  . 8)
      (c-comment-only-line-offset . 0)
@@ -386,11 +385,11 @@ a null operation."
       ;; fallback entry.
       (setq c-special-indent-hook
 	    (default-value 'c-special-indent-hook)))
-    (mapcar (lambda (elem)
-	      (c-set-style-1 elem dont-override))
-	    ;; Need to go through the variables backwards when we
-	    ;; don't override any settings.
-	    (if (eq dont-override t) (nreverse vars) vars)))
+    (mapc (lambda (elem)
+	    (c-set-style-1 elem dont-override))
+	  ;; Need to go through the variables backwards when we
+	  ;; don't override any settings.
+	  (if (eq dont-override t) (nreverse vars) vars)))
   (setq c-indentation-style stylename)
   (c-keep-region-active))
 
@@ -423,7 +422,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
-  ;; legal value only
+  ;; valid value only
   (let* ((oldoff  (cdr-safe (or (assq langelem c-offsets-alist)
 				(assq langelem (get 'c-offsets-alist
 						    'c-stylevar-fallback)))))
@@ -555,7 +554,7 @@ variables."
 	"[ \t\f]*\\\\?$")
   (setq c-sentence-end-with-esc-eol
 	(concat "\\(\\(" (c-default-value-sentence-end) "\\)"
-		;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".
+		;; N.B.:  "$" would be invalid when not enclosed like "\\($\\)".
 		"\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
 		"\\)")))
 
@@ -641,7 +640,7 @@ any reason to call this function directly."
 		'make-variable-buffer-local))
 	(varsyms (cons 'c-indentation-style (copy-alist c-style-variables))))
     (delq 'c-special-indent-hook varsyms)
-    (mapcar func varsyms)
+    (mapc func varsyms)
     ;; Hooks must be handled specially
     (if this-buf-only-p
 	(make-local-hook 'c-special-indent-hook)
