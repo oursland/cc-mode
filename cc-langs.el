@@ -2790,7 +2790,9 @@ identifier or one of the keywords on `c-<>-type-kwds' or
 `c-<>-arglist-kwds'.  If there's an identifier before then the whole
 expression is considered to be a type."
   t (or (consp (c-lang-const c-<>-type-kwds))
-	(consp (c-lang-const c-<>-arglist-kwds))))
+	(consp (c-lang-const c-<>-arglist-kwds)))
+  java t)	    ; 2008-10-19.  This is crude.  The syntax for java
+		    ; generics is not yet coded in CC Mode.
 (c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
 
 (c-lang-defconst c-recognize-paren-inits
