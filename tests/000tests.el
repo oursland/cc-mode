@@ -211,9 +211,13 @@ simplifications with lesser accuracy.")
 	(unless (eq (car elem) 'reg)
 	  (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
 		     (not (eq facename (car elem))))
-	    (error (concat "Ambiguous face %s - can be both %s and %s"
-			   " (cc-fonts loaded too early?)")
-		   (cdr elem) facename (car elem)))
+	    (message (concat "Ambiguous face %s - can be both %s and %s"
+			     " (cc-fonts loaded too early?)")
+		     (cdr elem) facename (car elem))
+;; 	    (error (concat "Ambiguous face %s - can be both %s and %s"
+;; 			   " (cc-fonts loaded too early?)")
+;; 		   (cdr elem) facename (car elem))
+	    )
 	  (put (cdr elem) 'cc-test-face-name (car elem)))))
 
   ;; Fix aliases.
@@ -1105,6 +1109,7 @@ to be set as a file local variable.")
 	      (buffer-enable-undo cc-test-comp-buf)
 	      (set-buffer-modified-p nil)
 	      (compilation-mode)
+	      (toggle-read-only 0)	; `compilation-mode' has made it RO.
 	      (setq cc-test-comp-win (display-buffer cc-test-comp-buf))
 	      (set-window-start cc-test-comp-win (point-min))
 	      (compilation-set-window-height cc-test-comp-win)))
