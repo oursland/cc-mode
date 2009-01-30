@@ -1091,8 +1091,8 @@ This does not load the font-lock package.  Use after
 ;; which could cause it to clobber user settings.  Later emacsen have
 ;; an append option, but it's not safe to use.
 
-;; The the extension ".C" is associated to C++ while the lowercase
-;; variant goes to C.  On case insensitive file systems, this means
+;; The extension ".C" is associated with C++ while the lowercase
+;; variant goes with C.  On case insensitive file systems, this means
 ;; that ".c" files also might open C++ mode if the C++ entry comes
 ;; first on `auto-mode-alist'.  Thus we try to ensure that ".C" comes
 ;; after ".c", and since `add-to-list' adds the entry first we have to
@@ -1134,6 +1134,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map c-mode-map)
   (c-init-language-vars-for 'c-mode)
+  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
@@ -1197,6 +1198,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map c++-mode-map)
   (c-init-language-vars-for 'c++-mode)
+  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'c++-mode)
   (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
@@ -1258,6 +1260,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map objc-mode-map)
   (c-init-language-vars-for 'objc-mode)
+  (c-make-macro-with-semi-re) ; matches macro names whose expansion ends with ;
   (c-common-init 'objc-mode)
   (easy-menu-add c-objc-menu)
   (cc-imenu-init nil 'cc-imenu-objc-function)
