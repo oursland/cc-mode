@@ -1437,13 +1437,26 @@ non-nil, a caret is prepended to invert the set."
 			 '1-bit)
 		       list)))
 
-    ;; In Emacs >= 23, beginning-of-defun will passes its parameter to
-    ;; beginning-of-defun-function.  Assume end-of-defun does the same.
-    (let ((beginning-of-defun-function
-	   (lambda (&optional arg)
-	     (not (eq arg nil))))
-	  mark-ring)
-      (if (save-excursion (beginning-of-defun 1))
+    ;; Check whether beginning/end-of-defun call
+    ;; beginning/end-of-defun-function nicely, passing through the
+    ;; argument and respecting the return code.
+    (let* (mark-ring
+	   (bod-param 'foo) (eod-param 'foo)
+	   (beginning-of-defun-function
+	    (lambda (&optional arg)
+	      (or (eq bod-param 'foo) (setq bod-param 'bar))
+	      (and (eq bod-param 'foo)
+		   (setq bod-param arg)
+		   (eq arg 3))))
+	   (end-of-defun-function
+	    (lambda (&optional arg)
+	      (and (eq eod-param 'foo)
+		   (setq eod-param arg)
+		   (eq arg 3)))))
+      (if (save-excursion (and (beginning-of-defun 3) (= bod-param 3)
+			       (not (beginning-of-defun))
+			       (end-of-defun 3) (= eod-param 3)
+			       (not (end-of-defun))))
 	  (setq list (cons 'argumentative-bod-function list))))
 
     (let ((buf (generate-new-buffer " test"))
@@ -1546,9 +1559,8 @@ might be present:
 
 '8-bit              8 bit syntax entry flags (XEmacs style).
 '1-bit              1 bit syntax entry flags (Emacs style).
-'argumentative-bod-function         beginning-of-defun passes ARG through
-                    to a non-null beginning-of-defun-function.  It is assumed
-		    the end-of-defun does the same thing.
+'argumentative-bod-function         beginning-of-defun and end-of-defun pass
+                    ARG through to beginning/end-of-defun-function.
 'syntax-properties  It works to override the syntax for specific characters
 		    in the buffer with the 'syntax-table property.  It's
 		    always set - CC Mode no longer works in emacsen without
