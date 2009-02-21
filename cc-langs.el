@@ -451,6 +451,31 @@ parameters \(point-min), \(point-max) and <buffer size>."
 	       (c-lang-const c-before-font-lock-function))
 
 
+;;; Syntactic analysis ("virtual semicolons") for line-oriented languages (AWK).
+(c-lang-defconst c-at-vsemi-p-fn
+  "Contains a function \"Is there a virtual semicolon at POS or point?\".
+Such a function takes one optional parameter, a buffer position (defaults to
+point), and returns nil or t.  This variable contains nil for languages which
+don't have EOL terminated statements. "
+  t nil
+  (c c++ objc) 'c-at-macro-vsemi-p
+  awk 'c-awk-at-vsemi-p)
+(c-lang-defvar c-at-vsemi-p-fn (c-lang-const c-at-vsemi-p-fn))
+
+(c-lang-defconst c-vsemi-status-unknown-p-fn
+  "Contains a function \"are we unsure whether there is a virtual semicolon on this line?\".
+The (admittedly kludgey) purpose of such a function is to prevent an infinite
+recursion in c-beginning-of-statement-1 when point starts at a `while' token.
+The function MUST NOT UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1,
+even indirectly.  This variable contains nil for languages which don't have
+EOL terminated statements."
+  t nil
+  (c c++ objc) 'c-macro-vsemi-status-unknown-p
+  awk 'c-awk-vsemi-status-unknown-p)
+(c-lang-defvar c-vsemi-status-unknown-p-fn
+  (c-lang-const c-vsemi-status-unknown-p-fn))
+
+
 ;;; Lexer-level syntax (identifiers, tokens etc).
 
 (c-lang-defconst c-modified-constant
@@ -728,6 +753,8 @@ file name in angle brackets or quotes."
 definition, or nil if the language doesn't have any."
   t (if (c-lang-const c-opt-cpp-prefix)
 	"define"))
+(c-lang-defvar c-opt-cpp-macro-define
+  (c-lang-const c-opt-cpp-macro-define))
 
 (c-lang-defconst c-opt-cpp-macro-define-start
   ;; Regexp matching everything up to the macro body of a cpp define, or the
@@ -1174,6 +1201,15 @@ properly."
 (c-lang-defvar c-block-comment-start-regexp
   (c-lang-const c-block-comment-start-regexp))
 
+(c-lang-defconst c-line-comment-start-regexp
+  ;; Regexp which matches the start of a line comment (if such exists in the
+  ;; language; it does in all 7 CC Mode languages).
+  t (if (c-lang-const c-line-comment-starter)
+	(regexp-quote (c-lang-const c-line-comment-starter))
+      "\\<\\>"))
+(c-lang-defvar c-line-comment-start-regexp
+	       (c-lang-const c-line-comment-start-regexp))
+
 (c-lang-defconst c-literal-start-regexp
   ;; Regexp to match the start of comments and string literals.
   t (concat (c-lang-const c-comment-start-regexp)
@@ -1399,29 +1435,6 @@ properly."
 	     "\\|")
 	    "\\)"))
 (c-lang-defvar c-syntactic-eol (c-lang-const c-syntactic-eol))
-
-
-;;; Syntactic analysis ("virtual semicolons") for line-oriented languages (AWK).
-(c-lang-defconst c-at-vsemi-p-fn
-  "Contains a function \"Is there a virtual semicolon at POS or point?\".
-Such a function takes one optional parameter, a buffer position (defaults to
-point), and returns nil or t.  This variable contains nil for languages which
-don't have EOL terminated statements. "
-  t nil
-  awk 'c-awk-at-vsemi-p)
-(c-lang-defvar c-at-vsemi-p-fn (c-lang-const c-at-vsemi-p-fn))
-
-(c-lang-defconst c-vsemi-status-unknown-p-fn
-  "Contains a function \"are we unsure whether there is a virtual semicolon on this line?\".
-The (admittedly kludgey) purpose of such a function is to prevent an infinite
-recursion in c-beginning-of-statement-1 when point starts at a `while' token.
-The function MUST NOT UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1,
-even indirectly.  This variable contains nil for languages which don't have
-EOL terminated statements."
-  t nil
-  awk 'c-awk-vsemi-status-unknown-p)
-(c-lang-defvar c-vsemi-status-unknown-p-fn
-  (c-lang-const c-vsemi-status-unknown-p-fn))
 
 
 ;;; Defun handling.
@@ -2124,6 +2137,17 @@ nevertheless contains a list separated with ';' and not ','."
   t (if (c-lang-const c-asm-stmt-kwds)
 	(c-make-keywords-re t (c-lang-const c-asm-stmt-kwds))))
 (c-lang-defvar c-opt-asm-stmt-key (c-lang-const c-opt-asm-stmt-key))
+
+(c-lang-defconst c-case-kwds
+  "The keyword\(s) which introduce a \"case\" like construct.
+This construct is \"<keyword> <expression> :\"."
+  t '("case")
+  awk nil)
+
+(c-lang-defconst c-case-kwds-regexp
+  ;; Adorned regexp matching any "case"-like keyword.
+  t (c-make-keywords-re t (c-lang-const c-case-kwds)))
+(c-lang-defvar c-case-kwds-regexp (c-lang-const c-case-kwds-regexp))
 
 (c-lang-defconst c-label-kwds
   "Keywords introducing colon terminated labels in blocks."
