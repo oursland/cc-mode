@@ -82,8 +82,11 @@
 ;;
 ;; 'syntax-table
 ;;   Used to modify the syntax of some characters.  It is used to
-;;   mark the "<" and ">" of angle bracket parens with paren syntax, and
-;;   to "hide" obtrusive characters in preprocessor lines.
+;;   mark the "<" and ">" of angle bracket parens with paren syntax;
+;;   also to "hide" obtrusive characters in preprocessor lines, by
+;;   marking them with punctuation syntax, '(1).  If this value is ever
+;;   used for any other purpose, modify
+;;   `c-font-lock-invalid-cpp-string-matcher' accordingly.
 ;;
 ;;   This property is used on single characters and is therefore
 ;;   always treated as front and rear nonsticky (or start and end open
