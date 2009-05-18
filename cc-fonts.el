@@ -286,7 +286,7 @@
     ;; bit of the overhead compared to a real matcher.  The main reason
     ;; is however to pass the real search limit to the anchored
     ;; matcher(s), since most (if not all) font-lock implementations
-    ;; arbitrarily limits anchored matchers to the same line, and also
+    ;; arbitrarily limit anchored matchers to the same line, and also
     ;; to insulate against various other irritating differences between
     ;; the different (X)Emacs font-lock packages.
     ;;
@@ -307,7 +307,7 @@
     ;; covered by the font-lock context.)
 
     ;; Note: Replace `byte-compile' with `eval' to debug the generated
-    ;; lambda easier.
+    ;; lambda more easily.
     (byte-compile
      `(lambda (limit)
 	(let (;; The font-lock package in Emacs is known to clobber
@@ -560,6 +560,25 @@ stuff.  Used on level 1 and higher."
 	     t)
 	   (c-put-font-lock-face start (1+ start) 'font-lock-warning-face)))))
 
+(defun c-font-lock-invalid-cpp-string-matcher (lim)
+  ;; Fontify unterminated strings within preprocessor constructs.
+  ;;
+  ;; Unmatched string quotes will have been marked with a punctuation
+  ;; syntax-table text property (value '(1)) by `c-neutralize-syntax-in-CPP'.
+  ;; 
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIM, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  (while (c-search-forward-char-property 'syntax-table '(1) lim) ; punctuation
+    (when (memq (char-before) '(?\" ?\'))
+      (c-put-font-lock-face (1- (point)) (point) 'font-lock-warning-face)
+      (search-forward-regexp "\\(.*\\\\[\n\r]\\)*\\(.*$\\)")
+      (if (> (match-end 0) (match-beginning 0))
+	  (c-put-font-lock-face (match-beginning 0) (match-end 0)
+				'font-lock-string-face)))))
+
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
 other easily recognizable things that should be fontified before generic
@@ -580,6 +599,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	;; `c-skip-comments-and-strings' work correctly.
 	(concat ".\\(" c-string-limit-regexp "\\)")
 	'((c-font-lock-invalid-string)))
+
+      ;; Put a warning face on the opening quote of unclosed strings inside
+      ;; preprocessor construcs (#define).  The previous clause doesn't do
+      ;; this, since the hook function `c-neutralize-syntax-in-CPP' has
+      ;; splatted the syntax of the unmated string quotes.
+      ,@(when (c-lang-const c-opt-cpp-prefix)
+	  '((c-font-lock-invalid-cpp-string-matcher)))
 
       ;; Fontify keyword constants.
       ,@(when (c-lang-const c-constant-kwds)
