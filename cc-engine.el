@@ -3632,12 +3632,15 @@ comment at the start of cc-engine.el for more info."
   ;; Such a spot is:
   ;; o  The first token after bob.
   ;; o  The first token after the end of submatch 1 in
-  ;;    `c-decl-prefix-or-start-re' when that submatch matches.
+  ;;    `c-decl-prefix-or-start-re' when that submatch matches.  This
+  ;;    submatch is typically a (L or R) brace or paren, a ;, or a ,.
   ;; o  The start of each `c-decl-prefix-or-start-re' match when
-  ;;    submatch 1 doesn't match.
-  ;; o  The first token after the end of each occurence of the
-  ;;    `c-type' text property with the value `c-decl-end', provided
-  ;;    `c-type-decl-end-used' is set.
+  ;;    submatch 1 doesn't match.  This is, for example, the keyword
+  ;;    "class" in Pike.
+  ;; o  The start of a previously recognized declaration; "recognized"
+  ;;    means that the last char of the previous token has a `c-type'
+  ;;    text property with the value `c-decl-end'; this only holds
+  ;;    when `c-type-decl-end-used' is set.
   ;;
   ;; Only a spot that match CFD-DECL-RE and whose face is in the
   ;; CFD-FACE-CHECKLIST list causes CFD-FUN to be called.  The face
