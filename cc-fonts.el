@@ -195,11 +195,59 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
-(eval-and-compile
-  ;; We need the following functions during compilation since they're
-  ;; called when the `c-lang-defconst' initializers are evaluated.
-  ;; Define them at runtime too for the sake of derived modes.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; F o n t   l o c k   c o n t e x t s
+;;
+;; The "context" of a buffer position from a font locking point of view.
+;; This indicates, for example, that the start of the font lock region is
+;; within a list of _typedef_ declarators:
+;;
+;;    typedef struct { ....} FOO, BAR;
+;;                           ^
+;; as opposed to _variable_ declarators:
+;;
+;;    struct { ....} FOO, BAR;
+;;                   ^
+;; , so that the identifiers be given the correct face
+;; (font-lock-type-face).
+;;
+;; A font lock context will be one of the following symbols:
+;; o - nil                  nothing notable
+;; o - in-id-decl           in the type part of a variable declaration
+;; o - in-type-decl         in the type part of a typedef declaration
+;; o - in-id-declarators    in the declarators of a variable declaration
+;; o - in-type-declarators  in the declarators of a typedef declaration
+;; o - in-id-struct         in the brace block of a "struct"-like
+;;                            declaration
+;; o - in-type-struct       in the brace block of a "struct"-like typedef
+;;                            declaration
+;; o - in-cpp-expr          in a preprocessor expr like "#if defined (.."
+;;
+;; Currently (2009-06), only in-cpp-expr is implemented.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun c-guess-font-lock-context ()
+  ;; Determine what sort of construct POINT is in the middle of, from the
+  ;; point of view of font locking.  The result is a symbol such as
+  ;; `in-cpp-expr' or nil.
+  (save-excursion
+    (if (and c-cpp-expr-intro-re
+	     (c-beginning-of-macro)
+	     (looking-at c-cpp-expr-intro-re))
+	'in-cpp-expr)))
+
+(eval-and-compile
+  ;; We need the following definitions during compilation since they're
+  ;; used when the `c-lang-defconst' initializers are evaluated.  Define
+  ;; them at runtime too for the sake of derived modes.
+
+  ;; This indicates the "font locking context", and is set just before
+  ;; fontification is done.  If non-nil, it says, e.g., point starts
+  ;; from within a #if preprocessor construct.
+  (defvar c-font-lock-context nil)
+  (make-variable-buffer-local 'c-font-lock-context)
+  
   (defmacro c-put-font-lock-face (from to face)
     ;; Put a face on a region (overriding any existing face) in the way
     ;; font-lock would do it.  In XEmacs that means putting an
@@ -280,6 +328,45 @@
 			      nil)))))
 	  res))))
 
+  (defun c-make-font-lock-search-form (regexp highlights)
+    ;; Return a lisp form which will fontify every occurence of REGEXP
+    ;; (a regular expression, NOT a function) between POINT and `limit'
+    ;; with HIGHLIGHTS, a list of highlighters as specified on page
+    ;; "Search-based Fontification" in the elisp manual.
+    `(while (re-search-forward ,regexp limit t)
+       (unless (progn
+		 (goto-char (match-beginning 0))
+		 (c-skip-comments-and-strings limit))
+	 (goto-char (match-end 0))
+	 ,@(mapcar
+	    (lambda (highlight)
+	      (if (integerp (car highlight))
+		  ;; e.g. highlight is (1 font-lock-type-face t)
+		  (progn
+		    (unless (eq (nth 2 highlight) t)
+		      (error
+		       "The override flag must currently be t in %s"
+		       highlight))
+		    (when (nth 3 highlight)
+		      (error
+		       "The laxmatch flag may currently not be set in %s"
+		       highlight))
+		    `(save-match-data
+		       (c-put-font-lock-face
+			(match-beginning ,(car highlight))
+			(match-end ,(car highlight))
+			,(elt highlight 1))))
+		;; highlight is an "ANCHORED HIGHLIGHER" of the form
+		;; (ANCHORED-MATCHER PRE-FORM POST-FORM SUBEXP-HIGHLIGHTERS...)
+		(when (nth 3 highlight)
+		  (error "Match highlights currently not supported in %s"
+			 highlight))
+		`(progn
+		   ,(nth 1 highlight)
+		   (save-match-data ,(car highlight))
+		   ,(nth 2 highlight))))
+	    highlights))))
+
   (defun c-make-font-lock-search-function (regexp &rest highlights)
     ;; This function makes a byte compiled function that works much like
     ;; a matcher element in `font-lock-keywords'.  It cuts out a little
@@ -310,42 +397,68 @@
     ;; lambda more easily.
     (byte-compile
      `(lambda (limit)
-	(let (;; The font-lock package in Emacs is known to clobber
+	(let ( ;; The font-lock package in Emacs is known to clobber
 	      ;; `parse-sexp-lookup-properties' (when it exists).
 	      (parse-sexp-lookup-properties
 	       (cc-eval-when-compile
 		 (boundp 'parse-sexp-lookup-properties))))
-	  (while (re-search-forward ,regexp limit t)
-	    (unless (progn
-		      (goto-char (match-beginning 0))
-		      (c-skip-comments-and-strings limit))
-	      (goto-char (match-end 0))
-	      ,@(mapcar
-		 (lambda (highlight)
-		   (if (integerp (car highlight))
-		       (progn
-			 (unless (eq (nth 2 highlight) t)
-			   (error
-			    "The override flag must currently be t in %s"
-			    highlight))
-			 (when (nth 3 highlight)
-			   (error
-			    "The laxmatch flag may currently not be set in %s"
-			    highlight))
-			 `(save-match-data
-			    (c-put-font-lock-face
-			     (match-beginning ,(car highlight))
-			     (match-end ,(car highlight))
-			     ,(elt highlight 1))))
-		     (when (nth 3 highlight)
-		       (error "Match highlights currently not supported in %s"
-			      highlight))
-		     `(progn
-			,(nth 1 highlight)
-			(save-match-data ,(car highlight))
-			,(nth 2 highlight))))
-		 highlights))))
+	  ,(c-make-font-lock-search-form regexp highlights))
 	nil)))
+
+  (defun c-make-font-lock-context-search-function (normal &rest state-stanzas)
+    ;; This function makes a byte compiled function that works much like
+    ;; a matcher element in `font-lock-keywords', with the following
+    ;; enhancement: the generated function will test for particular "font
+    ;; lock contexts" at the start of the region, i.e. is this point in
+    ;; the middle of some particular construct?  if so the generated
+    ;; function will first fontify the tail of the construct, before
+    ;; going into the main loop and fontify full constructs up to limit.
+    ;;
+    ;; The generated function takes one parameter called `limit', and
+    ;; will fontify the region between POINT and LIMIT.
+    ;;
+    ;; NORMAL is a list of the form (REGEXP HIGHLIGHTS .....), and is
+    ;; used to fontify the "regular" bit of the region.
+    ;; STATE-STANZAS is list of elements of the form (STATE LIM REGEXP
+    ;; HIGHLIGHTS), each element coding one possible font lock context.
+
+    ;; o - REGEXP is a font-lock regular expression (NOT a function),
+    ;; o - HIGHLIGHTS is a list of zero or more highlighters as defined
+    ;;   on page "Search-based Fontification" in the elisp manual.  As
+    ;;   yet (2009-06), they must have OVERRIDE set, and may not have
+    ;;   LAXMATCH set.
+    ;;
+    ;; o - STATE is the "font lock context" (e.g. in-cpp-expr) and is
+    ;;   not quoted.
+    ;; o - LIM is a lisp form whose evaluation will yield the limit
+    ;;   position in the buffer for fontification by this stanza.
+    ;;
+    ;; This function does not do any hidden buffer changes, but the
+    ;; generated functions will.  (They are however used in places
+    ;; covered by the font-lock context.)
+    ;; 
+    ;; Note: Replace `byte-compile' with `eval' to debug the generated
+    ;; lambda more easily.
+    (byte-compile
+     `(lambda (limit)
+	(let ( ;; The font-lock package in Emacs is known to clobber
+	      ;; `parse-sexp-lookup-properties' (when it exists).
+	      (parse-sexp-lookup-properties
+	       (cc-eval-when-compile
+		 (boundp 'parse-sexp-lookup-properties))))
+	  ,@(mapcar
+	     (lambda (stanza)
+	       (let ((state (car stanza))
+		     (lim (nth 1 stanza))
+		     (regexp (nth 2 stanza))
+		     (highlights (cdr (cddr stanza))))
+		 `(if (eq c-font-lock-context ',state)
+		      (let ((limit ,lim))
+			,(c-make-font-lock-search-form
+			  regexp highlights)))))
+	     state-stanzas)
+	  ,(c-make-font-lock-search-form (car normal) (cdr normal))
+	  nil))))
 
   (eval-after-load "edebug"
     '(progn
@@ -490,19 +603,24 @@ stuff.  Used on level 1 and higher."
 				  (c-lang-const c-cpp-expr-directives)))
 			(cef-re (c-make-keywords-re t
 				  (c-lang-const c-cpp-expr-functions))))
-		    `((,(c-make-font-lock-search-function
-			 (concat noncontinued-line-end
-				 (c-lang-const c-opt-cpp-prefix)
-				 ced-re ; 1 + ncle-depth
-				 ;; Match the whole logical line to look
-				 ;; for the functions in.
-				 "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
-			 `((let ((limit (match-end 0)))
-			     (while (re-search-forward ,cef-re limit 'move)
-			       (c-put-font-lock-face (match-beginning 1)
-						     (match-end 1)
-						     c-preprocessor-face-name)))
-			   (goto-char (match-end ,(1+ ncle-depth)))))))))
+
+		    `((,(c-make-font-lock-context-search-function
+			 `(,(concat noncontinued-line-end
+				    (c-lang-const c-opt-cpp-prefix)
+				    ced-re ; 1 + ncle-depth
+				    ;; Match the whole logical line to look
+				    ;; for the functions in.
+				    "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
+			   ((let ((limit (match-end 0)))
+			      (while (re-search-forward ,cef-re limit 'move)
+				(c-put-font-lock-face (match-beginning 1)
+						      (match-end 1)
+						      c-preprocessor-face-name)))
+			    (goto-char (match-end ,(1+ ncle-depth)))))
+			 `(in-cpp-expr
+			   (save-excursion (c-end-of-macro) (point))
+			   ,cef-re
+			   (1 c-preprocessor-face-name t)))))))
 
 	      ;; Fontify the directive names.
 	      (,(c-make-font-lock-search-function
@@ -752,6 +870,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (when (memq prop '(c-decl-id-start c-decl-type-start))
       (c-forward-syntactic-ws limit)
       (c-font-lock-declarators limit t (eq prop 'c-decl-type-start))))
+
+  (setq c-font-lock-context (c-guess-font-lock-context))
 
   nil)
 
