@@ -12,9 +12,16 @@ href="src/README">README</a> file in the tarball and <a
 href="installation.php">on-line</a>.  Older releases can be found <a
 href="http://prdownloads.sourceforge.net/cc-mode/">here</a>.
 
-<p>[Note: "5.31.4" and "5.31.5" denote the versions of CC Mode contained in
-  GNU Emacs 22.1 and 22.2.  These versions have not been released as
-  stand-alone versions here.]
+<p>[Note: "5.31.4", "5.31.5", "5.31.6" and "5.31.7" denote the versions of CC
+  Mode contained in several GNU Emacs releases.  These versions have not been
+  released as stand-alone versions here.  However, the
+  <a href="http://cc-mode.cvs.sourceforge.net/viewvc/cc-mode/cc-mode/">CVS
+  repository</a> remains the definitive version of CC Mode; it contains all
+  bug fixes and new features released with these GNU Emacs versions.  You can
+  usually <a href="anoncvs.php">load and run</a> these versions.
+<p>I currently (August 2009) intend to release a new version of CC Mode
+  "soon".  It may contain contain fixes for several difficult bugs currently
+  being worked on.]
 
 <p>You can also browse the <a href="src/">individual files</a>.
 
