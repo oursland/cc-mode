@@ -2873,8 +2873,8 @@ neither in a statement nor in a declaration context.  The regexp is
 tested at the beginning of every sexp in a suspected label,
 i.e. before \":\".  Only used if `c-recognize-colon-labels' is set."
   t (concat
-     ;; Don't allow string literals.
-     "[\"']\\|"
+     ;; Don't allow string literals.  Character constants are OK.
+     "\"\\|"
      ;; All keywords except `c-label-kwds' and `c-protection-kwds'.
      (c-make-keywords-re t
        (set-difference (c-lang-const c-keywords)
