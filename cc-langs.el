@@ -426,7 +426,7 @@ parameters \(point-min) and \(point-max)."
   awk 'c-awk-record-region-clear-NL)
 (c-lang-defvar c-get-state-before-change-function
 	       (c-lang-const c-get-state-before-change-function))
-  
+
 (c-lang-defconst c-before-font-lock-function
   "If non-nil, a function called just before font locking.
 Typically it will extend the region about to be fontified \(see
@@ -1529,6 +1529,7 @@ Note that an alternative if the second part doesn't hold is
 on one of the `*-decl-kwds' lists."
   t    nil
   c    '("struct" "union" "enum")
+  java '("class" "enum")
   c++  (append '("class" "typename")
 	       (c-lang-const c-type-prefix-kwds c)))
 
