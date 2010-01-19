@@ -469,6 +469,7 @@ which c-backward-sexp needs to be called twice to move backwards over."
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
 operator at the top level."
   t    (concat "[" c-alpha "_]")
+  java (concat "[" c-alpha "_@]")
   objc (concat "[" c-alpha "@]")
   pike (concat "[" c-alpha "_`]"))
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
