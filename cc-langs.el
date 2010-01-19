@@ -343,7 +343,7 @@ The syntax tables aren't stored directly since they're quite large."
        (let ((table (make-syntax-table)))
 	 (c-populate-syntax-table table)
 	 ;; Mode specific syntaxes.
-	 ,(cond ((c-major-mode-is 'objc-mode)
+	 ,(cond ((or (c-major-mode-is 'objc-mode) (c-major-mode-is 'java-mode))
 		 ;; Let '@' be part of symbols in ObjC to cope with
 		 ;; its compiler directives as single keyword tokens.
 		 ;; This is then necessary since it's assumed that
@@ -390,6 +390,8 @@ the new syntax, as accepted by `modify-syntax-entry'."
   t    '((?_ . "w") (?$ . "w"))
   objc (append '((?@ . "w"))
 	       (c-lang-const c-identifier-syntax-modifications))
+  java (append '((?@ . "w"))
+               (c-lang-const c-identifier-syntax-modifications))
   awk  '((?_ . "w")))
 (c-lang-defvar c-identifier-syntax-modifications
   (c-lang-const c-identifier-syntax-modifications))
@@ -821,7 +823,7 @@ since CC Mode treats every identifier as an expression."
 
       ;; Primary.
       ,@(c-lang-const c-identifier-ops)
-      ,@(cond ((c-major-mode-is 'c++-mode)
+      ,@(cond ((or (c-major-mode-is 'c++-mode) (c-major-mode-is 'java-mode))
 	       `((postfix-if-paren "<" ">"))) ; Templates.
 	      ((c-major-mode-is 'pike-mode)
 	       `((prefix "global" "predef")))
@@ -1591,7 +1593,7 @@ following identifier as a type; the keyword must also be present on
   c++  '("class" "struct" "union")
   objc '("struct" "union"
 	 "@interface" "@implementation" "@protocol")
-  java '("class" "interface")
+  java '("class" "@interface" "interface")
   idl  '("component" "eventtype" "exception" "home" "interface" "struct"
 	 "union" "valuetype"
 	 ;; In CORBA PSDL:

@@ -1313,7 +1313,7 @@ Key bindings:
   ;; add bindings which are only useful for Java
   )
 
-;; Regexp trying to describe the beginning of a Java top-level
+;; Regexp trying to describe the beginning of a xJava top-level
 ;; definition.  This is not used by CC Mode, nor is it maintained
 ;; since it's practically impossible to write a regexp that reliably
 ;; matches such a construct.  Other tools are necessary.
