@@ -1355,6 +1355,7 @@ Key bindings:
   (easy-menu-add c-java-menu)
   (cc-imenu-init cc-imenu-java-generic-expression)
   (c-run-mode-hooks 'c-mode-common-hook 'java-mode-hook)
+  (font-lock-add-keywords nil '(("\\(@[A-Z][a-zA-Z0-9_]*\\)" 1 'java-annotation-face t)) t)
   (c-update-modeline))
 
 
