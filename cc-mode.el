@@ -992,8 +992,10 @@ Note that the style variables are always made local to the buffer."
 	;; larger than (beg end).
 	(setq c-new-BEG beg
 	      c-new-END end)
-	(if c-get-state-before-change-function
-	    (funcall c-get-state-before-change-function beg end))
+	(if c-get-state-before-change-functions
+	    (mapc (lambda (fn)
+		    (funcall fn beg end))
+		  c-get-state-before-change-functions))
 	))))
 
 (defun c-after-change (beg end old-len)
