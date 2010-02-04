@@ -5035,7 +5035,7 @@ comment at the start of cc-engine.el for more info."
   ;; region we must work on.
   ;;
   ;; This function is called from before-change-functions (via
-  ;; c-get-state-before-change-function).  Thus the buffer is widened,
+  ;; c-get-state-before-change-functions).  Thus the buffer is widened,
   ;; and point is undefined, both at entry and exit.
   ;;
   ;; FIXME!!!  This routine ignores the possibility of macros entirely.
