@@ -370,7 +370,12 @@ The syntax tables aren't stored directly since they're quite large."
 	 (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
 	   (modify-syntax-entry ?< "(>" table)
 	   (modify-syntax-entry ?> ")<" table)
-	   table)))
+	   table))
+  java `(lambda ()
+       (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
+         (modify-syntax-entry ?< "(>" table)
+         (modify-syntax-entry ?> ")<" table)
+         table)))
 (c-lang-defvar c++-template-syntax-table
   (and (c-lang-const c++-make-template-syntax-table)
        (funcall (c-lang-const c++-make-template-syntax-table))))
@@ -1594,7 +1599,7 @@ following identifier as a type; the keyword must also be present on
   c++  '("class" "struct" "union")
   objc '("struct" "union"
 	 "@interface" "@implementation" "@protocol")
-  java '("class" "@interface" "interface")
+  java '("class" "@interface" "interface" "super")
   idl  '("component" "eventtype" "exception" "home" "interface" "struct"
 	 "union" "valuetype"
 	 ;; In CORBA PSDL:
@@ -2461,7 +2466,7 @@ more info."
   ;; in all languages except Java for when a cpp macro definition
   ;; begins with a declaration.
   t "\\([\{\}\(\);,]+\\)"
-  java "\\([\{\}\(;,]+\\)"
+  java "\\([\{\}\(;,<]+\\)"
   ;; Match "<" in C++ to get the first argument in a template arglist.
   ;; In that case there's an additional check in `c-find-decl-spots'
   ;; that it got open paren syntax.
@@ -3073,4 +3078,6 @@ evaluated and should not be quoted."
 (cc-provide 'cc-langs)
 
 ;;; arch-tag: 1ab57482-cfc2-4c5b-b628-3539c3098822
+
 ;;; cc-langs.el ends here
+

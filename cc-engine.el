@@ -4380,6 +4380,7 @@ comment at the start of cc-engine.el for more info."
       (goto-char safe-pos)
       t)))
 
+
 (defun c-forward-<>-arglist (all-types)
   ;; The point is assumed to be at a "<".  Try to treat it as the open
   ;; paren of an angle bracket arglist and move forward to the the
@@ -4486,15 +4487,8 @@ comment at the start of cc-engine.el for more info."
 			       ;; `c-record-found-types'.
 			       (setq c-record-found-types
 				     orig-record-found-types))))))
-
 		  (setq pos (point))
-		  (or (when (eq (char-after) ?>)
-			;; Must check for '>' at the very start separately,
-			;; since the regexp below has to avoid ">>" without
-			;; using \\=.
-			(forward-char)
-			t)
-
+		  (or
 		      ;; Note: These regexps exploit the match order in \| so
 		      ;; that "<>" is matched by "<" rather than "[^>:-]>".
 		      (c-syntactic-re-search-forward

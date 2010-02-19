@@ -1575,7 +1575,7 @@ names)."))
   :group 'c)
 
 (defcustom java-font-lock-extra-types
-  (list (concat "[" c-upper "]\\sw*[" c-lower "]\\sw*"))
+  (list (concat "[" c-upper "]\\sw*[" c-lower "]\\sw"))
   (c-make-font-lock-extra-types-blurb "Java" "java-mode" (concat
 "For example, a value of (\"[" c-upper "]\\\\sw*[" c-lower "]\\\\sw*\") means
 capitalized words are treated as type names (the requirement for a

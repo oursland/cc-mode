@@ -403,7 +403,7 @@ preferably use the `c-mode-menu' language constant directly."
 ;; temporary changes in some font lock support modes, causing extra
 ;; unnecessary work and font lock glitches due to interactions between
 ;; various text properties.
-;; 
+;;
 ;; (2007-02-12): The macro `combine-after-change-calls' ISN'T used any
 ;; more.
 
@@ -444,18 +444,18 @@ preferably use the `c-mode-menu' language constant directly."
 			      end (point))))))))
 
 ;; c-maybe-stale-found-type records a place near the region being
-;; changed where an element of `found-types' might become stale.  It 
+;; changed where an element of `found-types' might become stale.  It
 ;; is set in c-before-change and is either nil, or has the form:
 ;;
 ;;   (c-decl-id-start "foo" 97 107  " (* ooka) " "o"), where
-;;   
+;;
 ;; o - `c-decl-id-start' is the c-type text property value at buffer
 ;;   pos 96.
-;; 
+;;
 ;; o - 97 107 is the region potentially containing the stale type -
 ;;   this is delimited by a non-nil c-type text property at 96 and
 ;;   either another one or a ";", "{", or "}" at 107.
-;; 
+;;
 ;; o - " (* ooka) " is the (before change) buffer portion containing
 ;;   the suspect type (here "ooka").
 ;;
@@ -512,7 +512,7 @@ that requires a literal mode spec at compile time."
 
   (when (or c-recognize-<>-arglists
 	    (c-major-mode-is 'awk-mode)
-	    (c-major-mode-is '(c-mode c++-mode objc-mode)))
+	    (c-major-mode-is '(java-mode c-mode c++-mode objc-mode)))
     ;; We'll use the syntax-table text property to change the syntax
     ;; of some chars for this language, so do the necessary setup for
     ;; that.
@@ -548,7 +548,7 @@ that requires a literal mode spec at compile time."
   ;; In Emacs 21 and later it's possible to turn off the ad-hoc
   ;; heuristic that open parens in column 0 are defun starters.  Since
   ;; we have c-state-cache, that heuristic isn't useful and only causes
-  ;; trouble, so turn it off. 
+  ;; trouble, so turn it off.
 ;;   (when (memq 'col-0-paren c-emacs-features)
 ;;     (make-local-variable 'open-paren-in-column-0-is-defun-start)
 ;;     (setq open-paren-in-column-0-is-defun-start nil))
@@ -842,15 +842,15 @@ Note that the style variables are always made local to the buffer."
   ;; (i) Extend the font lock region to cover all changed preprocessor
   ;; regions; it sets the variables `c-new-BEG' and `c-new-END' to the new
   ;; boundaries.
-  ;; 
+  ;;
   ;; (ii) "Neutralize" every preprocessor line wholly or partially in the
   ;; extended changed region.  "Restore" lines which were CPP lines before the
   ;; change and are no longer so; these can be located from the Buffer local
   ;; variables `c-old-BOM' and `c-old-EOM'.
-  ;; 
+  ;;
   ;; That is, set syntax-table properties on characters that would otherwise
   ;; interact syntactically with those outside the CPP line(s).
-  ;; 
+  ;;
   ;; This function is called from an after-change function, BEGG ENDD and
   ;; OLD-LEN being the standard parameters.  It prepares the buffer for font
   ;; locking, hence must get called before `font-lock-after-change-function'.
@@ -861,7 +861,7 @@ Note that the style variables are always made local to the buffer."
   ;; This function is the C/C++/ObjC value of `c-before-font-lock-function'.
   ;;
   ;; Note: SPEED _MATTERS_ IN THIS FUNCTION!!!
-  ;; 
+  ;;
   ;; This function might make hidden buffer changes.
   (c-save-buffer-state (limits mbeg+1)
     ;; First determine the region, (c-new-BEG c-new-END), which will get font
@@ -906,7 +906,7 @@ Note that the style variables are always made local to the buffer."
   ;; otherwise used only to remove stale entries from the `c-found-types'
   ;; cache, and to record entries which a `c-after-change' function might
   ;; confirm as stale.
-  ;; 
+  ;;
   ;; Note that this function must be FAST rather than accurate.  Note
   ;; also that it only has any effect when font locking is enabled.
   ;; We exploit this by checking for font-lock-*-face instead of doing
@@ -1313,7 +1313,7 @@ Key bindings:
   ;; add bindings which are only useful for Java
   )
 
-;; Regexp trying to describe the beginning of a xJava top-level
+;; Regexp trying to describe the beginning of a Java top-level
 ;; definition.  This is not used by CC Mode, nor is it maintained
 ;; since it's practically impossible to write a regexp that reliably
 ;; matches such a construct.  Other tools are necessary.

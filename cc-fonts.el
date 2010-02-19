@@ -755,6 +755,30 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   nil)
 
+(defun c-font-lock-java-generics (limit)
+  ;;TODO - once you find a type, highlight it in rest of buffer - c-add-type?
+  (while (search-forward "<" limit t)
+    (let ((num-recursive-templates 1)
+          (start (1- (point))))
+      (while (and (not (= 0 num-recursive-templates))
+                  (re-search-forward "[<>]" limit t))
+        (backward-char 1)
+        (if (looking-at "<")
+            (setq num-recursive-templates (1+ num-recursive-templates))
+          (setq num-recursive-templates (1- num-recursive-templates)))
+        (forward-char 1))
+        ;;Inside start and end, fontify as type everything matching the regexp:
+      (let ((end (1- (point))))
+        (goto-char start)
+        (while (re-search-forward "\\([a-zA-Z_][a-zA-Z_0-9]*\\)" end t)
+          (match-string 1)
+          (let ((match-begin (match-beginning 0))
+                (match-end (match-end 0)))
+            (unless (get-text-property match-begin 'face)
+              (c-put-font-lock-face match-begin match-end 'font-lock-type-face)
+              (c-add-type match-begin match-end))))
+        (goto-char (1+ end))))))
+
 (defun c-font-lock-<>-arglists (limit)
   ;; This function will be called from font-lock for a region bounded by POINT
   ;; and LIMIT, as though it were to identify a keyword for
@@ -774,7 +798,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (cc-eval-when-compile
 	   (boundp 'parse-sexp-lookup-properties)))
 	(c-parse-and-markup-<>-arglists t)
-	c-restricted-<>-arglists
+	nc-restricted-<>-arglists
 	id-start id-end id-face pos kwd-sym)
 
     (while (and (< (point) limit)
@@ -1366,6 +1390,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
 
+      ;,@(when (c-major-mode-is 'java-mode)
+          ;`(c-font-lock-java-generics))
+
       ;; The first two rules here mostly find occurences that
       ;; `c-font-lock-declarations' has found already, but not
       ;; declarations containing blocks in the type (see note below).
@@ -1695,7 +1722,7 @@ need for `c-font-lock-extra-types'.")
   ;; FIXME!!!  Put in a comment about the context of this function's
   ;; invocation.  I think it's called as an ANCHORED-MATCHER within an
   ;; ANCHORED-HIGHLIGHTER.  (2007/2/10).
-  ;; 
+  ;;
   ;; Assuming point is after a "new" word, check that it isn't inside
   ;; a string or comment, and if so try to fontify the type in the
   ;; allocation expression.  Nil is always returned.
@@ -2182,7 +2209,7 @@ need for `pike-font-lock-extra-types'.")
 (defconst gtkdoc-font-lock-doc-comments
   (let ((symbol "[a-zA-Z0-9_]+")
 	(header "^ \\* "))
-    `((,(concat header "\\("     symbol "\\):[ \t]*$") 
+    `((,(concat header "\\("     symbol "\\):[ \t]*$")
        1 ,c-doc-markup-face-name prepend nil)
       (,(concat                  symbol     "()")
        0 ,c-doc-markup-face-name prepend nil)
