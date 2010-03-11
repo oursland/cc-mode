@@ -510,6 +510,9 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'fill-paragraph-function)
   (setq fill-paragraph-function 'c-fill-paragraph)
 
+  ;; Initialise the cache of brace pairs, and opening braces/brackets/parens.
+  (c-state-cache-init)
+
   (when (or c-recognize-<>-arglists
 	    (c-major-mode-is 'awk-mode)
 	    (c-major-mode-is '(java-mode c-mode c++-mode objc-mode)))
@@ -531,19 +534,15 @@ that requires a literal mode spec at compile time."
       (make-local-variable 'lookup-syntax-properties)
       (setq lookup-syntax-properties t)))
 
-  ;; Use this in Emacs 21 to avoid meddling with the rear-nonsticky
+  ;; Use this in Emacs 21+ to avoid meddling with the rear-nonsticky
   ;; property on each character.
   (when (boundp 'text-property-default-nonsticky)
     (make-local-variable 'text-property-default-nonsticky)
-    (let ((elem (assq 'syntax-table text-property-default-nonsticky)))
-      (if elem
-	  (setcdr elem t)
-	(setq text-property-default-nonsticky
-	      (cons '(syntax-table . t)
-		    text-property-default-nonsticky))))
-    (setq text-property-default-nonsticky
-	  (cons '(c-type . t)
-		text-property-default-nonsticky)))
+    (mapc (lambda (tprop)
+	    (unless (assq tprop text-property-default-nonsticky)
+	      (setq text-property-default-nonsticky
+		    (cons `(,tprop . t) text-property-default-nonsticky))))
+	  '(syntax-table category c-type)))
 
   ;; In Emacs 21 and later it's possible to turn off the ad-hoc
   ;; heuristic that open parens in column 0 are defun starters.  Since
@@ -634,8 +633,10 @@ compatible with old code; callers should always specify it."
   (save-restriction
     (widen)
     (save-excursion
-      (if c-get-state-before-change-function
-	  (funcall c-get-state-before-change-function (point-min) (point-max)))
+      (if c-get-state-before-change-functions
+	  (mapc (lambda (fn)
+		  (funcall fn (point-min) (point-max)))
+		c-get-state-before-change-functions))
       (if c-before-font-lock-function
 	  (funcall c-before-font-lock-function (point-min) (point-max)
 		   (- (point-max) (point-min))))))
@@ -800,8 +801,8 @@ Note that the style variables are always made local to the buffer."
   ;; has already been widened, and match-data saved.  The return value is
   ;; meaningless.
   ;;
-  ;; This function is the C/C++/ObjC value of
-  ;; `c-get-state-before-change-function' and is called exclusively as a
+  ;; This function is in the C/C++/ObjC values of
+  ;; `c-get-state-before-change-functions' and is called exclusively as a
   ;; before change function.
   (goto-char beg)
   (c-beginning-of-macro)
@@ -838,7 +839,7 @@ Note that the style variables are always made local to the buffer."
 	      t)
 	     (t nil)))))))
 
-(defun c-extend-and-neutralize-syntax-in-CPP (begg endd old-len)
+(defun c-neutralize-syntax-in-and-mark-CPP (begg endd old-len)
   ;; (i) Extend the font lock region to cover all changed preprocessor
   ;; regions; it sets the variables `c-new-BEG' and `c-new-END' to the new
   ;; boundaries.
@@ -847,6 +848,11 @@ Note that the style variables are always made local to the buffer."
   ;; extended changed region.  "Restore" lines which were CPP lines before the
   ;; change and are no longer so; these can be located from the Buffer local
   ;; variables `c-old-BOM' and `c-old-EOM'.
+  ;;
+  ;; (iii) Mark every CPP construct by placing a `category' property value
+  ;; `c-cpp-delimiter' at its start and end.  The marked characters are the
+  ;; opening # and usually the terminating EOL, but sometimes the character
+  ;; before a comment/string delimiter.
   ;;
   ;; That is, set syntax-table properties on characters that would otherwise
   ;; interact syntactically with those outside the CPP line(s).
@@ -863,30 +869,32 @@ Note that the style variables are always made local to the buffer."
   ;; Note: SPEED _MATTERS_ IN THIS FUNCTION!!!
   ;;
   ;; This function might make hidden buffer changes.
-  (c-save-buffer-state (limits mbeg+1)
+  (c-save-buffer-state (limits)
     ;; First determine the region, (c-new-BEG c-new-END), which will get font
     ;; locked.  It might need "neutralizing".  This region may not start
     ;; inside a string, comment, or macro.
     (goto-char c-old-BOM)	  ; already set to old start of macro or begg.
     (setq c-new-BEG
-	  (if (setq limits (c-literal-limits))
+	  (if (setq limits (c-state-literal-at (point)))
 	      (cdr limits)	    ; go forward out of any string or comment.
 	    (point)))
 
     (goto-char endd)
-    (if (setq limits (c-literal-limits))
+    (if (setq limits (c-state-literal-at (point)))
 	(goto-char (car limits)))  ; go backward out of any string or comment.
     (if (c-beginning-of-macro)
 	(c-end-of-macro))
     (setq c-new-END (max (+ (- c-old-EOM old-len) (- endd begg))
 		   (point)))
 
-    ;; Clear any existing punctuation properties.
+    ;; Clear all old relevant properties.
     (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
+    (c-clear-char-property-with-value c-new-BEG c-new-END 'category 'c-cpp-delimiter)
+    ;; FIXME!!!  What about the "<" and ">" category properties?  2009-11-16
 
     ;; Add needed properties to each CPP construct in the region.
     (goto-char c-new-BEG)
-    (let ((pps-position c-new-BEG)  pps-state)
+    (let ((pps-position c-new-BEG)  pps-state mbeg)
       (while (and (< (point) c-new-END)
 		  (search-forward-regexp c-anchored-cpp-prefix c-new-END t))
 	;; If we've found a "#" inside a string/comment, ignore it.
@@ -895,14 +903,20 @@ Note that the style variables are always made local to the buffer."
 	      pps-position (point))
 	(unless (or (nth 3 pps-state)	; in a string?
 		    (nth 4 pps-state))	; in a comment?
-	  (setq mbeg+1 (point))
-	  (c-end-of-macro)	  ; Do we need to go forward 1 char here?  No!
-	  (c-neutralize-CPP-line mbeg+1 (point))
-	  (setq pps-position (point))))))) ; no need to update pps-state.
+	  (goto-char (match-beginning 0))
+	  (setq mbeg (point))
+	  (if (> (c-syntactic-end-of-macro) mbeg)
+	      (progn
+		(c-neutralize-CPP-line mbeg (point))
+		(c-set-cpp-delimiters mbeg (point))
+		;(setq pps-position (point))
+		)
+	    (forward-line))	      ; no infinite loop with, e.g., "#//"
+	  )))))
 
 (defun c-before-change (beg end)
   ;; Function to be put in `before-change-functions'.  Primarily, this calls
-  ;; the language dependent `c-get-state-before-change-function'.  It is
+  ;; the language dependent `c-get-state-before-change-functions'.  It is
   ;; otherwise used only to remove stale entries from the `c-found-types'
   ;; cache, and to record entries which a `c-after-change' function might
   ;; confirm as stale.
@@ -980,8 +994,10 @@ Note that the style variables are always made local to the buffer."
 	;; larger than (beg end).
 	(setq c-new-BEG beg
 	      c-new-END end)
-	(if c-get-state-before-change-function
-	    (funcall c-get-state-before-change-function beg end))
+	(if c-get-state-before-change-functions
+	    (mapc (lambda (fn)
+		    (funcall fn beg end))
+		  c-get-state-before-change-functions))
 	))))
 
 (defun c-after-change (beg end old-len)
@@ -1014,6 +1030,14 @@ Note that the style variables are always made local to the buffer."
 	  (setq end (point-max))
 	  (when (> beg end)
 	    (setq beg end)))
+
+	;; C-y is capable of spuriously converting category properties
+	;; c-</>-as-paren-syntax into hard syntax-table properties.  Remove
+	;; these when it happens.
+	(c-clear-char-property-with-value beg end 'syntax-table
+					  c-<-as-paren-syntax)
+	(c-clear-char-property-with-value beg end 'syntax-table
+					  c->-as-paren-syntax)
 
 	(c-trim-found-types beg end old-len) ; maybe we don't need all of these.
 	(c-invalidate-sws-region-after beg end)
