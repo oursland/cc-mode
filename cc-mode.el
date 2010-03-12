@@ -593,6 +593,7 @@ that requires a literal mode spec at compile time."
   ;; don't become invalid due to buffer changes.
   (make-local-hook 'before-change-functions)
   (add-hook 'before-change-functions 'c-before-change nil t)
+  (setq c-just-done-before-change nil)
   (make-local-hook 'after-change-functions)
   (add-hook 'after-change-functions 'c-after-change nil t)
   (when (boundp 'font-lock-extend-after-change-region-function)
@@ -793,6 +794,14 @@ Note that the style variables are always made local to the buffer."
 (defvar c-old-EOM 0)
 (make-variable-buffer-local 'c-old-EOM)
 
+(defvar c-just-done-before-change nil)
+(make-variable-buffer-local 'c-just-done-before-change)
+;; This variable is set to t by `c-before-change' and to nil by
+;; `c-after-change'.  It is used to detect a spurious invocation of
+;; `before-change-functions' directly following on from a correct one.  This
+;; happens in some Emacsen, for example when `basic-save-buffer' does (insert
+;; ?\n) when `require-final-newline' is non-nil.
+
 (defun c-extend-region-for-CPP (beg end)
   ;; Set c-old-BOM or c-old-EOM respectively to BEG, END, each extended to the
   ;; beginning/end of any preprocessor construct they may be in.
@@ -930,75 +939,78 @@ Note that the style variables are always made local to the buffer."
   ;; it/them from the cache.  Don't worry about being inside a string
   ;; or a comment - "wrongly" removing a symbol from `c-found-types'
   ;; isn't critical.
-  (setq c-maybe-stale-found-type nil)
-  (save-restriction
-    (save-match-data
-      (widen)
-      (save-excursion
-	;; Are we inserting/deleting stuff in the middle of an identifier?
-	(c-unfind-enclosing-token beg)
-	(c-unfind-enclosing-token end)
-	;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
-	(when (< beg end)
-	  (c-unfind-coalesced-tokens beg end))
-	;; Are we (potentially) disrupting the syntactic context which
-	;; makes a type a type?  E.g. by inserting stuff after "foo" in
-	;; "foo bar;", or before "foo" in "typedef foo *bar;"?
-	;;
-	;; We search for appropriate c-type properties "near" the change.
-	;; First, find an appropriate boundary for this property search.
-	(let (lim
-	      type type-pos
-	      marked-id term-pos
-	      (end1
-	       (or (and (eq (get-text-property end 'face) 'font-lock-comment-face)
-			(previous-single-property-change end 'face))
-		   end)))
-	  (when (>= end1 beg) ; Don't hassle about changes entirely in comments.
-	    ;; Find a limit for the search for a `c-type' property
-	    (while
-		(and (/= (skip-chars-backward "^;{}") 0)
-		     (> (point) (point-min))
-		     (memq (c-get-char-property (1- (point)) 'face)
-			   '(font-lock-comment-face font-lock-string-face))))
-	    (setq lim (max (point-min) (1- (point))))
+  (unless c-just-done-before-change   ; guard against a spurious second
+					; invocation of before-change-functions.
+    (setq c-just-done-before-change t)
+    (setq c-maybe-stale-found-type nil)
+    (save-restriction
+      (save-match-data
+	(widen)
+	(save-excursion
+	  ;; Are we inserting/deleting stuff in the middle of an identifier?
+	  (c-unfind-enclosing-token beg)
+	  (c-unfind-enclosing-token end)
+	  ;; Are we coalescing two tokens together, e.g. "fo o" -> "foo"?
+	  (when (< beg end)
+	    (c-unfind-coalesced-tokens beg end))
+	  ;; Are we (potentially) disrupting the syntactic context which
+	  ;; makes a type a type?  E.g. by inserting stuff after "foo" in
+	  ;; "foo bar;", or before "foo" in "typedef foo *bar;"?
+	  ;;
+	  ;; We search for appropriate c-type properties "near" the change.
+	  ;; First, find an appropriate boundary for this property search.
+	  (let (lim
+		type type-pos
+		marked-id term-pos
+		(end1
+		 (or (and (eq (get-text-property end 'face) 'font-lock-comment-face)
+			  (previous-single-property-change end 'face))
+		     end)))
+	    (when (>= end1 beg) ; Don't hassle about changes entirely in comments.
+	      ;; Find a limit for the search for a `c-type' property
+	      (while
+		  (and (/= (skip-chars-backward "^;{}") 0)
+		       (> (point) (point-min))
+		       (memq (c-get-char-property (1- (point)) 'face)
+			     '(font-lock-comment-face font-lock-string-face))))
+	      (setq lim (max (point-min) (1- (point))))
 
-	    ;; Look for the latest `c-type' property before end1
-	    (when (and (> end1 (point-min))
-		       (setq type-pos
-			     (if (get-text-property (1- end1) 'c-type)
-				 end1
-			       (previous-single-property-change end1 'c-type nil lim))))
-	      (setq type (get-text-property (max (1- type-pos) lim) 'c-type))
+	      ;; Look for the latest `c-type' property before end1
+	      (when (and (> end1 (point-min))
+			 (setq type-pos
+			       (if (get-text-property (1- end1) 'c-type)
+				   end1
+				 (previous-single-property-change end1 'c-type nil lim))))
+		(setq type (get-text-property (max (1- type-pos) lim) 'c-type))
 
-	      (when (memq type '(c-decl-id-start c-decl-type-start))
-		;; Get the identifier, if any, that the property is on.
-		(goto-char (1- type-pos))
-		(setq marked-id
-		      (when (looking-at "\\(\\sw\\|\\s_\\)")
-			(c-beginning-of-current-token)
-			(buffer-substring-no-properties (point) type-pos)))
+		(when (memq type '(c-decl-id-start c-decl-type-start))
+		  ;; Get the identifier, if any, that the property is on.
+		  (goto-char (1- type-pos))
+		  (setq marked-id
+			(when (looking-at "\\(\\sw\\|\\s_\\)")
+			  (c-beginning-of-current-token)
+			  (buffer-substring-no-properties (point) type-pos)))
 
-		(goto-char end1)
-		(skip-chars-forward "^;{}") ; FIXME!!!  loop for comment, maybe
-		(setq lim (point))
-		(setq term-pos
-		      (or (next-single-property-change end 'c-type nil lim) lim))
-		(setq c-maybe-stale-found-type
-		      (list type marked-id
-			    type-pos term-pos
-			    (buffer-substring-no-properties type-pos term-pos)
-			    (buffer-substring-no-properties beg end)))))))
+		  (goto-char end1)
+		  (skip-chars-forward "^;{}") ; FIXME!!!  loop for comment, maybe
+		  (setq lim (point))
+		  (setq term-pos
+			(or (next-single-property-change end 'c-type nil lim) lim))
+		  (setq c-maybe-stale-found-type
+			(list type marked-id
+			      type-pos term-pos
+			      (buffer-substring-no-properties type-pos term-pos)
+			      (buffer-substring-no-properties beg end)))))))
 
-	;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
-	;; larger than (beg end).
-	(setq c-new-BEG beg
-	      c-new-END end)
-	(if c-get-state-before-change-functions
-	    (mapc (lambda (fn)
-		    (funcall fn beg end))
-		  c-get-state-before-change-functions))
-	))))
+	  ;; (c-new-BEG c-new-END) will be the region to fontify.  It may become
+	  ;; larger than (beg end).
+	  (setq c-new-BEG beg
+		c-new-END end)
+	  (if c-get-state-before-change-functions
+	      (mapc (lambda (fn)
+		      (funcall fn beg end))
+		    c-get-state-before-change-functions))
+	  )))))
 
 (defun c-after-change (beg end old-len)
   ;; Function put on `after-change-functions' to adjust various caches
@@ -1014,6 +1026,7 @@ Note that the style variables are always made local to the buffer."
   ;; This calls the language variable c-before-font-lock-function, if non nil.
   ;; This typically sets `syntax-table' properties.
 
+  (setq c-just-done-before-change nil)
   (c-save-buffer-state ()
     ;; When `combine-after-change-calls' is used we might get calls
     ;; with regions outside the current narrowing.  This has been
