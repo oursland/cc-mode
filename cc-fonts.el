@@ -195,6 +195,11 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
+
+(defvar c-annotation-face (make-face 'c-annotation-face)
+  "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
+(set-face-foreground 'c-annotation-face "blue")
+
 (eval-and-compile
   ;; We need the following functions during compilation since they're
   ;; called when the `c-lang-defconst' initializers are evaluated.
@@ -1300,6 +1305,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		      (c-font-lock-objc-method)))
 		  nil))
 	      (goto-char (match-end 1))))))
+
 
       ;; Fontify all type names and the identifiers in the
       ;; declarations they might start.  Use eval here since

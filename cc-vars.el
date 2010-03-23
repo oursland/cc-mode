@@ -1598,10 +1598,6 @@ names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
-;; Face for highlighting Java annotation
-(make-face 'java-annotation-face)
-(set-face-foreground 'java-annotation-face "blue")
-
 
 ;; Non-customizable variables, still part of the interface to CC Mode
 (defvar c-file-style nil
