@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.16 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.17 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -6421,13 +6421,15 @@ or destructor declarations in a class definition, etc.  Sometimes it
 is better to write a custom Line-up Function instead (@pxref{Custom
 Line-Up}).
 
-When the indentation engine calls this hook, the variable
-@code{c-syntactic-context} is bound to the current syntactic context
-(i.e. what you would get by typing @kbd{C-c C-s} on the source line.
-@xref{Custom Braces}.).  Note that you should not change point or mark
-inside a @code{c-special-indent-hook} function, i.e. you'll probably
-want to wrap your function in a @code{save-excursion}@footnote{The
-numerical value returned by @code{point} will change if you change the
+The indentation engine calls each function on this hook with no
+parameters, with point somewhere on the pertinent line, and with the
+variable @code{c-syntactic-context} bound to the current syntactic
+context (i.e. what you would get by typing @kbd{C-c C-s} on the source
+line.  @xref{Custom Braces}.).  Note that you should not change
+@code{c-syntactic-context} or point or mark inside a
+@code{c-special-indent-hook} function; thus you'll probably want to
+wrap your function in a @code{save-excursion}@footnote{The numerical
+value returned by @code{point} will change if you change the
 indentation of the line within a @code{save-excursion} form, but point
 itself will still be over the same piece of text.}.
 
