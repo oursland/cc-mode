@@ -909,8 +909,8 @@ since CC Mode treats every identifier as an expression."
 
       ;; Shift.
       (left-assoc "<<" ">>"
-		  ,@(when (c-major-mode-is 'java-mode)
-		      '(">>>")))
+                  ,@(when (c-major-mode-is 'java-mode)
+                      '(">>>")))
 
       ;; Relational.
       (left-assoc "<" ">" "<=" ">="
@@ -1119,15 +1119,21 @@ operators."
 		    t
 		    "\\`<."
 		    (lambda (op) (substring op 1)))))
+
 (c-lang-defvar c-<-op-cont-regexp (c-lang-const c-<-op-cont-regexp))
 
 (c-lang-defconst c->-op-cont-regexp
   ;; Regexp matching the second and subsequent characters of all
   ;; multicharacter tokens that begin with ">".
   t (c-make-keywords-re nil
+     (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+                   t
+                   "\\`>."
+                   (lambda (op) (substring op 1))))
+  java (c-make-keywords-re nil
       (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
 		    t
-		    "\\`>."
+		    "\\`>[^>]\\|\\`>>[^>]"
 		    (lambda (op) (substring op 1)))))
 (c-lang-defvar c->-op-cont-regexp (c-lang-const c->-op-cont-regexp))
 
@@ -1952,7 +1958,7 @@ or variable identifier (that's being defined)."
   t    nil
   c++  '("operator")
   objc '("@class")
-  java '("import" "new" "extends" "implements" "throws")
+  java '("import" "new" "extends" "super" "implements" "throws")
   idl  '("manages" "native" "primarykey" "supports"
 	 ;; In CORBA PSDL:
 	 "as" "implements" "of" "scope")
@@ -2757,7 +2763,7 @@ It's undefined whether identifier syntax (see `c-identifier-syntax-table')
 is in effect or not."
   t nil
   (c c++ objc pike) "\\(\\.\\.\\.\\)"
-  java (concat "\\(\\[" (c-lang-const c-simple-ws) "*\\]\\)"))
+  java (concat "\\(\\[" (c-lang-const c-simple-ws) "*\\]\\|\\.\\.\\.\\)"))
 (c-lang-defvar c-opt-type-suffix-key (c-lang-const c-opt-type-suffix-key))
 
 (c-lang-defvar c-known-type-key

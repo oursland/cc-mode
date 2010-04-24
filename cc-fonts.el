@@ -761,30 +761,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   nil)
 
-(defun c-font-lock-java-generics (limit)
-  ;;TODO - once you find a type, highlight it in rest of buffer - c-add-type?
-  (while (search-forward "<" limit t)
-    (let ((num-recursive-templates 1)
-          (start (1- (point))))
-      (while (and (not (= 0 num-recursive-templates))
-                  (re-search-forward "[<>]" limit t))
-        (backward-char 1)
-        (if (looking-at "<")
-            (setq num-recursive-templates (1+ num-recursive-templates))
-          (setq num-recursive-templates (1- num-recursive-templates)))
-        (forward-char 1))
-        ;;Inside start and end, fontify as type everything matching the regexp:
-      (let ((end (1- (point))))
-        (goto-char start)
-        (while (re-search-forward "\\([a-zA-Z_][a-zA-Z_0-9]*\\)" end t)
-          (match-string 1)
-          (let ((match-begin (match-beginning 0))
-                (match-end (match-end 0)))
-            (unless (get-text-property match-begin 'face)
-              (c-put-font-lock-face match-begin match-end 'font-lock-type-face)
-              (c-add-type match-begin match-end))))
-        (goto-char (1+ end))))))
-
 (defun c-font-lock-<>-arglists (limit)
   ;; This function will be called from font-lock for a region bounded by POINT
   ;; and LIMIT, as though it were to identify a keyword for
@@ -1354,6 +1330,17 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		   (c-forward-syntactic-ws))
 		 (goto-char (match-end 1)))))))
 
+      ;; Fontify Java annotations
+      ,@(when (c-major-mode-is 'java-mode)
+          (c-make-font-lock-search-function
+           "\\(@[a-zA-Z0-9_]+\\)"
+           '(1 'c-annotation-face t)
+           '((c-font-lock-declarators limit t nil)
+             (save-match-data
+               (goto-char (match-end 1))
+               (c-forward-syntactic-ws))
+             (goto-char (match-end 1)))))
+
       ;; Fontify generic colon labels in languages that support them.
       ,@(when (c-lang-const c-recognize-colon-labels)
 	  `(c-font-lock-labels))))
@@ -1396,9 +1383,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; Fontify angle bracket arglists like templates in C++.
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
-
-      ;,@(when (c-major-mode-is 'java-mode)
-          ;`(c-font-lock-java-generics))
 
       ;; The first two rules here mostly find occurences that
       ;; `c-font-lock-declarations' has found already, but not
