@@ -4,8 +4,8 @@
 ;; Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
-;;             1998- Martin Stjernholm
-;;             1997-1999 Barry A. Warsaw
+;;	       1998- Martin Stjernholm
+;;	       1997-1999 Barry A. Warsaw
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    03-Jul-1997 (as cc-mode-19.el)
 ;; Version:    See cc-mode.el
@@ -20,7 +20,7 @@
 
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -74,7 +74,7 @@ change the list."
 (if (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
     (progn
       ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents CC
-      ;; Mode building.  Those in Emacs 21.[23] are not entirely
+      ;; Mode building.	 Those in Emacs 21.[23] are not entirely
       ;; accurate.  The following definition comes from Emacs's
       ;; regexp-opt.el CVS version 1.25 and is believed to be a
       ;; rigorously correct implementation.
@@ -116,7 +116,7 @@ in REGEXP."
       ))
 
 ;; Some XEmacs versions have a bug in which font-lock-compile-keywords
-;; overwrites the variable font-lock-keywords with its result.  This causes
+;; overwrites the variable font-lock-keywords with its result.	This causes
 ;; havoc when what the function is compiling is font-lock-SYNTACTIC-keywords,
 ;; hence....
 (eval-after-load "font-lock"
@@ -129,13 +129,13 @@ in REGEXP."
        "Compile KEYWORDS (a list) and return the list of compiled keywords.
 Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
        (if (eq (car-safe keywords) t)
-           keywords
-         (cons t (mapcar 'font-lock-compile-keyword keywords))))
+	   keywords
+	 (cons t (mapcar 'font-lock-compile-keyword keywords))))
      (defadvice font-lock-fontify-keywords-region (before c-compile-font-lock-keywords
-                                                          activate preactivate)
+							  activate preactivate)
        (unless (eq (car-safe font-lock-keywords) t)
-         (setq font-lock-keywords
-               (font-lock-compile-keywords font-lock-keywords))))
+	 (setq font-lock-keywords
+	       (font-lock-compile-keywords font-lock-keywords))))
      ))
 
 

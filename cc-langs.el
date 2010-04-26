@@ -5,10 +5,10 @@
 ;;   Foundation, Inc.
 
 ;; Authors:    2002- Alan Mackenzie
-;;             1998- Martin Stjernholm
-;;             1992-1999 Barry A. Warsaw
-;;             1987 Dave Detlefs and Stewart Clamen
-;;             1985 Richard M. Stallman
+;;	       1998- Martin Stjernholm
+;;	       1992-1999 Barry A. Warsaw
+;;	       1987 Dave Detlefs and Stewart Clamen
+;;	       1985 Richard M. Stallman
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
 ;; Version:    See cc-mode.el
@@ -23,7 +23,7 @@
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -50,7 +50,7 @@
 ;;; Introduction to the language dependent variable system:
 ;;
 ;; This file contains all the language dependent variables, except
-;; those specific for font locking which reside in cc-fonts.el.  As
+;; those specific for font locking which reside in cc-fonts.el.	 As
 ;; far as possible, all the differences between the languages that CC
 ;; Mode supports are described with these variables only, so that the
 ;; code can be shared.
@@ -88,21 +88,21 @@
 ;; evaluation; the byte compiled file(s) for them will contain the
 ;; compiled runtime constants ready for use by (the byte compiled) CC
 ;; Mode, and the source definitions in this file don't have to be
-;; loaded then.  However, if a byte compiled package is loaded that
+;; loaded then.	 However, if a byte compiled package is loaded that
 ;; has been compiled with a different version of CC Mode than the one
 ;; currently loaded, then the compiled-in values will be discarded and
-;; new ones will be built when the mode is initialized.  That will
+;; new ones will be built when the mode is initialized.	 That will
 ;; automatically trig a load of the file(s) containing the source
 ;; definitions (i.e. this file and/or cc-fonts.el) if necessary.
 ;;
 ;; A small example of a derived mode is available at
-;; <http://cc-mode.sourceforge.net/derived-mode-ex.el>.  It also
+;; <http://cc-mode.sourceforge.net/derived-mode-ex.el>.	 It also
 ;; contains some useful hints for derived mode developers.
 
 ;;; Using language variables:
 ;;
 ;; The `c-lang-defvar' forms in this file comprise the language
-;; variables that CC Mode uses.  It does not work to use
+;; variables that CC Mode uses.	 It does not work to use
 ;; `c-lang-defvar' anywhere else (which isn't much of a limitation
 ;; since these variables sole purpose is to interface with the CC Mode
 ;; core functions).  The values in these `c-lang-defvar's are not
@@ -150,8 +150,8 @@
 	c-emacs-variable-inits-tail c-emacs-variable-inits))
 
 (defmacro c-lang-defvar (var val &optional doc)
-  "Declares the buffer local variable VAR to get the value VAL.  VAL is
-evaluated and assigned at mode initialization.  More precisely, VAL is
+  "Declares the buffer local variable VAR to get the value VAL.	 VAL is
+evaluated and assigned at mode initialization.	More precisely, VAL is
 evaluated and bound to VAR when the result from the macro
 `c-init-language-vars' is evaluated.
 
@@ -262,37 +262,37 @@ the evaluated constant value at compile time."
 ;;; Various mode specific values that aren't language related.
 
 (c-lang-defconst c-mode-menu
-  ;; The definition for the mode menu.  The menu title is prepended to
+  ;; The definition for the mode menu.	The menu title is prepended to
   ;; this before it's fed to `easy-menu-define'.
-  t `(["Comment Out Region"     comment-region
+  t `(["Comment Out Region"	comment-region
        (c-fn-region-is-active-p)]
-      ["Uncomment Region"       (comment-region (region-beginning)
+      ["Uncomment Region"	(comment-region (region-beginning)
 						(region-end) '(4))
        (c-fn-region-is-active-p)]
-      ["Indent Expression"      c-indent-exp
+      ["Indent Expression"	c-indent-exp
        (memq (char-after) '(?\( ?\[ ?\{))]
-      ["Indent Line or Region"  c-indent-line-or-region t]
+      ["Indent Line or Region"	c-indent-line-or-region t]
       ["Fill Comment Paragraph" c-fill-paragraph t]
       "----"
-      ["Backward Statement"     c-beginning-of-statement t]
-      ["Forward Statement"      c-end-of-statement t]
+      ["Backward Statement"	c-beginning-of-statement t]
+      ["Forward Statement"	c-end-of-statement t]
       ,@(when (c-lang-const c-opt-cpp-prefix)
 	  ;; Only applicable if there's a cpp preprocessor.
-	  `(["Up Conditional"         c-up-conditional t]
+	  `(["Up Conditional"	      c-up-conditional t]
 	    ["Backward Conditional"   c-backward-conditional t]
 	    ["Forward Conditional"    c-forward-conditional t]
 	    "----"
 	    ["Macro Expand Region"    c-macro-expand
 	     (c-fn-region-is-active-p)]
-	    ["Backslashify"           c-backslash-region
+	    ["Backslashify"	      c-backslash-region
 	     (c-fn-region-is-active-p)]))
       "----"
       ("Toggle..."
        ["Syntactic indentation" c-toggle-syntactic-indentation t]
-       ["Electric mode"         c-toggle-electric-state t]
-       ["Auto newline"          c-toggle-auto-newline t]
-       ["Hungry delete"         c-toggle-hungry-state t]
-       ["Subword mode"          c-subword-mode t])))
+       ["Electric mode"		c-toggle-electric-state t]
+       ["Auto newline"		c-toggle-auto-newline t]
+       ["Hungry delete"		c-toggle-hungry-state t]
+       ["Subword mode"		c-subword-mode t])))
 
 
 ;;; Syntax tables.
@@ -303,17 +303,17 @@ This includes setting ' and \" as string delimiters, and setting up
 the comment syntax to handle both line style \"//\" and block style
 \"/*\" \"*/\" comments."
 
-  (modify-syntax-entry ?_  "_"     table)
-  (modify-syntax-entry ?\\ "\\"    table)
-  (modify-syntax-entry ?+  "."     table)
-  (modify-syntax-entry ?-  "."     table)
-  (modify-syntax-entry ?=  "."     table)
-  (modify-syntax-entry ?%  "."     table)
-  (modify-syntax-entry ?<  "."     table)
-  (modify-syntax-entry ?>  "."     table)
-  (modify-syntax-entry ?&  "."     table)
-  (modify-syntax-entry ?|  "."     table)
-  (modify-syntax-entry ?\' "\""    table)
+  (modify-syntax-entry ?_  "_"	   table)
+  (modify-syntax-entry ?\\ "\\"	   table)
+  (modify-syntax-entry ?+  "."	   table)
+  (modify-syntax-entry ?-  "."	   table)
+  (modify-syntax-entry ?=  "."	   table)
+  (modify-syntax-entry ?%  "."	   table)
+  (modify-syntax-entry ?<  "."	   table)
+  (modify-syntax-entry ?>  "."	   table)
+  (modify-syntax-entry ?&  "."	   table)
+  (modify-syntax-entry ?|  "."	   table)
+  (modify-syntax-entry ?\' "\""	   table)
   (modify-syntax-entry ?\240 "."   table)
 
   ;; Set up block and line oriented comments.  The new C
@@ -361,7 +361,7 @@ The syntax tables aren't stored directly since they're quite large."
 (c-lang-defconst c++-make-template-syntax-table
   ;; A variant of `c++-mode-syntax-table' that defines `<' and `>' as
   ;; parenthesis characters.  Used temporarily when template argument
-  ;; lists are parsed.  Note that this encourages incorrect parsing of
+  ;; lists are parsed.	Note that this encourages incorrect parsing of
   ;; templates since they might contain normal operators that uses the
   ;; '<' and '>' characters.  Therefore this syntax table might go
   ;; away when CC Mode handles templates correctly everywhere.
@@ -447,7 +447,7 @@ Typically these will record enough state to allow
 and may do such things as removing text-properties which must be
 recalculated.
 
-These functions will be run in the order given.  Each of them
+These functions will be run in the order given.	 Each of them
 takes 2 parameters, the BEG and END supplied to every
 before-change function; on entry, the buffer will have been
 widened and match-data will have been saved; point is undefined
@@ -495,7 +495,7 @@ which c-backward-sexp needs to be called twice to move backwards over."
 
 (c-lang-defconst c-symbol-start
   "Regexp that matches the start of a symbol, i.e. any identifier or
-keyword.  It's unspecified how far it matches.  Does not contain a \\|
+keyword.  It's unspecified how far it matches.	Does not contain a \\|
 operator at the top level."
   t    (concat "[" c-alpha "_]")
   objc (concat "[" c-alpha "@]")
@@ -511,7 +511,7 @@ This is on the form that fits inside [ ] in a regexp."
   objc (concat c-alnum "_$@"))
 
 (c-lang-defconst c-symbol-key
-  "Regexp matching identifiers and keywords (with submatch 0).  Assumed
+  "Regexp matching identifiers and keywords (with submatch 0).	Assumed
 to match if `c-symbol-start' matches on the same position."
   t    (concat (c-lang-const c-symbol-start)
 	       "[" (c-lang-const c-symbol-chars) "]*")
@@ -544,7 +544,7 @@ It's assumed to not contain any submatchers."
 
 (c-lang-defconst c-identifier-ops
   "The operators that make up fully qualified identifiers.  nil in
-languages that don't have such things.  See `c-operators' for a
+languages that don't have such things.	See `c-operators' for a
 description of the format.  Binary operators can concatenate symbols,
 e.g. \"::\" in \"A::B::C\".  Prefix operators can precede identifiers,
 e.g. \"~\" in \"~A::B\".  Other types of operators aren't supported.
@@ -599,7 +599,7 @@ This value is by default merged into `c-operators'."
 
 (c-lang-defconst c-after-id-concat-ops
   "Operators that can occur after a binary operator on `c-identifier-ops'
-in identifiers.  nil in languages that don't have such things.
+in identifiers.	 nil in languages that don't have such things.
 
 Operators here should also have appropriate entries in `c-operators' -
 it's not taken care of by default."
@@ -730,7 +730,7 @@ in the languages that have a macro preprocessor."
 
 (c-lang-defconst c-opt-cpp-start
   "Regexp matching the prefix of a cpp directive including the directive
-name, or nil in languages without preprocessor support.  The first
+name, or nil in languages without preprocessor support.	 The first
 submatch surrounds the directive name."
   t    (if (c-lang-const c-opt-cpp-prefix)
 	   (concat (c-lang-const c-opt-cpp-prefix)
@@ -762,13 +762,13 @@ definition, or nil if the language doesn't have any."
 
 (c-lang-defconst c-opt-cpp-macro-define-start
   ;; Regexp matching everything up to the macro body of a cpp define, or the
-  ;; end of the logical line if there is none.  Submatch 1 is the name of the
+  ;; end of the logical line if there is none.	Submatch 1 is the name of the
   ;; macro.  Set if c-opt-cpp-macro-define is.
   t (if (c-lang-const c-opt-cpp-macro-define)
 	(concat (c-lang-const c-opt-cpp-prefix)
 		(c-lang-const c-opt-cpp-macro-define)
 		"[ \t]+\\(\\(\\sw\\|_\\)+\\)\\(\([^\)]*\)\\)?"
-		;;       ^                 ^ #defined name
+		;;	 ^		   ^ #defined name
 		"\\([ \t]\\|\\\\\n\\)*")))
 (c-lang-defvar c-opt-cpp-macro-define-start
   (c-lang-const c-opt-cpp-macro-define-start))
@@ -806,26 +806,26 @@ expression."
 
 (c-lang-defconst c-operators
   "List describing all operators, along with their precedence and
-associativity.  The order in the list corresponds to the precedence of
+associativity.	The order in the list corresponds to the precedence of
 the operators: The operators in each element are a group with the same
 precedence, and the group has higher precedence than the groups in all
 following elements.  The car of each element describes the type of the
 operator group, and the cdr is a list of the operator tokens in it.
 The operator group types are:
 
-'prefix         Unary prefix operators.
-'postfix        Unary postfix operators.
+'prefix		Unary prefix operators.
+'postfix	Unary postfix operators.
 'postfix-if-paren
 		Unary postfix operators if and only if the chars have
 		parenthesis syntax.
-'left-assoc     Binary left associative operators (i.e. a+b+c means (a+b)+c).
-'right-assoc    Binary right associative operators (i.e. a=b=c means a=(b=c)).
+'left-assoc	Binary left associative operators (i.e. a+b+c means (a+b)+c).
+'right-assoc	Binary right associative operators (i.e. a=b=c means a=(b=c)).
 'right-assoc-sequence
-                Right associative operator that constitutes of a
-                sequence of tokens that separate expressions.  All the
-                tokens in the group are in this case taken as
-                describing the sequence in one such operator, and the
-                order between them is therefore significant.
+		Right associative operator that constitutes of a
+		sequence of tokens that separate expressions.  All the
+		tokens in the group are in this case taken as
+		describing the sequence in one such operator, and the
+		order between them is therefore significant.
 
 Operators containing a character with paren syntax are taken to match
 with a corresponding open/close paren somewhere else.  A postfix
@@ -960,7 +960,7 @@ since CC Mode treats every identifier as an expression."
 	;; Primary.
 	,@(c-lang-const c-identifier-ops)
 	;; Unary.
-	(prefix  "+" "-" "~")
+	(prefix	 "+" "-" "~")
 	;; Multiplicative.
 	(left-assoc "*" "/" "%")
 	;; Additive.
@@ -980,7 +980,7 @@ since CC Mode treats every identifier as an expression."
 
 (c-lang-defconst c-overloadable-operators
   "List of the operators that are overloadable, in their \"identifier
-form\".  See also `c-op-identifier-prefix'."
+form\".	 See also `c-op-identifier-prefix'."
   t    nil
   c++  '("new" "delete" ;; Can be followed by "[]" but we ignore that.
 	 "+" "-" "*" "/" "%"
@@ -1126,7 +1126,7 @@ operators."
 (c-lang-defconst c-stmt-delim-chars
   ;; The characters that should be considered to bound statements.  To
   ;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
-  ;; begin with "^" to negate the set.  If ? : operators should be
+  ;; begin with "^" to negate the set.	If ? : operators should be
   ;; detected then the string must end with "?:".
   t    "^;{}?:"
   awk  "^;{}#\n\r?:") ; The newline chars gets special treatment.
@@ -1158,7 +1158,7 @@ Line comments are always terminated by newlines.  At least one of
 `c-block-comment-starter' and this one is assumed to be set.
 
 Note that it's currently not enough to set this to support a new
-comment style.  Other stuff like the syntax table must also be set up
+comment style.	Other stuff like the syntax table must also be set up
 properly."
   t    "//"
   awk  "#")
@@ -1171,7 +1171,7 @@ to be set if this is.  At least one of `c-line-comment-starter' and
 this one is assumed to be set.
 
 Note that it's currently not enough to set this to support a new
-comment style.  Other stuff like the syntax table must also be set up
+comment style.	Other stuff like the syntax table must also be set up
 properly."
   t    "/*"
   awk  nil)
@@ -1180,7 +1180,7 @@ properly."
   "String that ends block comments, or nil if such don't exist.
 
 Note that it's currently not enough to set this to support a new
-comment style.  Other stuff like the syntax table must also be set up
+comment style.	Other stuff like the syntax table must also be set up
 properly."
   t    "*/"
   awk  nil)
@@ -1334,7 +1334,7 @@ properly."
   ;; allow line breaks is to avoid going very far and risk running out
   ;; of regexp stack; this regexp is intended to handle only short
   ;; comments that might be put in the middle of limited constructs
-  ;; like declarations.  Does not contain a \| operator at the top
+  ;; like declarations.	 Does not contain a \| operator at the top
   ;; level.
   t (when (c-lang-const c-unterminated-block-comment-regexp)
       (concat
@@ -1351,7 +1351,7 @@ properly."
 
 (c-lang-defconst c-nonwhite-syntactic-ws
   ;; Regexp matching a piece of syntactic whitespace that isn't a
-  ;; sequence of simple whitespace characters.  As opposed to
+  ;; sequence of simple whitespace characters.	As opposed to
   ;; `c-(forward|backward)-syntactic-ws', this doesn't regard cpp
   ;; directives as syntactic whitespace.
   t (c-concat-separated
@@ -1544,9 +1544,9 @@ the appropriate place for that."
 (c-lang-defconst c-primitive-type-prefix-kwds
   "Keywords that might act as prefixes for primitive types.  Assumed to
 be a subset of `c-primitive-type-kwds'."
-  t       nil
+  t	  nil
   (c c++) '("long" "short" "signed" "unsigned")
-  idl     '("long" "unsigned"
+  idl	  '("long" "unsigned"
 	    ;; In CORBA PSDL:
 	    "strong"))
 
@@ -1742,7 +1742,7 @@ will be handled."
 
 (c-lang-defconst c-modifier-kwds
   "Keywords that can prefix normal declarations of identifiers
-\(and typically act as flags).  Things like argument declarations
+\(and typically act as flags).	Things like argument declarations
 inside function headers are also considered declarations in this
 sense.
 
@@ -1779,10 +1779,10 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
 `c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
 will be handled."
-  t       nil
-  objc    '("@class" "@end" "@defs")
-  java    '("import" "package")
-  pike    '("import" "inherit"))
+  t	  nil
+  objc	  '("@class" "@end" "@defs")
+  java	  '("import" "package")
+  pike	  '("import" "inherit"))
 
 (c-lang-defconst c-decl-start-kwds
   "Keywords that always start declarations, wherever they occur.
@@ -1896,9 +1896,9 @@ like that, it ends with the following ';' and not right away.
 
 The keywords on list are assumed to also be present on one of the
 `*-decl-kwds' lists."
-  t        nil
+  t	   nil
   (c objc) '("struct" "union" "enum" "typedef")
-  c++      '("class" "struct" "union" "enum" "typedef"))
+  c++	   '("class" "struct" "union" "enum" "typedef"))
 
 (c-lang-defconst c-opt-block-decls-with-vars-key
   ;; Regexp matching the `c-block-decls-with-vars' keywords, or nil in
@@ -1927,7 +1927,7 @@ construct it's part of continues."
 
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type
-identifiers, where each optionally can be prefixed by keywords.  (Can
+identifiers, where each optionally can be prefixed by keywords.	 (Can
 also be used for the special case when the list can contain only one
 element.)
 
@@ -1952,7 +1952,7 @@ or variable identifier (that's being defined)."
 (c-lang-defconst c-ref-list-kwds
   "Keywords that may be followed by a comma separated list of
 reference (i.e. namespace/scope/module) identifiers, where each
-optionally can be prefixed by keywords.  (Can also be used for the
+optionally can be prefixed by keywords.	 (Can also be used for the
 special case when the list can contain only one element.)  Assumed to
 be mutually exclusive with `c-type-list-kwds'.
 
@@ -1969,7 +1969,7 @@ or variable identifier (that's being defined)."
 (c-lang-defconst c-colon-type-list-kwds
   "Keywords that may be followed (not necessarily directly) by a colon
 and then a comma separated list of type identifiers, where each
-optionally can be prefixed by keywords.  (Can also be used for the
+optionally can be prefixed by keywords.	 (Can also be used for the
 special case when the list can contain only one element.)"
   t    nil
   c++  '("class" "struct")
@@ -1985,7 +1985,7 @@ regexp if `c-colon-type-list-kwds' isn't nil."
   t (if (c-lang-const c-colon-type-list-kwds)
 	;; Disallow various common punctuation chars that can't come
 	;; before the ":" that starts the inherit list after "class"
-	;; or "struct" in C++.  (Also used as default for other
+	;; or "struct" in C++.	(Also used as default for other
 	;; languages.)
 	"[^\]\[{}();,/#=:]*:"))
 (c-lang-defvar c-colon-type-list-re (c-lang-const c-colon-type-list-re))
@@ -1993,7 +1993,7 @@ regexp if `c-colon-type-list-kwds' isn't nil."
 (c-lang-defconst c-paren-nontype-kwds
   "Keywords that may be followed by a parenthesis expression that doesn't
 contain type identifiers."
-  t       nil
+  t	  nil
   (c c++) '(;; GCC extension.
 	    "__attribute__"
 	    ;; MSVC extension.
@@ -2015,9 +2015,9 @@ type identifiers separated by arbitrary tokens."
 
 (c-lang-defconst c-<>-type-kwds
   "Keywords that may be followed by an angle bracket expression
-containing type identifiers separated by \",\".  The difference from
+containing type identifiers separated by \",\".	 The difference from
 `c-<>-arglist-kwds' is that unknown names are taken to be types and
-not other identifiers.  `c-recognize-<>-arglists' is assumed to be set
+not other identifiers.	`c-recognize-<>-arglists' is assumed to be set
 if this isn't nil."
   t    nil
   objc '("id")
@@ -2027,7 +2027,7 @@ if this isn't nil."
 
 (c-lang-defconst c-<>-arglist-kwds
   "Keywords that can be followed by a C++ style template arglist; see
-`c-recognize-<>-arglists' for details.  That language constant is
+`c-recognize-<>-arglists' for details.	That language constant is
 assumed to be set if this isn't nil."
   t    nil
   c++  '("template")
@@ -2167,12 +2167,12 @@ This construct is \"<keyword> <expression> :\"."
 
 (c-lang-defconst c-constant-kwds
   "Keywords for constants."
-  t       nil
+  t	  nil
   (c c++) '("NULL" ;; Not a keyword, but practically works as one.
 	    "false" "true")		; Defined in C99.
-  objc    '("nil" "Nil" "YES" "NO" "NS_DURING" "NS_HANDLER" "NS_ENDHANDLER")
-  idl     '("TRUE" "FALSE")
-  pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
+  objc	  '("nil" "Nil" "YES" "NO" "NS_DURING" "NS_HANDLER" "NS_ENDHANDLER")
+  idl	  '("TRUE" "FALSE")
+  pike	  '("UNDEFINED")) ;; Not a keyword, but practically works as one.
 
 (c-lang-defconst c-primary-expr-kwds
   "Keywords besides constants and operators that start primary expressions."
@@ -2257,7 +2257,7 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defconst c-opt-bitfield-key
   ;; Regexp matching the start of a bitfield (not uniquely), or nil in
   ;; languages without bitfield support.
-  t       nil
+  t	  nil
   (c c++) (c-make-keywords-re t (c-lang-const c-bitfield-kwds)))
 (c-lang-defvar c-opt-bitfield-key (c-lang-const c-opt-bitfield-key))
 
@@ -2334,10 +2334,10 @@ Note that Java specific rules are currently applied to tell this from
   ;;
   ;; E.g. to see whether the string str contains a keyword on
   ;; `c-class-decl-kwds', one can do like this:
-  ;;     (get (intern-soft str c-keyword-obarray) 'c-class-decl-kwds)
+  ;;	 (get (intern-soft str c-keyword-obarray) 'c-class-decl-kwds)
   ;; Which preferably is written using the associated functions in
   ;; cc-engine:
-  ;;     (c-keyword-member (c-keyword-sym str) 'c-class-decl-kwds)
+  ;;	 (c-keyword-member (c-keyword-sym str) 'c-class-decl-kwds)
 
   ;; The obarray is not stored directly as a language constant since
   ;; the printed representation for obarrays used in .elc files isn't
@@ -2352,7 +2352,7 @@ Note that Java specific rules are currently applied to tell this from
 	    alist (cdr alist))
       (setplist (intern kwd obarray)
 		;; Emacs has an odd bug that causes `mapcan' to fail
-		;; with unintelligible errors.  (XEmacs works.)
+		;; with unintelligible errors.	(XEmacs works.)
 		;;(mapcan (lambda (lang-const)
 		;;	      (list lang-const t))
 		;;	    lang-const-list)
@@ -2374,7 +2374,7 @@ Note that Java specific rules are currently applied to tell this from
 
 (c-lang-defconst c-primary-expr-regexp
   ;; Regexp matching the start of any primary expression, i.e. any
-  ;; literal, symbol, prefix operator, and '('.  It doesn't need to
+  ;; literal, symbol, prefix operator, and '('.	 It doesn't need to
   ;; exclude keywords; they are excluded afterwards unless the second
   ;; submatch matches. If the first but not the second submatch
   ;; matches then it is an ambiguous primary expression; it could also
@@ -2459,9 +2459,9 @@ This is used in the common situation where a declaration or cast
 doesn't start with any specific token that can be searched for.
 
 The regexp should not match bob; that is done implicitly.  It can't
-require a match longer than one token.  The end of the token is taken
+require a match longer than one token.	The end of the token is taken
 to be at the end of the first submatch, which is assumed to always
-match.  It's undefined whether identifier syntax (see
+match.	It's undefined whether identifier syntax (see
 `c-identifier-syntax-table') is in effect or not.  This regexp is
 assumed to be a superset of `c-label-prefix-re' if
 `c-recognize-colon-labels' is set.
@@ -2470,11 +2470,11 @@ Besides this, `c-decl-start-kwds' is used to find declarations.
 
 Note: This variable together with `c-decl-start-re' and
 `c-decl-start-kwds' is only used to detect \"likely\"
-declaration/cast/label starts.  I.e. they might produce more matches
+declaration/cast/label starts.	I.e. they might produce more matches
 but should not miss anything (or else it's necessary to use text
 properties - see the next note).  Wherever they match, the following
 construct is analyzed to see if it indeed is a declaration, cast or
-label.  That analysis is not cheap, so it's important that not too
+label.	That analysis is not cheap, so it's important that not too
 many false matches are triggered.
 
 Note: If a declaration/cast/label start can't be detected with this
@@ -2562,7 +2562,7 @@ If parens can occur, the chars inside those aren't filtered with this
 list.
 
 '<' and '>' should be disallowed even if angle bracket arglists can
-occur.  That since the search function needs to stop at them anyway to
+occur.	That since the search function needs to stop at them anyway to
 ensure they are given paren syntax.
 
 This is used to skip backward from the open brace to find the region
@@ -2618,7 +2618,7 @@ possible for good performance."
 
 (c-lang-defconst c-type-decl-prefix-key
   "Regexp matching any declarator operator that might precede the
-identifier in a declaration, e.g. the \"*\" in \"char *argv\".  This
+identifier in a declaration, e.g. the \"*\" in \"char *argv\".	This
 regexp should match \"(\" if parentheses are valid in declarators.
 The end of the first submatch is taken as the end of the operator.
 Identifier syntax is in effect when this is matched \(see
@@ -2655,7 +2655,7 @@ Identifier syntax is in effect when this is matched \(see
 
 (c-lang-defconst c-type-decl-suffix-key
   "Regexp matching the declarator operators that might follow after the
-identifier in a declaration, e.g. the \"[\" in \"char argv[]\".  This
+identifier in a declaration, e.g. the \"[\" in \"char argv[]\".	 This
 regexp should match \")\" if parentheses are valid in declarators.  If
 it matches an open paren of some kind, the type declaration check
 continues at the corresponding close paren, otherwise the end of the
@@ -2730,8 +2730,8 @@ not \",\" or \";\"."
 
 (c-lang-defconst c-opt-type-concat-key
   "Regexp matching operators that concatenate types, e.g. the \"|\" in
-\"int|string\" in Pike.  The end of the first submatch is taken as the
-end of the operator.  nil in languages without such operators.  It's
+\"int|string\" in Pike.	 The end of the first submatch is taken as the
+end of the operator.  nil in languages without such operators.	It's
 undefined whether identifier syntax (see `c-identifier-syntax-table')
 is in effect or not."
   t nil
@@ -2754,7 +2754,7 @@ is in effect or not."
 (c-lang-defvar c-known-type-key
   ;; Regexp matching the known type identifiers.  This is initialized
   ;; from the type keywords and `*-font-lock-extra-types'.  The first
-  ;; submatch is the one that matches the type.  Note that this regexp
+  ;; submatch is the one that matches the type.	 Note that this regexp
   ;; assumes that symbol constituents like '_' and '$' have word
   ;; syntax.
   (let* ((extra-types
@@ -2805,7 +2805,7 @@ e.g. `c-typeless-decl-kwds' may still be used when it's set to nil."
   (c-lang-const c-recognize-typeless-decls))
 
 (c-lang-defconst c-recognize-<>-arglists
-  "Non-nil means C++ style template arglists should be handled.  More
+  "Non-nil means C++ style template arglists should be handled.	 More
 specifically, this means a comma separated list of types or
 expressions surrounded by \"<\" and \">\".  It's always preceded by an
 identifier or one of the keywords on `c-<>-type-kwds' or
@@ -2842,7 +2842,7 @@ i.e. compound statements surrounded by parentheses inside expressions."
   ;; Regexp matching the start of angle bracket arglists in languages
   ;; where `c-recognize-<>-arglists' is set.  Does not exclude
   ;; keywords outside `c-<>-arglist-kwds'.  The first submatch is
-  ;; assumed to surround the preceding symbol.  The whole match is
+  ;; assumed to surround the preceding symbol.	The whole match is
   ;; assumed to end directly after the opening "<".
   t (if (c-lang-const c-recognize-<>-arglists)
 	(concat "\\("
@@ -2892,7 +2892,7 @@ not apply to labels recognized by `c-label-kwds' and
 
 (c-lang-defconst c-label-prefix-re
   "Regexp like `c-decl-prefix-re' that matches any token that can precede
-a generic colon label.  Not used if `c-recognize-colon-labels' is
+a generic colon label.	Not used if `c-recognize-colon-labels' is
 nil."
   t "\\([{};]+\\)")
 (c-lang-defvar c-label-prefix-re
@@ -2946,7 +2946,7 @@ way."
 (c-lang-defvar c-opt-friend-key (c-lang-const c-opt-friend-key))
 
 (c-lang-defconst c-opt-method-key
-  ;; Special regexp to match the start of Objective-C methods.  The
+  ;; Special regexp to match the start of Objective-C methods.	The
   ;; first submatch is assumed to end after the + or - key.
   t    nil
   objc (concat
@@ -2978,7 +2978,7 @@ way."
 ;;; Wrap up the `c-lang-defvar' system.
 
 ;; Compile in the list of language variables that has been collected
-;; with the `c-lang-defvar' and `c-lang-setvar' macros.  Note that the
+;; with the `c-lang-defvar' and `c-lang-setvar' macros.	 Note that the
 ;; first element of each is nil.
 (defconst c-lang-variable-inits (cc-eval-when-compile c-lang-variable-inits))
 (defconst c-emacs-variable-inits (cc-eval-when-compile c-emacs-variable-inits))
