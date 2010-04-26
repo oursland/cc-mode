@@ -5,9 +5,9 @@
 ;;   Foundation, Inc.
 
 ;; Authors:    1998- Martin Stjernholm
-;;             1992-1999 Barry A. Warsaw
-;;             1987 Dave Detlefs and Stewart Clamen
-;;             1985 Richard M. Stallman
+;;	       1992-1999 Barry A. Warsaw
+;;	       1987 Dave Detlefs and Stewart Clamen
+;;	       1985 Richard M. Stallman
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
 ;; Version:    See cc-mode.el
@@ -22,7 +22,7 @@
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -75,22 +75,22 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
     (nil
      ,(concat
        "^\\<.*"
-       "[^" c-alnum "_:<>~]"                  ; match any non-identifier char
-                                              ; (note: this can be `\n')
+       "[^" c-alnum "_:<>~]"		      ; match any non-identifier char
+					      ; (note: this can be `\n')
        "\\("
 	  "\\([" c-alnum "_:<>~]*::\\)?"      ; match an operator
-          "operator\\>[ \t]*"
-          "\\(()\\|[^(]*\\)"                  ; special case for `()' operator
+	  "operator\\>[ \t]*"
+	  "\\(()\\|[^(]*\\)"		      ; special case for `()' operator
        "\\)"
 
-       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; followed by ws, arg list,
-                                              ; require something other than
-                                              ; a `;' after the (...) to
-                                              ; avoid prototypes.  Can't
-                                              ; catch cases with () inside
-                                              ; the parentheses surrounding
-                                              ; the parameters.  e.g.:
-                                              ; `int foo(int a=bar()) {...}'
+       "[ \t]*([^)]*)[ \t]*[^ \t;]"	      ; followed by ws, arg list,
+					      ; require something other than
+					      ; a `;' after the (...) to
+					      ; avoid prototypes.  Can't
+					      ; catch cases with () inside
+					      ; the parentheses surrounding
+					      ; the parameters.	 e.g.:
+					      ; `int foo(int a=bar()) {...}'
        ) 1)
     ;; Special case to match a line like `main() {}'
     ;; e.g. no return type, not even on the previous line.
@@ -99,15 +99,15 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        "^"
        "\\([" c-alpha "_][" c-alnum "_:<>~]*\\)" ; match function name
        "[ \t]*("			      ; see above, BUT
-       "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
-       "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
+       "[ \t]*\\([^ \t(*][^)]*\\)?)"	      ; the arg list must not start
+       "[ \t]*[^ \t;(]"			      ; with an asterisk or parentheses
        ) 1)
     ;; General function name regexp
     (nil
      ,(concat
-       "^\\<"                                 ; line MUST start with word char
-       "[^()]*"                               ; no parentheses before
-       "[^" c-alnum "_:<>~]"                  ; match any non-identifier char
+       "^\\<"				      ; line MUST start with word char
+       "[^()]*"				      ; no parentheses before
+       "[^" c-alnum "_:<>~]"		      ; match any non-identifier char
        "\\([" c-alpha "_][" c-alnum "_:<>~]*\\)" ; match function name
        "\\([ \t\n]\\|\\\\\n\\)*("	      ; see above, BUT the arg list
        "\\([ \t\n]\\|\\\\\n\\)*\\([^ \t\n(*][^)]*\\)?)" ; must not start
@@ -118,33 +118,33 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
     ;; This case is only included if cc-imenu-c-prototype-macro-regexp is set.
     ;; Only supported in c-code, so no `:<>~' chars in function name!
     ,@(if cc-imenu-c-prototype-macro-regexp
-            `((nil
-                 ,(concat
-                   "^\\<.*"                   ; line MUST start with word char
-		   "[^" c-alnum "_]"          ; match any non-identifier char
+	    `((nil
+		 ,(concat
+		   "^\\<.*"		      ; line MUST start with word char
+		   "[^" c-alnum "_]"	      ; match any non-identifier char
 		   "\\([" c-alpha "_][" c-alnum "_]*\\)" ; match function name
-                   "[ \t]*"                   ; whitespace before macro name
-                   cc-imenu-c-prototype-macro-regexp
-                   "[ \t]*("                  ; ws followed by first paren.
-                   "[ \t]*([^)]*)[ \t]*)[ \t]*[^ \t;]" ; see above
-                   ) 1)))
+		   "[ \t]*"		      ; whitespace before macro name
+		   cc-imenu-c-prototype-macro-regexp
+		   "[ \t]*("		      ; ws followed by first paren.
+		   "[ \t]*([^)]*)[ \t]*)[ \t]*[^ \t;]" ; see above
+		   ) 1)))
     ;; Class definitions
     ("Class"
      ,(concat
-         "^"                                  ; beginning of line is required
-         "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
-         "\\(class\\|struct\\)[ \t]+"
-         "\\("                                ; the string we want to get
-	 "[" c-alnum "_]+"                    ; class name
-         "\\(<[^>]+>\\)?"                     ; possibly explicitly specialized
-         "\\)"
-         "\\([ \t\n]\\|\\\\\n\\)*[:{]"
-         ) 3))
+	 "^"				      ; beginning of line is required
+	 "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
+	 "\\(class\\|struct\\)[ \t]+"
+	 "\\("				      ; the string we want to get
+	 "[" c-alnum "_]+"		      ; class name
+	 "\\(<[^>]+>\\)?"		      ; possibly explicitly specialized
+	 "\\)"
+	 "\\([ \t\n]\\|\\\\\n\\)*[:{]"
+	 ) 3))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
 
 (defvar cc-imenu-c-generic-expression
   cc-imenu-c++-generic-expression
-  "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
+  "Imenu generic expression for C mode.	 See `imenu-generic-expression'.")
 
 (defvar cc-imenu-java-generic-expression
   `((nil
@@ -159,36 +159,36 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        ;; identifier.  A type spec is an identifier, possibly followed
        ;; by < typespec > possibly followed by [].
        (concat "("
-               "\\("
-               "[ \t\n\r]*"
-               "\\("
-               "@"
-               "[" c-alpha "_]"
-               "[" c-alnum "._]*"
-               "[ \t\n\r]+"
-               "\\)*"
-               "\\("
-               "[" c-alpha "_]"
-               "[][" c-alnum "_.]*"
-               "\\("
-               "<"
-               "[ \t\n\r]*"
-               "[\]\[.," c-alnum "_<> \t\n\r]*"
-               ">"
-               "\\)?"
-               "[\]\[ \t\n\r]+"
-               "\\)"
-               "[" c-alpha "_]"
-               "[" c-alnum "_]*"
-               "[ \t\n\r,]*"
-               "\\)*"
-               ")"
-               "[.," c-alnum " \t\n\r]*"
-               "{"
-               )) 1))
+	       "\\("
+	       "[ \t\n\r]*"
+	       "\\("
+	       "@"
+	       "[" c-alpha "_]"
+	       "[" c-alnum "._]*"
+	       "[ \t\n\r]+"
+	       "\\)*"
+	       "\\("
+	       "[" c-alpha "_]"
+	       "[][" c-alnum "_.]*"
+	       "\\("
+	       "<"
+	       "[ \t\n\r]*"
+	       "[\]\[.," c-alnum "_<> \t\n\r]*"
+	       ">"
+	       "\\)?"
+	       "[\]\[ \t\n\r]+"
+	       "\\)"
+	       "[" c-alpha "_]"
+	       "[" c-alnum "_]*"
+	       "[ \t\n\r,]*"
+	       "\\)*"
+	       ")"
+	       "[.," c-alnum " \t\n\r]*"
+	       "{"
+	       )) 1))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
-;;                        *Warning for cc-mode developers*
+;;			  *Warning for cc-mode developers*
 ;;
 ;; `cc-imenu-objc-generic-expression' elements depend on
 ;; `cc-imenu-c++-generic-expression'. So if you change this
@@ -240,7 +240,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
    ;; Pick a token by (match-string 8 or 9)
    ;;
    "\\|\\("
-   "^[-+][:" c-alnum "()*_<>\n\t ]*[;{]"        ; Methods
+   "^[-+][:" c-alnum "()*_<>\n\t ]*[;{]"	; Methods
    "\\|"
    "^@interface[\t ]+[" c-alnum "_]+[\t ]*:"
    "\\|"
@@ -276,7 +276,7 @@ Example:
 	    p (1+ p))
       (cond
        ;; Is CHAR part of a objc token?
-       ((and (not inargvar)     ; Ignore if CHAR is part of an argument variable.
+       ((and (not inargvar)	; Ignore if CHAR is part of an argument variable.
 	     (eq 0 betweenparen) ; Ignore if CHAR is in parentheses.
 	     (or (and (<= ?a char) (<= char ?z))
 		 (and (<= ?A char) (<= char ?Z))
@@ -302,7 +302,7 @@ Example:
 	(setq betweenparen (1- betweenparen)))))
     return))
 
-(defun cc-imenu-objc-remove-white-space  (str)
+(defun cc-imenu-objc-remove-white-space	 (str)
   "Remove all spaces and tabs from STR."
   (let ((return "")
 	(p 0)
@@ -323,7 +323,7 @@ Example:
 	;;
 	;; OBJC, Cnoreturn, Cgeneralfunc, Cproto are constants.
 	;;
-	;;                  *Warning for developers*
+	;;		    *Warning for developers*
 	;; These constants depend on `cc-imenu-c++-generic-expression'.
 	;;
 	(OBJC cc-imenu-objc-generic-expression-objc-base-index)
@@ -341,8 +341,8 @@ Example:
 	str
 	str2
 	(intflen (length "@interface"))
-	(implen  (length "@implementation"))
-	(prtlen  (length "@protocol"))
+	(implen	 (length "@implementation"))
+	(prtlen	 (length "@protocol"))
 	(func
 	 ;;
 	 ;; Does this emacs has buffer-substring-no-properties?

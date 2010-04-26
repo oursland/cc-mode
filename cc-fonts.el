@@ -1332,14 +1332,14 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify Java annotations
       ,@(when (c-major-mode-is 'java-mode)
-          (c-make-font-lock-search-function
-           "\\(@[a-zA-Z0-9_]+\\)"
-           '(1 'c-annotation-face t)
-           '((c-font-lock-declarators limit t nil)
-             (save-match-data
-               (goto-char (match-end 1))
-               (c-forward-syntactic-ws))
-             (goto-char (match-end 1)))))
+	  (c-make-font-lock-search-function
+	   "\\(@[a-zA-Z0-9_]+\\)"
+	   '(1 'c-annotation-face t)
+	   '((c-font-lock-declarators limit t nil)
+	     (save-match-data
+	       (goto-char (match-end 1))
+	       (c-forward-syntactic-ws))
+	     (goto-char (match-end 1)))))
 
       ;; Fontify generic colon labels in languages that support them.
       ,@(when (c-lang-const c-recognize-colon-labels)

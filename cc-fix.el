@@ -129,13 +129,13 @@ in REGEXP."
        "Compile KEYWORDS (a list) and return the list of compiled keywords.
 Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
        (if (eq (car-safe keywords) t)
-           keywords
-         (cons t (mapcar 'font-lock-compile-keyword keywords))))
+	   keywords
+	 (cons t (mapcar 'font-lock-compile-keyword keywords))))
      (defadvice font-lock-fontify-keywords-region (before c-compile-font-lock-keywords
-                                                          activate preactivate)
+							  activate preactivate)
        (unless (eq (car-safe font-lock-keywords) t)
-         (setq font-lock-keywords
-               (font-lock-compile-keywords font-lock-keywords))))
+	 (setq font-lock-keywords
+	       (font-lock-compile-keywords font-lock-keywords))))
      ))
 
 
