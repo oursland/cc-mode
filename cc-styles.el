@@ -5,10 +5,10 @@
 ;;   Foundation, Inc.
 
 ;; Authors:    2004- Alan Mackenzie
-;;             1998- Martin Stjernholm
-;;             1992-1999 Barry A. Warsaw
-;;             1987 Dave Detlefs and Stewart Clamen
-;;             1985 Richard M. Stallman
+;;	       1998- Martin Stjernholm
+;;	       1992-1999 Barry A. Warsaw
+;;	       1987 Dave Detlefs and Stewart Clamen
+;;	       1985 Richard M. Stallman
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
 ;; Version:    See cc-mode.el
@@ -23,7 +23,7 @@
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -58,7 +58,7 @@
   '(("gnu"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
-     (c-hanging-braces-alist     . ((substatement-open before after)
+     (c-hanging-braces-alist	 . ((substatement-open before after)
 				    (arglist-cont-nonempty)))
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 5)
@@ -164,15 +164,15 @@
     ("ellemtel"
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
-     (c-hanging-braces-alist     . ((substatement-open before after)
+     (c-hanging-braces-alist	 . ((substatement-open before after)
 				    (arglist-cont-nonempty)))
-     (c-offsets-alist . ((topmost-intro        . 0)
-			 (substatement         . +)
+     (c-offsets-alist . ((topmost-intro	       . 0)
+			 (substatement	       . +)
 			 (substatement-open    . 0)
-                         (case-label           . +)
-                         (access-label         . -)
-			 (inclass              . +)
-			 (inline-open          . 0))))
+			 (case-label	       . +)
+			 (access-label	       . -)
+			 (inclass	       . +)
+			 (inline-open	       . 0))))
     ("linux"
      (c-basic-offset  . 8)
      (c-comment-only-line-offset . 0)
@@ -183,11 +183,11 @@
 				(arglist-cont-nonempty)))
      (c-cleanup-list . (brace-else-brace))
      (c-offsets-alist . ((statement-block-intro . +)
-			 (knr-argdecl-intro     . 0)
-			 (substatement-open     . 0)
-			 (substatement-label    . 0)
-			 (label                 . 0)
-			 (statement-cont        . +))))
+			 (knr-argdecl-intro	. 0)
+			 (substatement-open	. 0)
+			 (substatement-label	. 0)
+			 (label			. 0)
+			 (statement-cont	. +))))
 
     ("python"
      (indent-tabs-mode . t)
@@ -211,18 +211,18 @@
      (c-comment-only-line-offset . (0 . 0))
      ;; the following preserves Javadoc starter lines
      (c-offsets-alist . ((inline-open . 0)
-			 (topmost-intro-cont    . +)
+			 (topmost-intro-cont	. +)
 			 (statement-block-intro . +)
- 			 (knr-argdecl-intro     . 5)
-			 (substatement-open     . +)
-			 (substatement-label    . +)
- 			 (label                 . +)
- 			 (statement-case-open   . +)
- 			 (statement-cont        . +)
- 			 (arglist-intro  . c-lineup-arglist-intro-after-paren)
- 			 (arglist-close  . c-lineup-arglist)
- 			 (access-label   . 0)
-			 (inher-cont     . c-lineup-java-inher)
+			 (knr-argdecl-intro	. 5)
+			 (substatement-open	. +)
+			 (substatement-label	. +)
+			 (label			. +)
+			 (statement-case-open	. +)
+			 (statement-cont	. +)
+			 (arglist-intro	 . c-lineup-arglist-intro-after-paren)
+			 (arglist-close	 . c-lineup-arglist)
+			 (access-label	 . 0)
+			 (inher-cont	 . c-lineup-java-inher)
 			 (func-decl-cont . c-lineup-java-throws))))
 
     ;; awk style exists primarily for auto-newline settings.  Otherwise it's
@@ -355,7 +355,7 @@ might get set too.
 
 If DONT-OVERRIDE is neither nil nor t, style variables whose default values
 have been set (more precisely, whose default values are not the symbol
-`set-from-style') will not be changed.  This avoids overriding global settings
+`set-from-style') will not be changed.	This avoids overriding global settings
 done in ~/.emacs.  It is useful to call c-set-style from a mode hook in this
 way.
 
@@ -407,13 +407,13 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
   (interactive
    (let ((stylename (completing-read "Style to add: " c-style-alist
 				     nil nil nil 'c-set-style-history))
-         (descr (eval-minibuffer "Style description: ")))
+	 (descr (eval-minibuffer "Style description: ")))
      (list stylename descr
 	   (y-or-n-p "Set the style too? "))))
   (setq style (downcase style))
   (let ((s (assoc style c-style-alist)))
     (if s
-        (setcdr s (copy-alist description)) ; replace
+	(setcdr s (copy-alist description)) ; replace
       (setq c-style-alist (cons (cons style description) c-style-alist))))
   (and set-p (c-set-style style)))
 
@@ -582,7 +582,7 @@ CC Mode by making sure the proper entries are present on
   ;; only.
 
   ;; The default configuration already handles C++ comments, but we
-  ;; need to add handling of C block comments.  A new filladapt token
+  ;; need to add handling of C block comments.	A new filladapt token
   ;; `c-comment' is added for that.
   (let (p)
     (setq p filladapt-token-table)
