@@ -5518,8 +5518,8 @@ comment at the start of cc-engine.el for more info."
 
 				(setq subres
 				      (let ((c-record-type-identifiers t)
-							(c-promote-possible-types t)
-							(c-record-found-types t))
+					    (c-promote-possible-types t)
+					    (c-record-found-types t))
 					(c-forward-<>-arglist-recur
 					 (and keyword-match
 					      (c-keyword-member
@@ -6520,7 +6520,7 @@ comment at the start of cc-engine.el for more info."
 		   ;; declared identifier and we should back up to the previous
 		   ;; type, providing it isn't a cast.
 		   (if (and (eq (char-after) ?:)
-					(not )c-major-mode-is 'java-mode)))
+			    (not (c-major-mode-is 'java-mode)))
 		       ;; If we've found a specifier keyword then it's a
 		       ;; declaration regardless.
 		       (throw 'at-decl-or-cast (eq at-decl-or-cast t))
