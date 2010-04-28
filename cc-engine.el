@@ -6018,9 +6018,12 @@ comment at the start of cc-engine.el for more info."
   ;; Used for Java code only at the moment.  Assumes point is on the
   ;; @, moves forward an annotation.  returns nil if there is no
   ;; annotation at point.
-  (if (looking-at "@")
-      (c-forward-type)))
-
+  (and (looking-at "@")
+       (c-forward-type)
+       (progn (c-forward-syntactic-ws) t)
+       (if (looking-at "(")
+	   (c-go-list-forward)
+         t)))
 
 
 ;; Handling of large scale constructs like statements and declarations.
