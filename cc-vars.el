@@ -1058,6 +1058,10 @@ can always override the use of `c-default-style' by making calls to
        (topmost-intro	      . 0)
        ;; Anchor pos: Bol at the last line of previous construct.
        (topmost-intro-cont    . c-lineup-topmost-intro-cont)
+	   ;;Anchor pos: Bol at the topmost annotation line
+	   (annotation-top-cont   .   0)
+	   ;;Anchor pos: Bol at the topmost annotation line
+	   (annotation-var-cont   .   +)
        ;; Anchor pos: Boi at the topmost intro line.
        (member-init-intro     . +)
        ;; Anchor pos: Boi at the func decl arglist open.
@@ -1287,6 +1291,10 @@ Here is the current list of valid syntactic element symbols:
  knr-argdecl		-- Subsequent lines in a K&R C argument declaration.
  topmost-intro		-- The first line in a topmost construct definition.
  topmost-intro-cont	-- Topmost definition continuation lines.
+ annotation-top-cont    -- Topmost definition continuation line where only
+			   annotations are on previous lines.
+ annotation-var-cont    -- A continuation of a C (or like) statement where
+			   only annotations are on previous lines.
  member-init-intro	-- First line in a member initialization list.
  member-init-cont	-- Subsequent member initialization list lines.
  inher-intro		-- First line of a multiple inheritance list.
@@ -1375,7 +1383,7 @@ Here is the current list of valid syntactic element symbols:
   '(defun-block-intro block-open block-close statement statement-cont
     statement-block-intro statement-case-intro statement-case-open
     substatement substatement-open substatement-label case-label label
-    do-while-closure else-clause catch-clause inlambda))
+    do-while-closure else-clause catch-clause inlambda annotation-var-cont))
 
 (defcustom c-style-variables-are-local-p t
   "*Whether style variables should be buffer local by default.

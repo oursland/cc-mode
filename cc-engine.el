@@ -6014,6 +6014,14 @@ comment at the start of cc-engine.el for more info."
 
     res))
 
+(defun c-forward-annotation ()
+  ;; Used for Java code only at the moment.  Assumes point is on the
+  ;; @, moves forward an annotation.  returns nil if there is no
+  ;; annotation at point.
+  (if (looking-at "@")
+      (c-forward-type)))
+
+
 
 ;; Handling of large scale constructs like statements and declarations.
 
@@ -8595,6 +8603,21 @@ comment at the start of cc-engine.el for more info."
       (c-add-stmt-syntax 'func-decl-cont nil t
 			 containing-sexp paren-state))
 
+     ;;CASE F: continued statement and the only preceding items are
+     ;;annotations.
+      ((and (setq placeholder (point))
+            (c-beginning-of-statement-1)
+            (progn
+              (while (and (c-forward-annotation)
+                          (< (point) placeholder))
+                (c-forward-syntactic-ws))
+              t)
+            (prog1
+                (>= (point) placeholder)
+              (goto-char placeholder)))
+       (c-beginning-of-statement-1 containing-sexp)
+       (c-add-syntax 'annotation-var-cont (point)))
+
      ;; CASE D: continued statement.
      (t
       (c-beginning-of-statement-1 containing-sexp)
@@ -9455,6 +9478,20 @@ comment at the start of cc-engine.el for more info."
 	 (macro-start
 	  (c-beginning-of-statement-1 containing-sexp)
 	  (c-add-stmt-syntax 'statement nil t containing-sexp paren-state))
+
+     ;;CASE 5N: We are at a tompmost continuation line and the only
+     ;;preceding items are annotations.
+     ((and (setq placeholder (point))
+           (c-beginning-of-statement-1)
+           (progn
+	     (while (and (c-forward-annotation)
+			 (< (point) placeholder))
+	       (c-forward-syntactic-ws))
+	     t)
+	   (prog1
+             (>= (point) placeholder)
+             (goto-char placeholder)))
+      (c-add-syntax 'annotation-top-cont (c-point 'boi)))
 
 	 ;; CASE 5M: we are at a topmost continuation line
 	 (t
