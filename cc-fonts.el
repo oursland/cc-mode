@@ -195,7 +195,6 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
-
 (defvar c-annotation-face (make-face 'c-annotation-face)
   "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
 (set-face-foreground 'c-annotation-face "blue")
@@ -780,7 +779,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (cc-eval-when-compile
 	   (boundp 'parse-sexp-lookup-properties)))
 	(c-parse-and-markup-<>-arglists t)
-	nc-restricted-<>-arglists
+	c-restricted-<>-arglists
 	id-start id-end id-face pos kwd-sym)
 
     (while (and (< (point) limit)
@@ -1282,7 +1281,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		  nil))
 	      (goto-char (match-end 1))))))
 
-
       ;; Fontify all type names and the identifiers in the
       ;; declarations they might start.  Use eval here since
       ;; `c-known-type-key' gets its value from
@@ -1329,17 +1327,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		   (goto-char (match-end 1))
 		   (c-forward-syntactic-ws))
 		 (goto-char (match-end 1)))))))
-
-      ;; Fontify Java annotations
-      ,@(when (c-major-mode-is 'java-mode)
-	  (c-make-font-lock-search-function
-	   "\\(@[a-zA-Z0-9_]+\\)"
-	   '(1 'c-annotation-face t)
-	   '((c-font-lock-declarators limit t nil)
-	     (save-match-data
-	       (goto-char (match-end 1))
-	       (c-forward-syntactic-ws))
-	     (goto-char (match-end 1)))))
 
       ;; Fontify generic colon labels in languages that support them.
       ,@(when (c-lang-const c-recognize-colon-labels)

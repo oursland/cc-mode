@@ -366,16 +366,11 @@ The syntax tables aren't stored directly since they're quite large."
   ;; '<' and '>' characters.  Therefore this syntax table might go
   ;; away when CC Mode handles templates correctly everywhere.
   t   nil
-  c++ `(lambda ()
+  (java c++) `(lambda ()
 	 (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
 	   (modify-syntax-entry ?< "(>" table)
 	   (modify-syntax-entry ?> ")<" table)
-	   table))
-  java `(lambda ()
-       (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
-	 (modify-syntax-entry ?< "(>" table)
-	 (modify-syntax-entry ?> ")<" table)
-	 table)))
+	   table)))
 (c-lang-defvar c++-template-syntax-table
   (and (c-lang-const c++-make-template-syntax-table)
        (funcall (c-lang-const c++-make-template-syntax-table))))
@@ -414,9 +409,7 @@ the new syntax, as accepted by `modify-syntax-entry'."
   ;; it as an indentifier character since it's often used in various
   ;; machine generated identifiers.
   t    '((?_ . "w") (?$ . "w"))
-  objc (append '((?@ . "w"))
-	       (c-lang-const c-identifier-syntax-modifications))
-  java (append '((?@ . "w"))
+  (objc java) (append '((?@ . "w"))
 	       (c-lang-const c-identifier-syntax-modifications))
   awk  '((?_ . "w")))
 (c-lang-defvar c-identifier-syntax-modifications
@@ -1126,15 +1119,16 @@ operators."
   ;; Regexp matching the second and subsequent characters of all
   ;; multicharacter tokens that begin with ">".
   t (c-make-keywords-re nil
-     (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
-		   t
-		   "\\`>."
-		   (lambda (op) (substring op 1))))
-  java (c-make-keywords-re nil
       (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
 		    t
-		    "\\`>[^>]\\|\\`>>[^>]"
-		    (lambda (op) (substring op 1)))))
+		    "\\`>."
+		    (lambda (op) (substring op 1))))
+  java (c-make-keywords-re nil
+	 (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		       t
+		       "\\`>[^>]\\|\\`>>[^>]"
+		       (lambda (op) (substring op 1)))))
+
 (c-lang-defvar c->-op-cont-regexp (c-lang-const c->-op-cont-regexp))
 
 (c-lang-defconst c-stmt-delim-chars
@@ -1574,7 +1568,7 @@ Note that an alternative if the second part doesn't hold is
 on one of the `*-decl-kwds' lists."
   t    nil
   c    '("struct" "union" "enum")
-  java '("class" "enum")
+  ;java '("class" "enum")
   c++  (append '("class" "typename")
 	       (c-lang-const c-type-prefix-kwds c)))
 

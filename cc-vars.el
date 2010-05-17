@@ -1058,10 +1058,10 @@ can always override the use of `c-default-style' by making calls to
        (topmost-intro	      . 0)
        ;; Anchor pos: Bol at the last line of previous construct.
        (topmost-intro-cont    . c-lineup-topmost-intro-cont)
-	   ;;Anchor pos: Bol at the topmost annotation line
-	   (annotation-top-cont   .   0)
-	   ;;Anchor pos: Bol at the topmost annotation line
-	   (annotation-var-cont   .   +)
+       ;;Anchor pos: Bol at the topmost annotation line
+       (annotation-top-cont   .   0)
+       ;;Anchor pos: Bol at the topmost annotation line
+       (annotation-var-cont   .   +)
        ;; Anchor pos: Boi at the topmost intro line.
        (member-init-intro     . +)
        ;; Anchor pos: Boi at the func decl arglist open.
@@ -1292,9 +1292,9 @@ Here is the current list of valid syntactic element symbols:
  topmost-intro		-- The first line in a topmost construct definition.
  topmost-intro-cont	-- Topmost definition continuation lines.
  annotation-top-cont    -- Topmost definition continuation line where only
-			   annotations are on previous lines.
+ 			   annotations are on previous lines.
  annotation-var-cont    -- A continuation of a C (or like) statement where
-			   only annotations are on previous lines.
+ 			   only annotations are on previous lines.
  member-init-intro	-- First line in a member initialization list.
  member-init-cont	-- Subsequent member initialization list lines.
  inher-intro		-- First line of a multiple inheritance list.
