@@ -30,8 +30,8 @@ public class AnnotationTest {
     }
 
     @Foo
-    @Bar public void bar( @NonNull int Bla, @NonNegative
-			  @NonNull int c ) {
+    public void bar( @NonNull int Bla,
+		     @NonNegative @NonNull int test ) {
     }
 
     @Foo("hi")

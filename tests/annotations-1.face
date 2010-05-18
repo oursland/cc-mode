@@ -30,12 +30,12 @@
 
 
 (4 ant) (8 reg)
-(4 ant) (8 reg) (9 key) (15 reg) (16 typ) (20 reg) (21 fun) (24 reg) (26 ant) (34 reg) (35 typ) (38 reg) (39 var) (42 reg) (44 ant) (56 reg)
+(4 key) (10 reg) (11 typ) (15 reg) (16 fun) (19 reg) (21 ant) (29 reg) (30 typ) (33 reg) (34 var) (37 reg)
+(21 ant) (33 reg) (34 ant) (42 reg) (43 typ) (46 reg) (47 var) (51 reg)
 
 
-
-
-
+(4 ant) (8 reg) (10 str) (12 reg)
+(4 key) (10 reg) (11 typ) (15 reg) (16 fun) (20 reg)
 
 
 

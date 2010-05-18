@@ -5408,45 +5408,49 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		      (c-forward-syntactic-ws)
 		 (let ((orig-record-found-types c-record-found-types))
-		   (when (and c-record-type-identifiers
-			      all-types)
-			;; All encountered identifiers are types, so set the
-			;; promote flag and parse the type.
-			    (progn
-			      (c-forward-syntactic-ws)
-			      (when (looking-at c-identifier-start)
-			 (let ((c-promote-possible-types t))
-				  (c-forward-type))))
-			    ;; Check if this arglist argument is a sole type.  If
-			;; it's known then it's recorded in
-			;; `c-record-type-identifiers'.	 If it only is found
-			;; then it's recorded in `c-record-found-types' which we
-			;; might roll back if it turns out that this isn't an
-			;; angle bracket arglist afterall.
-		    (when (looking-at "\\?")
-			  (forward-char)
-			  (c-forward-syntactic-ws))
+		   (when (and c-record-type-identifiers all-types)
+		     ;; All encountered identifiers are types, so set the
+		     ;; promote flag and parse the type.
+		     (progn
+		       (c-forward-syntactic-ws)
+		       (when (looking-at c-identifier-start)
+			 (let ((c-promote-possible-types t)
+			       (c-promote-possible-types t)
+			       (c-record-found-types t))
+			   (c-forward-type))))
+		     ;; Check if this arglist argument is a sole type.  If
+		     ;; it's known then it's recorded in
+		     ;; `c-record-type-identifiers'.	 If it only is found
+		     ;; then it's recorded in `c-record-found-types' which we
+		     ;; might roll back if it turns out that this isn't an
+		     ;; angle bracket arglist afterall.
+		     (when (looking-at "\\?")
+		       (forward-char)
+		       (c-forward-syntactic-ws))
 
-			(when (or (looking-at "extends")
-				  (looking-at "super"))
-			  (forward-word)
-			  (c-forward-syntactic-ws)
-			  (let ((c-promote-possible-types t)
-				(c-record-type-identifiers t)
-				(c-record-found-types t))
-			    (c-forward-type)
-			    (c-forward-syntactic-ws)))
+		     (when (or (looking-at "extends")
+			       (looking-at "super"))
+		       (forward-word)
+		       (c-forward-syntactic-ws)
+		       (let ((c-promote-possible-types t)
+			     (c-record-type-identifiers t)
+			     (c-record-found-types t))
+			 (c-forward-type)
+			 (c-forward-syntactic-ws)))
 
-			(when (memq (char-before) '(?, ?<))
-			  (let ((orig-record-found-types c-record-found-types))
-			    (c-forward-syntactic-ws)
-			    (and (memq (c-forward-type) '(known found))
-				 (not (looking-at "[,>]"))
-				 ;; A found type was recorded but it's not the
-				 ;; only thing in the arglist argument, so reset
-				 ;; `c-record-found-types'.
-				 (setq c-record-found-types
-				       orig-record-found-types))))))
+		     (when (memq (char-before) '(?<))
+		       (let ((orig-record-found-types c-record-found-types)
+			     (c-promote-possible-types t)
+			     (c-record-type-identifiers t)
+			     (c-record-found-types t))
+			 (c-forward-syntactic-ws)
+			 (and (memq (c-forward-type) '(known found))
+			      (not (looking-at "[,>]"))
+			      ;; A found type was recorded but it's not the
+			      ;; only thing in the arglist argument, so reset
+			      ;; `c-record-found-types'.
+			      (setq c-record-found-types
+				    orig-record-found-types))))))
 
 		      (setq pos (point))
 
@@ -5454,15 +5458,11 @@ comment at the start of cc-engine.el for more info."
 		       ;; Note: These regexps exploit the match order in \| so
 		       ;; that "<>" is matched by "<" rather than "[^>:-]>".
 		       (c-syntactic-re-search-forward
-			(if c-restricted-<>-arglists
-			    ;; Stop on ',', '|', '&', '+' and '-' to catch
+			;; Stop on ',', '|', '&', '+' and '-' to catch
 			    ;; common binary operators that could be between
 			    ;; two comparison expressions "a<b" and "c>d".
-			    "[<;{},|+-&]\\|[>)]"
-			  ;; Otherwise we still stop on ',' to find the
-			  ;; argum ent start positions.
-		     "[<;{},&|]\\|>")
-			nil 'move t t 1)
+			    "[<;{},|+&-]\\|[>)]"
+			    nil 'move t t 1)
 
 		       ;; If the arglist starter has lost its open paren
 		       ;; syntax but not the closer, we won't find the
@@ -5519,8 +5519,8 @@ comment at the start of cc-engine.el for more info."
 
 				(setq subres
 				      (let ((c-record-type-identifiers t)
-				       (c-promote-possible-types nil)
-				       (c-record-found-types nil))
+					    (c-promote-possible-types t)
+					    (c-record-found-types t))
 					(c-forward-<>-arglist-recur
 					 (and keyword-match
 					      (c-keyword-member
@@ -5764,8 +5764,8 @@ comment at the start of cc-engine.el for more info."
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
 
-	       (when (let (c-record-type-identifiers
-			   c-record-found-types)
+	       (when (let ((c-record-type-identifiers t)
+			   (c-record-found-types t))
 		       (c-forward-<>-arglist nil))
 
 		 (c-add-type start (1+ pos))
@@ -6021,6 +6021,7 @@ comment at the start of cc-engine.el for more info."
   ;; @, moves forward an annotation.  returns nil if there is no
   ;; annotation at point.
   (and (looking-at "@")
+       (progn (forward-char) t)
        (c-forward-type)
        (progn (c-forward-syntactic-ws) t)
        (if (looking-at "(")
@@ -6195,6 +6196,9 @@ comment at the start of cc-engine.el for more info."
 	;; that it isn't a declaration or cast.
 	(save-rec-type-ids c-record-type-identifiers)
 	(save-rec-ref-ids c-record-ref-identifiers))
+
+    (while (c-forward-annotation)
+      (c-forward-syntactic-ws))
 
     ;; Check for a type.  Unknown symbols are treated as possible
     ;; types, but they could also be specifiers disguised through
@@ -10287,3 +10291,4 @@ Cannot combine absolute offsets %S and %S in `add' method"
 
 ;;; arch-tag: 149add18-4673-4da5-ac47-6805e4eae089
 ;;; cc-engine.el ends here
+

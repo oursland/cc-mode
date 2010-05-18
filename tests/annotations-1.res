@@ -31,7 +31,7 @@
 ((inclass <15,0>) (topmost-intro <1,0>))
 ((inclass <16,0>) (topmost-intro <2,0>))
 ((annotation-top-cont <1,4>))
-((arglist-cont-nonempty <1,4> <1,24>))
+((arglist-cont-nonempty <1,4> <1,19>))
 ((inline-close <3,4>))
 ((inclass <20,0>) (topmost-intro <1,0>))
 ((inclass <21,0>) (topmost-intro <2,0>))
