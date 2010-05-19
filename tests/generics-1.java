@@ -1,12 +1,11 @@
 
-public class generics-1 {
+public class generics {
 
     Map<String, Driver> allDrivers = new Map<String, Driver>();
 
     static <T> void fromArrayToCollection(T[] a, Collection<T> c) {
         for (T o: a) {
-            c.add(o); // correct
-
+            c.add(o);
         }
     }
 
@@ -17,9 +16,9 @@ interface Collection<E> {
     public <T extends E> boolean addAll(Collection<T> c);
 }
 
-public class GenericsTest<T extends Comparable>{
+public class GenericsTest<T extends Comparable> {
     static List<List<? extends Shape>> history =
-        new List<List<? extends Shape>>();
+	new List<List<? extends Shape>>();
 
     public void drawAll(List<? extends Shape> shapes) {
         history.addLast(shapes);

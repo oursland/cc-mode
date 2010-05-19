@@ -5408,25 +5408,21 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		      (c-forward-syntactic-ws)
 		 (let ((orig-record-found-types c-record-found-types))
-		   (when (and c-record-type-identifiers all-types)
+		   (when (or (and c-record-type-identifiers all-types)
+			     (c-major-mode-is 'java-mode))
 		     ;; All encountered identifiers are types, so set the
 		     ;; promote flag and parse the type.
 		     (progn
 		       (c-forward-syntactic-ws)
-		       (when (looking-at c-identifier-start)
-			 (let ((c-promote-possible-types t)
-			       (c-promote-possible-types t)
-			       (c-record-found-types t))
-			   (c-forward-type))))
-		     ;; Check if this arglist argument is a sole type.  If
-		     ;; it's known then it's recorded in
-		     ;; `c-record-type-identifiers'.	 If it only is found
-		     ;; then it's recorded in `c-record-found-types' which we
-		     ;; might roll back if it turns out that this isn't an
-		     ;; angle bracket arglist afterall.
-		     (when (looking-at "\\?")
-		       (forward-char)
-		       (c-forward-syntactic-ws))
+		       (if (looking-at "\\?")
+			   (forward-char)
+			 (when (looking-at c-identifier-start)
+			   (let ((c-promote-possible-types t)
+				 (c-promote-possible-types t)
+				 (c-record-found-types t))
+			     (c-forward-type))))
+
+		     (c-forward-syntactic-ws)
 
 		     (when (or (looking-at "extends")
 			       (looking-at "super"))
@@ -5436,21 +5432,7 @@ comment at the start of cc-engine.el for more info."
 			     (c-record-type-identifiers t)
 			     (c-record-found-types t))
 			 (c-forward-type)
-			 (c-forward-syntactic-ws)))
-
-		     (when (memq (char-before) '(?<))
-		       (let ((orig-record-found-types c-record-found-types)
-			     (c-promote-possible-types t)
-			     (c-record-type-identifiers t)
-			     (c-record-found-types t))
-			 (c-forward-syntactic-ws)
-			 (and (memq (c-forward-type) '(known found))
-			      (not (looking-at "[,>]"))
-			      ;; A found type was recorded but it's not the
-			      ;; only thing in the arglist argument, so reset
-			      ;; `c-record-found-types'.
-			      (setq c-record-found-types
-				    orig-record-found-types))))))
+			 (c-forward-syntactic-ws))))))
 
 		      (setq pos (point))
 
@@ -5459,19 +5441,11 @@ comment at the start of cc-engine.el for more info."
 		       ;; that "<>" is matched by "<" rather than "[^>:-]>".
 		       (c-syntactic-re-search-forward
 			;; Stop on ',', '|', '&', '+' and '-' to catch
-			    ;; common binary operators that could be between
-			    ;; two comparison expressions "a<b" and "c>d".
-			    "[<;{},|+&-]\\|[>)]"
-			    nil 'move t t 1)
-
-		       ;; If the arglist starter has lost its open paren
-		       ;; syntax but not the closer, we won't find the
-		       ;; closer above since we only search in the
-		       ;; balanced sexp.  In that case we stop just short
-		       ;; of it so check if the following char is the closer.
-		       (when (eq (char-after) ?>)
-			 (forward-char)
-			 t)))
+			;; common binary operators that could be between
+			;; two comparison expressions "a<b" and "c>d".
+			"[<;{},|+&-]\\|[>)]"
+			nil t t)
+		       t))
 
 		    (cond
 		     ((eq (char-before) ?>)
@@ -5547,9 +5521,10 @@ comment at the start of cc-engine.el for more info."
 			      (c-record-type-id (cons id-start id-end))))))
 		      t)
 
-		((or (and (eq (char-before) ?&)
-			  (not (eq (char-after) ?&)))
-			  (eq (char-before) ?,))
+		((and (not c-restricted-<>-arglists)
+		      (or (and (eq (char-before) ?&)
+			       (not (eq (char-after) ?&)))
+			  (eq (char-before) ?,)))
 		      ;; Just another argument.	 Record the position.  The
 		      ;; type check stuff that made us stop at it is at
 		      ;; the top of the loop.
