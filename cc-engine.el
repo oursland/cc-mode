@@ -5365,6 +5365,7 @@ comment at the start of cc-engine.el for more info."
 		  ;; `nconc' doesn't mind that the tail of
 		  ;; `c-record-found-types' is t.
 		  (nconc c-record-found-types c-record-type-identifiers)))
+	    (if (c-major-mode-is 'java-mode) (c-fontify-recorded-types-and-refs))
 	  t)
 
       (goto-char start)
@@ -5418,7 +5419,6 @@ comment at the start of cc-engine.el for more info."
 			   (forward-char)
 			 (when (looking-at c-identifier-start)
 			   (let ((c-promote-possible-types t)
-				 (c-promote-possible-types t)
 				 (c-record-found-types t))
 			     (c-forward-type))))
 
@@ -5429,8 +5429,7 @@ comment at the start of cc-engine.el for more info."
 		       (forward-word)
 		       (c-forward-syntactic-ws)
 		       (let ((c-promote-possible-types t)
-			     (c-record-type-identifiers t)
-			     (c-record-found-types t))
+			    (c-record-found-types t))
 			 (c-forward-type)
 			 (c-forward-syntactic-ws))))))
 
@@ -5492,8 +5491,7 @@ comment at the start of cc-engine.el for more info."
 				    (setq id-start (point))))
 
 				(setq subres
-				      (let ((c-record-type-identifiers t)
-					    (c-promote-possible-types t)
+				      (let ((c-promote-possible-types t)
 					    (c-record-found-types t))
 					(c-forward-<>-arglist-recur
 					 (and keyword-match
@@ -5738,7 +5736,6 @@ comment at the start of cc-engine.el for more info."
 	      ((and c-recognize-<>-arglists
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
-
 	       (when (let ((c-record-type-identifiers t)
 			   (c-record-found-types t))
 		       (c-forward-<>-arglist nil))

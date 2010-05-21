@@ -1629,7 +1629,7 @@ following identifier as a type; the keyword must also be present on
   c++  '("class" "struct" "union")
   objc '("struct" "union"
 	 "@interface" "@implementation" "@protocol")
-  java '("class" "@interface" "interface" "super" "extends")
+  java '("class" "@interface" "interface")
   idl  '("component" "eventtype" "exception" "home" "interface" "struct"
 	 "union" "valuetype"
 	 ;; In CORBA PSDL:
