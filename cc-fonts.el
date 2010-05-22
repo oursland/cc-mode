@@ -1582,6 +1582,9 @@ higher."
 	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
 		   (c-forward-keyword-clause 1)
 		   (if (> (point) limit) (goto-char limit))))))))
+
+      ,@(when (c-major-mode-is 'java-mode)
+	  `((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1 c-annotation-face))))
       ))
 
 (c-lang-defconst c-matchers-1
