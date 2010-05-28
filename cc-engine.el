@@ -707,7 +707,7 @@ comment at the start of cc-engine.el for more info."
 	;; The last position where a label is possible provided the
 	;; statement started there.  It's nil as long as no invalid
 	;; label content has been found (according to
-	;; `c-nonlabel-token-key'.  It's `start' if no valid label
+	;; `c-nonlabel-token-key').  It's `start' if no valid label
 	;; content was found in the label.  Note that we might still
 	;; regard it a label if it starts with `c-label-kwds'.
 	label-good-pos
@@ -769,7 +769,7 @@ comment at the start of cc-engine.el for more info."
 
 	;; The following while loop goes back one sexp (balanced parens,
 	;; etc. with contents, or symbol or suchlike) each iteration.  This
-	;; movement is accomplished with a call to scan-sexps approx 130 lines
+	;; movement is accomplished with a call to scan-sexps approx 150 lines
 	;; below.
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
@@ -1024,7 +1024,12 @@ comment at the start of cc-engine.el for more info."
 		  ;; (including a case label) or something like C++'s "public:"?
 		  ;; A case label might use an expression rather than a token.
 		  (setq after-case:-pos (or tok start))
-		  (if (looking-at c-nonlabel-token-key) ; e.g. "while" or "'a'"
+		  (if (or (looking-at c-nonlabel-token-key) ; e.g. "while" or "'a'"
+			  ;; Catch C++'s inheritance construct "class foo : bar".
+			  (save-excursion
+			    (and
+			     (c-safe (c-backward-sexp) t)
+			     (looking-at c-nonlabel-token-2-key))))
 		      (setq c-maybe-labelp nil)
 		    (if after-labels-pos ; Have we already encountered a label?
 			(if (not last-label-pos)

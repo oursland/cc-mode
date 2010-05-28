@@ -1502,24 +1502,6 @@ properly."
   awk 'c-awk-end-of-defun)
 (c-lang-setvar end-of-defun-function (c-lang-const end-of-defun-function))
 
-(c-lang-defconst c-defun-tactic
-  "Defines beginnings/ends of defuns in languages with nested declaration scopes.
-\(These are introduced by keywords like \"namespace\" and \"class\" in C++).
-
-The following values are under consideration, but this list is
-tentative.  Currently (2008-06), only 'respect-enclosure is
-recognized, all other values being equivalent to t
-
-nil			Column-0 or top-level brace is BOD.
-t			Function (struct, etc.) header preceding Column-0 or
-			top-level brace.
-'respect-enclosure	Seek BOD (\"beginning of defun\") directly inside the
-			currently enclosing declaration scope.	Do not look in
-			any other decl scopes enclosed by this one.
-'any-level		Seek BOD regardless of level of nesting."
-  t t
-  (c++ java objc pike) 'respect-enclosure)
-(c-lang-defvar c-defun-tactic (c-lang-const c-defun-tactic))
 
 ;;; In-comment text handling.
 
@@ -2963,6 +2945,14 @@ i.e. before \":\".  Only used if `c-recognize-colon-labels' is set."
   ;; work in labels.
   c++ (concat "\\s\(\\|" (c-lang-const c-nonlabel-token-key)))
 (c-lang-defvar c-nonlabel-token-key (c-lang-const c-nonlabel-token-key))
+
+(c-lang-defconst c-nonlabel-token-2-key
+  "Regexp matching things that can't occur two symbols before a colon in
+a label construct.  This catches C++'s inheritance construct \"class foo
+: bar\".  Only used if `c-recognize-colon-labels' is set."
+  t "\\<\\>"				; matches nothing
+  c++ (c-make-keywords-re t '("class")))
+(c-lang-defvar c-nonlabel-token-2-key (c-lang-const c-nonlabel-token-2-key))
 
 (c-lang-defconst c-opt-extra-label-key
   "Optional regexp matching labels.
