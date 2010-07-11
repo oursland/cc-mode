@@ -8477,7 +8477,7 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
 
-  (let (special-brace-list)
+  (let (special-brace-list placeholder)
     (goto-char indent-point)
     (skip-chars-forward " \t")
 

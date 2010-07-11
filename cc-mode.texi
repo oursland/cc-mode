@@ -202,7 +202,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.241.2.16.2.3 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.241.2.16.2.4 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
 @url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
@@ -3955,10 +3955,10 @@ The first line in a ``topmost'' definition.  @ref{Function Symbols}.
 @item topmost-intro-cont
 Topmost definition continuation lines.  This is only used in the parts
 that aren't covered by other symbols such as @code{func-decl-cont} and
+@code{knr-argdecl}.  @ref{Function Symbols}.
 @item annotation-top-cont
 Topmost definition continuation lines where all previous items are
-annotations. @ref{Java Symbols}.
-@code{knr-argdecl}.  @ref{Function Symbols}.
+annotations.  @ref{Java Symbols}.
 @item member-init-intro
 First line in a member initialization list.  @ref{Class Symbols}.
 @item member-init-cont
@@ -3989,7 +3989,7 @@ A statement.  @ref{Function Symbols}.
 A continuation of a statement.  @ref{Function Symbols}.
 @item annotation-var-cont
 A continuation of a statement where all previous items are
-annotations. @ref{Java Symbols}.
+annotations.  @ref{Java Symbols}.
 @item statement-block-intro
 The first line in a new statement block.  @ref{Conditional Construct
 Symbols}.
@@ -4794,8 +4794,6 @@ continuation of a topmost introduction with an annotation symbol preceding
 the current line.  Similarly, line 4 is assigned the @code{annotation-var-cont}
 syntax due to it being a continuation of a variable declaration where preceding
 the declaration is an annotation.
-
-@ssindex
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Statement Block Symbols, K&R Symbols, Java Symbols, Syntactic Symbols
