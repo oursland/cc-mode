@@ -654,6 +654,17 @@ compatible with old code; callers should always specify it."
       (make-local-variable 'require-final-newline)
       (setq require-final-newline (cdr rfn)))))
 
+(defun c-count-cfss (lv-alist)
+  ;; LV-ALIST is an alist like `file-local-variables-alist'.  Count how many
+  ;; elements with the key `c-file-style' there are in it.
+  (let ((elt-ptr lv-alist) elt (cownt 0))
+    (while elt-ptr
+      (setq elt (car elt-ptr)
+	    elt-ptr (cdr elt-ptr))
+      (when (eq (car elt) 'c-file-style)
+	(setq cownt (1+ cownt))))
+    cownt))
+							  
 (defun c-before-hack-hook ()
   "Set the CC Mode style and \"offsets\" when in the buffer's local variables.
 They are set only when, respectively, the pseudo variables
@@ -670,7 +681,15 @@ This function is called from the hook `before-hack-local-variables-hook'."
 	      (delq mode-cons file-local-variables-alist)))
       (when stile
 	(or (stringp stile) (error "c-file-style is not a string"))
-	(c-set-style stile t))
+	(if (boundp 'dir-local-variables-alist)
+	    ;; Determine whether `c-file-style' was set in the file's local
+	    ;; variables or in a .dir-locals.el (a directory setting).
+	    (let ((cfs-in-file-and-dir-count
+		   (c-count-cfss file-local-variables-alist))
+		  (cfs-in-dir-count (c-count-cfss dir-local-variables-alist)))
+	      (c-set-style stile
+			   (= cfs-in-file-and-dir-count cfs-in-dir-count)))
+	  (c-set-style stile)))
       (when offsets
 	(mapc
 	 (lambda (langentry)
@@ -741,7 +760,8 @@ Note that the style variables are always made local to the buffer."
     (when c-file-style
       (or (stringp c-file-style)
 	  (error "c-file-style is not a string"))
-      (c-set-style c-file-style t))
+      (c-set-style c-file-style ;t
+		   ))
 
     (and c-file-offsets
 	 (mapcar
