@@ -195,6 +195,10 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
+(defvar c-annotation-face (make-face 'c-annotation-face)
+  "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
+(set-face-foreground 'c-annotation-face "blue")
+
 (eval-and-compile
   ;; We need the following functions during compilation since they're
   ;; called when the `c-lang-defconst' initializers are evaluated.
@@ -1578,6 +1582,9 @@ higher."
 	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
 		   (c-forward-keyword-clause 1)
 		   (if (> (point) limit) (goto-char limit))))))))
+
+      ,@(when (c-major-mode-is 'java-mode)
+	  `((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1 c-annotation-face))))
       ))
 
 (c-lang-defconst c-matchers-1
@@ -1696,7 +1703,7 @@ need for `c-font-lock-extra-types'.")
   ;; FIXME!!!  Put in a comment about the context of this function's
   ;; invocation.  I think it's called as an ANCHORED-MATCHER within an
   ;; ANCHORED-HIGHLIGHTER.  (2007/2/10).
-  ;; 
+  ;;
   ;; Assuming point is after a "new" word, check that it isn't inside
   ;; a string or comment, and if so try to fontify the type in the
   ;; allocation expression.  Nil is always returned.
@@ -2183,7 +2190,7 @@ need for `pike-font-lock-extra-types'.")
 (defconst gtkdoc-font-lock-doc-comments
   (let ((symbol "[a-zA-Z0-9_]+")
 	(header "^ \\* "))
-    `((,(concat header "\\("     symbol "\\):[ \t]*$") 
+    `((,(concat header "\\("     symbol "\\):[ \t]*$")
        1 ,c-doc-markup-face-name prepend nil)
       (,(concat                  symbol     "()")
        0 ,c-doc-markup-face-name prepend nil)

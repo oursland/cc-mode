@@ -1034,7 +1034,6 @@ LIMIT bounds the search.  The comparison is done with `equal'.
 Leave point just after the character, and set the match data on
 this character, and return point.  If VALUE isn't found, Return
 nil; point is then left undefined."
-  ;; FIXME!!!  Make this work in XEmacs.  2010-03-07.
   `(let ((place (point)))
      (while
 	 (and
@@ -1054,7 +1053,6 @@ LIMIT bounds the search.  The comparison is done with `equal'.
 Leave point just before the character, set the match data on this
 character, and return point.  If VALUE isn't found, Return nil;
 point is then left undefined."
-  ;; FIXME!!!  Make this work in XEmacs.  2010-03-07.
   `(let ((place (point)))
      (while
 	 (and

@@ -193,6 +193,7 @@ simplifications with lesser accuracy.")
     (err . font-lock-warning-face)
     (nbs . c-nonbreakable-space-face)
     (neg . font-lock-negation-char-face)
+    (ant . c-annotation-face)
     ;; The following is used on the comment delimiters themselves in
     ;; Emacs >= 22.  Just make it an alias for the comment face to
     ;; keep compatibility with our current set of test cases.  (It's
@@ -799,7 +800,7 @@ to be set as a file local variable.")
 					 (when cc-test-last-backtrace
 					   (cc-test-log "%s" cc-test-last-backtrace)
 					   (setq cc-test-last-backtrace nil))))))
-	    
+
 	    ;; Record the expected indentation and reindent.  This is done
 	    ;; in backward direction to avoid cascading errors.
 	    (while (= (forward-line -1) 0)
