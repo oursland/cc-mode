@@ -464,6 +464,14 @@ preferably use the `c-mode-menu' language constant directly."
 (defvar c-maybe-stale-found-type nil)
 (make-variable-buffer-local 'c-maybe-stale-found-type)
 
+(defvar c-just-done-before-change nil)
+(make-variable-buffer-local 'c-just-done-before-change)
+;; This variable is set to t by `c-before-change' and to nil by
+;; `c-after-change'.  It is used to detect a spurious invocation of
+;; `before-change-functions' directly following on from a correct one.  This
+;; happens in some Emacsen, for example when `basic-save-buffer' does (insert
+;; ?\n) when `require-final-newline' is non-nil.
+
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
 and the line breaking/filling code.  Intended to be used by other
@@ -764,7 +772,7 @@ Note that the style variables are always made local to the buffer."
 		   ))
 
     (and c-file-offsets
-	 (mapcar
+	 (mapc
 	  (lambda (langentry)
 	    (let ((langelem (car langentry))
 		  (offset (cdr langentry)))
@@ -820,14 +828,6 @@ Note that the style variables are always made local to the buffer."
 (make-variable-buffer-local 'c-old-BOM)
 (defvar c-old-EOM 0)
 (make-variable-buffer-local 'c-old-EOM)
-
-(defvar c-just-done-before-change nil)
-(make-variable-buffer-local 'c-just-done-before-change)
-;; This variable is set to t by `c-before-change' and to nil by
-;; `c-after-change'.  It is used to detect a spurious invocation of
-;; `before-change-functions' directly following on from a correct one.  This
-;; happens in some Emacsen, for example when `basic-save-buffer' does (insert
-;; ?\n) when `require-final-newline' is non-nil.
 
 (defun c-extend-region-for-CPP (beg end)
   ;; Set c-old-BOM or c-old-EOM respectively to BEG, END, each extended to the
@@ -1688,15 +1688,15 @@ Key bindings:
 		     adaptive-fill-mode
 		     adaptive-fill-regexp)
 		   nil)))
-	(mapcar (lambda (var) (unless (boundp var)
-				(setq vars (delq var vars))))
-		'(signal-error-on-buffer-boundary
-		  filladapt-mode
-		  defun-prompt-regexp
-		  font-lock-mode
-		  font-lock-maximum-decoration
-		  parse-sexp-lookup-properties
-		  lookup-syntax-properties))
+	(mapc (lambda (var) (unless (boundp var)
+			      (setq vars (delq var vars))))
+	      '(signal-error-on-buffer-boundary
+		filladapt-mode
+		defun-prompt-regexp
+		font-lock-mode
+		font-lock-maximum-decoration
+		parse-sexp-lookup-properties
+		lookup-syntax-properties))
 	vars)
       (lambda ()
 	(run-hooks 'c-prepare-bug-report-hooks)

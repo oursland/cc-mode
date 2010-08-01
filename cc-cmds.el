@@ -323,7 +323,7 @@ after special characters such as brace, comma, semi-colon, and colon."
   (c-keep-region-active))
 
 (defalias 'c-toggle-auto-state 'c-toggle-auto-newline)
-(make-obsolete 'c-toggle-auto-state 'c-toggle-auto-newline)
+(make-obsolete 'c-toggle-auto-state 'c-toggle-auto-newline nil)
 
 (defun c-toggle-hungry-state (&optional arg)
   "Toggle hungry-delete-key feature.
@@ -478,7 +478,7 @@ inside a literal or a macro, nothing special happens."
 	  (bolp (bolp)))
       (beginning-of-line)
       (delete-horizontal-space)
-      (insert last-command-char)
+      (insert last-command-event)
       (and (not bolp)
 	   (goto-char (- (point-max) pos)))
       )))
@@ -737,7 +737,7 @@ settings of `c-cleanup-list' are done."
 	      ;; `}': clean up empty defun braces
 	      (when (c-save-buffer-state ()
 		      (and (memq 'empty-defun-braces c-cleanup-list)
-			   (eq last-command-char ?\})
+			   (eq last-command-event ?\})
 			   (c-intersect-lists '(defun-close class-close inline-close)
 					      syntax)
 			   (progn
@@ -753,14 +753,14 @@ settings of `c-cleanup-list' are done."
 	      ;; `}': compact to a one-liner defun?
 	      (save-match-data
 		(when
-		    (and (eq last-command-char ?\})
+		    (and (eq last-command-event ?\})
 			 (memq 'one-liner-defun c-cleanup-list)
 			 (c-intersect-lists '(defun-close) syntax)
 			 (c-try-one-liner))
 		  (setq here (- (point-max) pos))))
 
 	      ;; `{': clean up brace-else-brace and brace-elseif-brace
-	      (when (eq last-command-char ?\{)
+	      (when (eq last-command-event ?\{)
 		(cond
 		 ((and (memq 'brace-else-brace c-cleanup-list)
 		       (re-search-backward
@@ -814,7 +814,7 @@ settings of `c-cleanup-list' are done."
 	    ))))
 
     ;; blink the paren
-    (and (eq last-command-char ?\})
+    (and (eq last-command-event ?\})
 	 (not executing-kbd-macro)
 	 old-blink-paren
 	 (save-excursion
@@ -851,7 +851,7 @@ is inhibited."
     (when (and (not arg)
 	       (eq literal 'c)
 	       (memq 'comment-close-slash c-cleanup-list)
-	       (eq last-command-char ?/)
+	       (eq last-command-event ?/)
 	       (looking-at (concat "[ \t]*\\("
 				   (regexp-quote comment-end) "\\)?$"))
 	; (eq c-block-comment-ender "*/") ; C-style comments ALWAYS end in */
@@ -867,7 +867,7 @@ is inhibited."
     (setq indentp (and (not arg)
 		       c-syntactic-indentation
 		       c-electric-flag
-		       (eq last-command-char ?/)
+		       (eq last-command-event ?/)
 		       (eq (char-before) (if literal ?* ?/))))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
@@ -941,10 +941,10 @@ settings of `c-cleanup-list'."
 	  (let ((pos (- (point-max) (point))))
 	    (if (c-save-buffer-state ()
 		  (and (or (and
-			    (eq last-command-char ?,)
+			    (eq last-command-event ?,)
 			    (memq 'list-close-comma c-cleanup-list))
 			   (and
-			    (eq last-command-char ?\;)
+			    (eq last-command-event ?\;)
 			    (memq 'defun-close-semi c-cleanup-list)))
 		       (progn
 			 (forward-char -1)
@@ -1101,7 +1101,7 @@ numeric argument is supplied, or the point is inside a literal."
     ;; Indent the line if appropriate.
     (when (and c-electric-flag c-syntactic-indentation c-recognize-<>-arglists)
       (setq found-delim
-	    (if (eq last-command-char ?<)
+	    (if (eq last-command-event ?<)
 		;; If a <, basically see if it's got "template" before it .....
 		(or (and (progn
 			   (backward-char)
@@ -1194,7 +1194,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 	    ;; clean up brace-elseif-brace
 	    (when
 		(and (memq 'brace-elseif-brace c-cleanup-list)
-		     (eq last-command-char ?\()
+		     (eq last-command-event ?\()
 		     (re-search-backward
 		      (concat "}"
 			      "\\([ \t\n]\\|\\\\\n\\)*"
@@ -1212,7 +1212,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 	    ;; clean up brace-catch-brace
 	    (when
 		(and (memq 'brace-catch-brace c-cleanup-list)
-		     (eq last-command-char ?\()
+		     (eq last-command-event ?\()
 		     (re-search-backward
 		      (concat "}"
 			      "\\([ \t\n]\\|\\\\\n\\)*"
@@ -1233,7 +1233,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 
 	     ;; space-before-funcall clean-up?
 	     ((and (memq 'space-before-funcall c-cleanup-list)
-		   (eq last-command-char ?\()
+		   (eq last-command-event ?\()
 		   (save-excursion
 		     (backward-char)
 		     (skip-chars-backward " \t")
@@ -1251,7 +1251,7 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
 	     ;; compact-empty-funcall clean-up?
 		  ((c-save-buffer-state ()
 		     (and (memq 'compact-empty-funcall c-cleanup-list)
-			  (eq last-command-char ?\))
+			  (eq last-command-event ?\))
 			  (save-excursion
 			    (c-safe (backward-char 2))
 			    (when (looking-at "()")
@@ -1280,7 +1280,7 @@ keyword on the line, the keyword is not inserted inside a literal, and
     (when (c-save-buffer-state ()
 	    (and c-electric-flag
 		 c-syntactic-indentation
-		 (not (eq last-command-char ?_))
+		 (not (eq last-command-event ?_))
 		 (= (save-excursion
 		      (skip-syntax-backward "w")
 		      (point))
@@ -1303,14 +1303,14 @@ keyword on the line, the keyword is not inserted inside a literal, and
   (interactive "p")
   (require 'cc-subword)
   (c-forward-subword arg))
-(make-obsolete 'c-forward-into-nomenclature 'c-forward-subword)
+(make-obsolete 'c-forward-into-nomenclature 'c-forward-subword nil)
 
 (defun c-backward-into-nomenclature (&optional arg)
   "Compatibility alias for `c-backward-subword'."
   (interactive "p")
   (require 'cc-subword)
   (c-backward-subword arg))
-(make-obsolete 'c-backward-into-nomenclature 'c-backward-subword)
+(make-obsolete 'c-backward-into-nomenclature 'c-backward-subword nil)
 
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
@@ -2647,7 +2647,7 @@ sentence motion in or near comments and multiline strings."
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
 ;; the functions which delete, which gets 'supersede.
-(mapcar
+(mapc
  (function
   (lambda (sym)
     (put sym 'delete-selection t)	; for delsel (Emacs)
@@ -4433,7 +4433,7 @@ If a fill prefix is specified, it overrides all the above."
 	     (indent-to col))))))
 
 (defalias 'c-comment-line-break-function 'c-indent-new-comment-line)
-(make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line)
+(make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line nil)
 
 ;; advice for indent-new-comment-line for older Emacsen
 (unless (boundp 'comment-line-break-function)

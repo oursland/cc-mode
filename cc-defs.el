@@ -83,8 +83,8 @@
 ;; The above takes care of the delayed loading, but this is necessary
 ;; to ensure correct byte compilation.
 (eval-when-compile
-  (if (and (not (featurep 'cc-fix))
-	   (featurep 'xemacs)
+  (if (and (featurep 'xemacs)
+	   (not (featurep 'cc-fix))
 	   (progn
 	     (require 'font-lock)
 	     (let (font-lock-keywords)
