@@ -5441,135 +5441,135 @@ comment at the start of cc-engine.el for more info."
       (forward-char)
 
       (unless (looking-at c-<-op-cont-regexp)
-		(while (and
+	(while (and
 		(progn
-		      (c-forward-syntactic-ws)
-		 (let ((orig-record-found-types c-record-found-types))
-		   (when (or (and c-record-type-identifiers all-types)
-			     (c-major-mode-is 'java-mode))
-		     ;; All encountered identifiers are types, so set the
-		     ;; promote flag and parse the type.
-		     (progn
-		       (c-forward-syntactic-ws)
-		       (if (looking-at "\\?")
-			   (forward-char)
-			 (when (looking-at c-identifier-start)
-			   (let ((c-promote-possible-types t)
-				 (c-record-found-types t))
-			     (c-forward-type))))
+		  (c-forward-syntactic-ws)
+		  (let ((orig-record-found-types c-record-found-types))
+		    (when (or (and c-record-type-identifiers all-types)
+			      (c-major-mode-is 'java-mode))
+		      ;; All encountered identifiers are types, so set the
+		      ;; promote flag and parse the type.
+		      (progn
+			(c-forward-syntactic-ws)
+			(if (looking-at "\\?")
+			    (forward-char)
+			  (when (looking-at c-identifier-start)
+			    (let ((c-promote-possible-types t)
+				  (c-record-found-types t))
+			      (c-forward-type))))
 
-		     (c-forward-syntactic-ws)
+			(c-forward-syntactic-ws)
 
-		     (when (or (looking-at "extends")
-			       (looking-at "super"))
-		       (forward-word)
-		       (c-forward-syntactic-ws)
-		       (let ((c-promote-possible-types t)
-			    (c-record-found-types t))
-			 (c-forward-type)
-			 (c-forward-syntactic-ws))))))
+			(when (or (looking-at "extends")
+				  (looking-at "super"))
+			  (forward-word)
+			  (c-forward-syntactic-ws)
+			  (let ((c-promote-possible-types t)
+				(c-record-found-types t))
+			    (c-forward-type)
+			    (c-forward-syntactic-ws))))))
 
-		      (setq pos (point))
+		  (setq pos (point))
 
-		      (or
-		       ;; Note: These regexps exploit the match order in \| so
-		       ;; that "<>" is matched by "<" rather than "[^>:-]>".
-		       (c-syntactic-re-search-forward
-			;; Stop on ',', '|', '&', '+' and '-' to catch
-			;; common binary operators that could be between
-			;; two comparison expressions "a<b" and "c>d".
-			"[<;{},|+&-]\\|[>)]"
-			nil t t)
-		       t))
+		  (or
+		   ;; Note: These regexps exploit the match order in \| so
+		   ;; that "<>" is matched by "<" rather than "[^>:-]>".
+		   (c-syntactic-re-search-forward
+		    ;; Stop on ',', '|', '&', '+' and '-' to catch
+		    ;; common binary operators that could be between
+		    ;; two comparison expressions "a<b" and "c>d".
+		    "[<;{},|+&-]\\|[>)]"
+		    nil t t)
+		   t))
 
-		    (cond
-		     ((eq (char-before) ?>)
-		      ;; Either an operator starting with '>' or the end of
-		      ;; the angle bracket arglist.
+		(cond
+		 ((eq (char-before) ?>)
+		  ;; Either an operator starting with '>' or the end of
+		  ;; the angle bracket arglist.
 
-		      (if (looking-at c->-op-cont-regexp)
-			  (progn
-			    (goto-char (match-end 0))
-			    t)		; Continue the loop.
+		  (if (looking-at c->-op-cont-regexp)
+		      (progn
+			(goto-char (match-end 0))
+			t)		; Continue the loop.
 
-			;; The angle bracket arglist is finished.
-			(when c-parse-and-markup-<>-arglists
-			  (while arg-start-pos
-			    (c-put-c-type-property (1- (car arg-start-pos))
-						   'c-<>-arg-sep)
-			    (setq arg-start-pos (cdr arg-start-pos)))
-			  (c-mark-<-as-paren start)
-			  (c-mark->-as-paren (1- (point))))
-			(setq res t)
-			nil))		; Exit the loop.
+		    ;; The angle bracket arglist is finished.
+		    (when c-parse-and-markup-<>-arglists
+		      (while arg-start-pos
+			(c-put-c-type-property (1- (car arg-start-pos))
+					       'c-<>-arg-sep)
+			(setq arg-start-pos (cdr arg-start-pos)))
+		      (c-mark-<-as-paren start)
+		      (c-mark->-as-paren (1- (point))))
+		    (setq res t)
+		    nil))		; Exit the loop.
 
-		     ((eq (char-before) ?<)
-		      ;; Either an operator starting with '<' or a nested arglist.
-		      (setq pos (point))
-		      (let (id-start id-end subres keyword-match)
-			(if (if (looking-at c-<-op-cont-regexp)
-				(setq tmp (match-end 0))
-			      (setq tmp pos)
-			      (backward-char)
-			      (not
-			       (and
+		 ((eq (char-before) ?<)
+		  ;; Either an operator starting with '<' or a nested arglist.
+		  (setq pos (point))
+		  (let (id-start id-end subres keyword-match)
+		    (if (if (looking-at c-<-op-cont-regexp)
+			    (setq tmp (match-end 0))
+			  (setq tmp pos)
+			  (backward-char)
+			  (not
+			   (and
 
-				(save-excursion
-				  ;; There's always an identifier before an angle
-				  ;; bracket arglist, or a keyword in
-				  ;; `c-<>-type-kwds' or `c-<>-arglist-kwds'.
-				  (c-backward-syntactic-ws)
-				  (setq id-end (point))
-				  (c-simple-skip-symbol-backward)
-				  (when (or (setq keyword-match
-						  (looking-at c-opt-<>-sexp-key))
-					    (not (looking-at c-keywords-regexp)))
-				    (setq id-start (point))))
+			    (save-excursion
+			      ;; There's always an identifier before an angle
+			      ;; bracket arglist, or a keyword in
+			      ;; `c-<>-type-kwds' or `c-<>-arglist-kwds'.
+			      (c-backward-syntactic-ws)
+			      (setq id-end (point))
+			      (c-simple-skip-symbol-backward)
+			      (when (or (setq keyword-match
+					      (looking-at c-opt-<>-sexp-key))
+					(not (looking-at c-keywords-regexp)))
+				(setq id-start (point))))
 
-				(setq subres
-				      (let ((c-promote-possible-types t)
-					    (c-record-found-types t))
-					(c-forward-<>-arglist-recur
-					 (and keyword-match
-					      (c-keyword-member
-					       (c-keyword-sym (match-string 1))
-					       'c-<>-type-kwds)))))
-				)))
+			    (setq subres
+				  (let ((c-promote-possible-types t)
+					(c-record-found-types t))
+				    (c-forward-<>-arglist-recur
+				     (and keyword-match
+					  (c-keyword-member
+					   (c-keyword-sym (match-string 1))
+					   'c-<>-type-kwds)))))
+			    )))
 
-			    ;; It was not an angle bracket arglist.
-			    (goto-char tmp)
+			;; It was not an angle bracket arglist.
+			(goto-char tmp)
 
-			  ;; It was an angle bracket arglist.
-			  (setq c-record-found-types subres)
+		      ;; It was an angle bracket arglist.
+		      (setq c-record-found-types subres)
 
-			  ;; Record the identifier before the template as a type
-			  ;; or reference depending on whether the arglist is last
-			  ;; in a qualified identifier.
-			  (when (and c-record-type-identifiers
-				     (not keyword-match))
-			    (if (and c-opt-identifier-concat-key
-				     (progn
-				       (c-forward-syntactic-ws)
-				       (looking-at c-opt-identifier-concat-key)))
-				(c-record-ref-id (cons id-start id-end))
-			      (c-record-type-id (cons id-start id-end))))))
-		      t)
+		      ;; Record the identifier before the template as a type
+		      ;; or reference depending on whether the arglist is last
+		      ;; in a qualified identifier.
+		      (when (and c-record-type-identifiers
+				 (not keyword-match))
+			(if (and c-opt-identifier-concat-key
+				 (progn
+				   (c-forward-syntactic-ws)
+				   (looking-at c-opt-identifier-concat-key)))
+			    (c-record-ref-id (cons id-start id-end))
+			  (c-record-type-id (cons id-start id-end))))))
+		  t)
 
-		((and (not c-restricted-<>-arglists)
-		      (or (and (eq (char-before) ?&)
-			       (not (eq (char-after) ?&)))
-			  (eq (char-before) ?,)))
-		      ;; Just another argument.	 Record the position.  The
-		      ;; type check stuff that made us stop at it is at
-		      ;; the top of the loop.
-		      (setq arg-start-pos (cons (point) arg-start-pos)))
+		 ((and (not c-restricted-<>-arglists)
+		       (or (and (eq (char-before) ?&)
+				(not (eq (char-after) ?&)))
+			   (eq (char-before) ?,)))
+		  ;; Just another argument.	 Record the position.  The
+		  ;; type check stuff that made us stop at it is at
+		  ;; the top of the loop.
+		  (setq arg-start-pos (cons (point) arg-start-pos)))
 
-		     (t
-		      ;; Got a character that can't be in an angle bracket
-		      ;; arglist argument.  Abort using `throw', since
-		      ;; it's useless to try to find a surrounding arglist
-		      ;; if we're nested.
-		      (throw 'angle-bracket-arglist-escape nil))))))
+		 (t
+		  ;; Got a character that can't be in an angle bracket
+		  ;; arglist argument.  Abort using `throw', since
+		  ;; it's useless to try to find a surrounding arglist
+		  ;; if we're nested.
+		  (throw 'angle-bracket-arglist-escape nil))))))
       (if res
 	  (or c-record-found-types t)))))
 
