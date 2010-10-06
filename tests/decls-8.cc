@@ -3,11 +3,11 @@ class Foo {
     b;
 class {
 }
-    a,				/* Known punt. */
+    a,
     b;
 int main() {
     if (x) {
-    } a, b;			/* Known punt. */
+    } a, b;
     if (x) {
     } int a;
 }
