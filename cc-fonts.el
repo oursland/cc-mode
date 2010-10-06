@@ -1156,8 +1156,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; o - nil, if not in an arglist at all.  This includes the
 	  ;;   parenthesised condition which follows "if", "while", etc.
 	  context
-	  ;; The position of the next token after the closing paren of
-	  ;; the last detected cast.
+	  ;; A list of starting positions of possible type declarations, or of
+	  ;; the typedef preceding one, if any.
 	  last-cast-end
 	  ;; The result from `c-forward-decl-or-cast-1'.
 	  decl-or-cast
@@ -1288,13 +1288,52 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (t (setq context 'arglist
 			     c-restricted-<>-arglists t))))
 
+	    ;; Check we haven't missed a preceding "typedef".
+	    (when (not (looking-at c-typedef-key))
+	      (c-backward-syntactic-ws)
+	      (c-backward-token-2)
+	      (or (looking-at c-typedef-key)
+		  (goto-char start-pos)))
+
 	    ;; Now analyze the construct.
 	    (setq decl-or-cast (c-forward-decl-or-cast-1
 				match-pos context last-cast-end))
 
 	    (if (not decl-or-cast)
-		;; False alarm.  Return t to go on to the next check.
-		t
+		;; Are we at a declarator?
+		;; Try to go back to the declaration to check this.
+		(let (paren-state bod-res lim encl-pos is-typedef)
+		  (goto-char start-pos)
+		  (save-excursion
+		    (setq lim (and (c-syntactic-skip-backward "^;" nil t)
+				   (point))))
+		  (save-excursion
+		    (setq bod-res (car (c-beginning-of-decl-1 lim)))
+		    (if (and (eq bod-res 'same)
+			     (progn
+			       (c-backward-syntactic-ws)
+			       (eq (char-before) ?\})))
+			(c-beginning-of-decl-1 lim))
+		    ;; We're now putatively at the declaration.
+		    (setq paren-state (c-parse-state))
+		    ;; At top level or inside a "{"?
+		    (if (or (not (setq encl-pos
+				       (c-most-enclosing-brace paren-state)))
+			    (eq (char-after encl-pos) ?\{))
+			(progn
+			  (when (looking-at c-typedef-key) ; "typedef"
+			    (setq is-typedef t)
+			    (goto-char (match-end 0))
+			    (c-forward-syntactic-ws))
+			  ;; At a real declaration?
+			  (if (memq (c-forward-type t) '(t known found))
+			      (progn
+				(c-font-lock-declarators limit t is-typedef)
+				nil)
+		      ;; False alarm.  Return t to go on to the next check.
+			    (goto-char start-pos)
+			    t))
+		      t)))
 
 	      (if (eq decl-or-cast 'cast)
 		  ;; Save the position after the previous cast so we can feed
