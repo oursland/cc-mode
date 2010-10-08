@@ -1135,18 +1135,17 @@ This does not load the font-lock package.  Use after
 ;; Emacs < 22 and XEmacs
 (defmacro c-advise-fl-for-region (function)
   `(defadvice ,function (before get-awk-region activate)
-     ;; When font-locking an AWK Mode buffer, make sure that any string/regexp is
-     ;; completely font-locked.
-     (when c-buffer-is-cc-mode
-       (save-excursion
-	 (ad-set-arg 1 c-new-END)
-	 (ad-set-arg 0 c-new-BEG)))))
+     ;; Make sure that any string/regexp is completely font-locked.
+  (when ;; (eq major-mode 'awk-mode)
+      c-buffer-is-cc-mode
+    (save-excursion
+      (ad-set-arg 1 c-new-END)   ; end
+      (ad-set-arg 0 c-new-BEG)))))	; beg
 
-(unless (boundp 'font-lock-extend-after-change-region-function)
-  (c-advise-fl-for-region font-lock-after-change-function)
-  (c-advise-fl-for-region jit-lock-after-change)
-  (c-advise-fl-for-region lazy-lock-defer-rest-after-change)
-  (c-advise-fl-for-region lazy-lock-defer-line-after-change))
+(c-advise-fl-for-region font-lock-after-change-function)
+(c-advise-fl-for-region jit-lock-after-change)
+(c-advise-fl-for-region lazy-lock-defer-rest-after-change)
+(c-advise-fl-for-region lazy-lock-defer-line-after-change)
 
 
 ;; Support for C
