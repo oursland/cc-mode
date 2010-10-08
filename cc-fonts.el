@@ -750,6 +750,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   ;; Check if the fontified region starts inside a declarator list so
   ;; that `c-font-lock-declarators' should be called at the start.
+  ;; The declared identifiers are font-locked correctly as types, if
+  ;; that is what they are.
   (let ((prop (save-excursion
 		(c-backward-syntactic-ws)
 		(unless (bobp)
@@ -1375,7 +1377,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   "Complex font lock matchers for types and declarations.  Used on level
 3 and higher."
 
-  ;; Note: This code in this form dumps a number of funtions into the
+  ;; Note: This code in this form dumps a number of functions into the
   ;; resulting constant, `c-matchers-3'.  At run time, font lock will call
   ;; each of them as a "FUNCTION" (see Elisp page "Search-based
   ;; Fontification").  The font lock region is delimited by POINT and the
@@ -1427,7 +1429,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 	   `(,(concat "\\<\\(" re "\\)\\>")
 	     1 'font-lock-type-face)))
 
-      ;; Fontify types preceded by `c-type-prefix-kwds'.
+      ;; Fontify types preceded by `c-type-prefix-kwds' (e.g. "struct").
       ,@(when (c-lang-const c-type-prefix-kwds)
 	  `((,(byte-compile
 	       `(lambda (limit)
@@ -1475,23 +1477,25 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; override it if it turns out to be an new declaration, but
       ;; it will be wrong if it's an expression (see the test
       ;; decls-8.cc).
-      ,@(when (c-lang-const c-opt-block-decls-with-vars-key)
-	  `((,(c-make-font-lock-search-function
-	       (concat "}"
-		       (c-lang-const c-single-line-syntactic-ws)
-		       "\\("		; 1 + c-single-line-syntactic-ws-depth
-		       (c-lang-const c-type-decl-prefix-key)
-		       "\\|"
-		       (c-lang-const c-symbol-key)
-		       "\\)")
-	       `((c-font-lock-declarators limit t nil)
-		 (progn
-		   (c-put-char-property (match-beginning 0) 'c-type
-					'c-decl-id-start)
-		   (goto-char (match-beginning
-			       ,(1+ (c-lang-const
-				     c-single-line-syntactic-ws-depth)))))
-		 (goto-char (match-end 0)))))))
+;;       ,@(when (c-lang-const c-opt-block-decls-with-vars-key)
+;; 	  `((,(c-make-font-lock-search-function
+;; 	       (concat "}"
+;; 		       (c-lang-const c-single-line-syntactic-ws)
+;; 		       "\\("		; 1 + c-single-line-syntactic-ws-depth
+;; 		       (c-lang-const c-type-decl-prefix-key)
+;; 		       "\\|"
+;; 		       (c-lang-const c-symbol-key)
+;; 		       "\\)")
+;; 	       `((c-font-lock-declarators limit t nil) ; That `nil' says use `font-lock-variable-name-face';
+;; 					; `t' would mean `font-lock-function-name-face'.
+;; 		 (progn
+;; 		   (c-put-char-property (match-beginning 0) 'c-type
+;; 					'c-decl-id-start)
+;; ;					'c-decl-type-start)
+;; 		   (goto-char (match-beginning
+;; 			       ,(1+ (c-lang-const
+;; 				     c-single-line-syntactic-ws-depth)))))
+;; 		 (goto-char (match-end 0)))))))
 
       ;; Fontify the type in C++ "new" expressions.
       ,@(when (c-major-mode-is 'c++-mode)
