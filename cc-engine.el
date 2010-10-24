@@ -8671,6 +8671,31 @@ comment at the start of cc-engine.el for more info."
        (c-beginning-of-statement-1 containing-sexp)
        (c-add-syntax 'annotation-var-cont (point)))
 
+     ;; Mostly a duplication of case 5D.3 to fix templates-19:
+     ;; perhaps a template list continuation?
+     ((and (c-major-mode-is 'c++-mode)
+	   (save-excursion
+	     (save-restriction
+		 (goto-char indent-point)
+		 (setq placeholder (c-up-list-backward))
+		 (and placeholder
+		      (eq (char-after placeholder) ?<)))))
+      (c-with-syntax-table c++-template-syntax-table
+	(goto-char placeholder)
+	(c-beginning-of-statement-1 lim t)
+	(if (save-excursion
+	      (c-backward-syntactic-ws lim)
+	      (eq (char-before) ?<))
+	    ;; In a nested template arglist.
+	    (progn
+	      (goto-char placeholder)
+	      (c-syntactic-skip-backward "^,;" lim t)
+	      (c-forward-syntactic-ws))
+	  (back-to-indentation)))
+      ;; FIXME: Should use c-add-stmt-syntax, but it's not yet
+      ;; template aware.
+      (c-add-syntax 'template-args-cont (point) placeholder))
+     
      ;; CASE D: continued statement.
      (t
       (c-beginning-of-statement-1 containing-sexp)
