@@ -8683,14 +8683,14 @@ comment at the start of cc-engine.el for more info."
 		      (eq (char-after placeholder) ?<)))))
       (c-with-syntax-table c++-template-syntax-table
 	(goto-char placeholder)
-	(c-beginning-of-statement-1 lim t)
+	(c-beginning-of-statement-1 paren-state t)
 	(if (save-excursion
-	      (c-backward-syntactic-ws lim)
+	      (c-backward-syntactic-ws paren-state)
 	      (eq (char-before) ?<))
 	    ;; In a nested template arglist.
 	    (progn
 	      (goto-char placeholder)
-	      (c-syntactic-skip-backward "^,;" lim t)
+	      (c-syntactic-skip-backward "^,;" paren-state t)
 	      (c-forward-syntactic-ws))
 	  (back-to-indentation)))
       ;; FIXME: Should use c-add-stmt-syntax, but it's not yet
