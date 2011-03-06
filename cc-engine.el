@@ -9986,6 +9986,28 @@ comment at the start of cc-engine.el for more info."
 			     paren-state))
 	     ))
 
+       ;; CASE 19: line is an expression, not a statement, and is directly
+       ;; contained by a template delimiter.	Most likely, we are in a
+       ;; template arglist within a statement.  This case is based on CASE
+       ;; 7.	At some point in the future, we may wish to create more
+       ;; syntactic symbols such as `template-intro',
+       ;; `template-cont-nonempty', etc., and distinguish between them as we
+       ;; do for `arglist-intro' etc. (2009-12-07).
+       ((and c-recognize-<>-arglists
+ 	     (setq containing-< (c-up-list-backward indent-point containing-sexp))
+ 	     (eq (char-after containing-<) ?\<))
+ 	(setq placeholder (c-point 'boi containing-<))
+ 	(goto-char containing-sexp)	; Most nested Lbrace/Lparen (but not
+ 					; '<') before indent-point.
+ 	(if (>= (point) placeholder)
+ 	    (progn
+ 	      (forward-char)
+ 	      (skip-chars-forward " \t"))
+ 	  (goto-char placeholder))
+ 	(c-add-stmt-syntax 'template-args-cont (list containing-<) t
+ 			   (c-most-enclosing-brace c-state-cache (point))
+ 			   paren-state))
+
        ;; CASE 17: Statement or defun catchall.
        (t
 	(goto-char indent-point)
@@ -10121,28 +10143,6 @@ comment at the start of cc-engine.el for more info."
 	  (if (eq char-after-ip ?{)
 	      (c-add-syntax 'block-open)))
 	 ))
-
-       ;; CASE 19: line is an expression, not a statement, and is directly
-       ;; contained by a template delimiter.	Most likely, we are in a
-       ;; template arglist within a statement.  This case is based on CASE
-       ;; 7.	At some point in the future, we may wish to create more
-       ;; syntactic symbols such as `template-intro',
-       ;; `template-cont-nonempty', etc., and distinguish between them as we
-       ;; do for `arglist-intro' etc. (2009-12-07).
-       ((and c-recognize-<>-arglists
- 	     (setq containing-< (c-up-list-backward indent-point containing-sexp))
- 	     (eq (char-after containing-<) ?\<))
- 	(setq placeholder (c-point 'boi containing-<))
- 	(goto-char containing-sexp)	; Most nested Lbrace/Lparen (but not
- 					; '<') before indent-point.
- 	(if (>= (point) placeholder)
- 	    (progn
- 	      (forward-char)
- 	      (skip-chars-forward " \t"))
- 	  (goto-char placeholder))
- 	(c-add-stmt-syntax 'template-args-cont (list containing-<) t
- 			   (c-most-enclosing-brace c-state-cache (point))
- 			   paren-state))
        )
 
       ;; now we need to look at any modifiers
