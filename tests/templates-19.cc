@@ -7,9 +7,9 @@ namespace n
 void f()
 {
     int a = func<int,
-        float>();
+                 float>();
     
     int b = func<
-    int,
+        int,
         float>();
 }
