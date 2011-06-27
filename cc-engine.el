@@ -8710,15 +8710,19 @@ comment at the start of cc-engine.el for more info."
        (c-beginning-of-statement-1 containing-sexp)
        (c-add-syntax 'annotation-var-cont (point)))
 
+     ;; CASE G: a template list continuation?
      ;; Mostly a duplication of case 5D.3 to fix templates-19:
-     ;; perhaps a template list continuation?
      ((and (c-major-mode-is 'c++-mode)
 	   (save-excursion
-	     (save-restriction
-		 (goto-char indent-point)
-		 (setq placeholder (c-up-list-backward))
-		 (and placeholder
-		      (eq (char-after placeholder) ?<)))))
+	     (goto-char indent-point)
+	     (c-with-syntax-table c++-template-syntax-table
+	       (setq placeholder (c-up-list-backward)))
+	     (and placeholder
+		  (eq (char-after placeholder) ?<)
+		  (/= (char-before placeholder) ?<)
+		  (progn
+		    (goto-char (1+ placeholder))
+		    (not (looking-at c-<-op-cont-regexp))))))
       (c-with-syntax-table c++-template-syntax-table
 	(goto-char placeholder)
 	(c-beginning-of-statement-1 containing-sexp t)
