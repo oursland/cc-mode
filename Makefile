@@ -10,6 +10,7 @@ ELISPFILES=\
  cc-defs.el \
  cc-engine.el \
  cc-fonts.el \
+ cc-guess.el \
  cc-langs.el \
  cc-menus.el \
  cc-mode.el \
@@ -26,7 +27,6 @@ EXTRAFILES=\
  MANIFEST \
  README \
  COPYING \
- cc-guess.el \
  cc-lobotomy.el \
  cc-fix.el
 
