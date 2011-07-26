@@ -522,6 +522,12 @@ EOL terminated statements."
 
 ;;; Lexer-level syntax (identifiers, tokens etc).
 
+(c-lang-defconst c-has-bitfields
+  "Whether the language has bitfield declarations."
+  t nil
+  (c c++ objc) t)
+(c-lang-defvar c-has-bitfields (c-lang-const c-has-bitfields))
+
 (c-lang-defconst c-modified-constant
   "Regexp that matches a \"modified\" constant literal such as \"L'a'\",
 a \"long character\".  In particular, this recognizes forms of constant
@@ -548,6 +554,7 @@ This is of the form that fits inside [ ] in a regexp."
   ;; operator chars too, but they are handled with other means instead.
   t    (concat c-alnum "_$")
   objc (concat c-alnum "_$@"))
+(c-lang-defvar c-symbol-chars (c-lang-const c-symbol-chars))
 
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords (with submatch 0).	Assumed
@@ -1949,6 +1956,21 @@ one of `c-type-list-kwds', `c-ref-list-kwds',
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
+
+(c-lang-defconst c-not-primitive-type-keywords
+  "List of all keywords apart from primitive types (like \"int\")."
+  t (set-difference (c-lang-const c-keywords)
+		    (c-lang-const c-primitive-type-kwds)
+		    :test 'string-equal)
+  ;; The "more" for C++ is the QT keyword (as in "more slots:").
+  ;; This variable is intended for use in c-beginning-of-statement-1.
+  c++ (append (c-lang-const c-not-primitive-type-keywords) '("more")))
+
+(c-lang-defconst c-not-primitive-type-keywords-regexp
+  t (c-make-keywords-re t
+      (c-lang-const c-not-primitive-type-keywords)))
+(c-lang-defvar c-not-primitive-type-keywords-regexp
+  (c-lang-const c-not-primitive-type-keywords-regexp))
 
 (c-lang-defconst c-protection-kwds
   "Access protection label keywords in classes."
