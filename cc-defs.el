@@ -333,6 +333,14 @@ to it is returned.  This function does not modify the point or the mark."
 	  (t (error "Unknown buffer position requested: %s" position))))
        (point))))
 
+(defmacro c-next-single-property-change (position prop &optional object limit)
+  ;; See the doc string for either of the defuns expanded to.
+  (if c-use-extents
+      ;; XEmacs
+      `(next-single-char-property-change ,position ,prop ,object ,limit)
+    ;; Emacs
+    `(next-single-property-change ,position ,prop ,object ,limit)))
+
 (defmacro c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
@@ -908,36 +916,44 @@ MODE is either a mode symbol or a list of mode symbols."
 			       (cc-bytecomp-fboundp 'delete-extent)
 			       (cc-bytecomp-fboundp 'map-extents))))
 
+(defconst c-<-as-paren-syntax '(4 . ?>))
+(put 'c-<-as-paren-syntax 'syntax-table c-<-as-paren-syntax)
+
+(defconst c->-as-paren-syntax '(5 . ?<))
+(put 'c->-as-paren-syntax 'syntax-table c->-as-paren-syntax)
+
 ;; `c-put-char-property' is complex enough in XEmacs and Emacs < 21 to
 ;; make it a function.
-(defalias 'c-put-char-property-fun
-  (cc-eval-when-compile
-    (cond (c-use-extents
-	   ;; XEmacs.
-	   (byte-compile
-	    (lambda (pos property value)
-	      (let ((ext (extent-at pos nil property)))
-		(if ext
-		    (set-extent-property ext property value)
-		  (set-extent-properties (make-extent pos (1+ pos))
-					 (cons property
-					       (cons value
-						     '(start-open t
-						       end-open t)))))))))
+(eval-and-compile
+  (defalias 'c-put-char-property-fun
+    (cc-eval-when-compile
+      (cond (c-use-extents
+	     ;; XEmacs.
+	     (byte-compile
+	      (lambda (pos property value)
+		(let ((ext (extent-at pos nil property)))
+		  (if ext
+		      (set-extent-property ext property value)
+		    (set-extent-properties (make-extent pos (1+ pos))
+					   (cons property
+						 (cons value
+						       '(start-open t
+								    end-open t)))))))))
 
-	  ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
-	   ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
-	   (byte-compile
-	    (lambda (pos property value)
-	      (put-text-property pos (1+ pos) property value)
-	      (let ((prop (get-text-property pos 'rear-nonsticky)))
-		(or (memq property prop)
-		    (put-text-property pos (1+ pos)
-				       'rear-nonsticky
-				       (cons property prop))))))))))
+	    ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
+	     ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
+	     (byte-compile
+	      (lambda (pos property value)
+		(put-text-property pos (1+ pos) property value)
+		(let ((prop (get-text-property pos 'rear-nonsticky)))
+		  (or (memq property prop)
+		      (put-text-property pos (1+ pos)
+					 'rear-nonsticky
+					 (cons property prop)))))))))))
 (cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
 
-(defmacro c-put-char-property (pos property value)
+(eval-and-compile
+  (defmacro c-put-char-property (pos property value)
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
   ;; in XEmacs vocabulary.  If the character already has the given
@@ -957,7 +973,27 @@ MODE is either a mode symbol or a list of mode symbols."
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
-       (put-text-property -pos- (1+ -pos-) ',property ,value))))
+       (put-text-property -pos- (1+ -pos-) ',property ,value)))))
+
+(eval-and-compile
+  ;; Constant to decide at compilation time whether to use category
+  ;; properties.  Currently (2010-03) they're available only on GNU Emacs.
+  (defconst c-use-category
+    (let ((buf (generate-new-buffer " test"))
+	  parse-sexp-lookup-properties lookup-syntax-properties)
+      (prog1
+	  (save-excursion
+	    (set-buffer buf)
+	    (setq parse-sexp-lookup-properties t)
+	    (setq lookup-syntax-properties t)
+	    (set-syntax-table (make-syntax-table))
+	    (insert "<()>")
+	    (c-put-char-property (point-min) 'category 'c-<-as-paren-syntax)
+	    (c-put-char-property (+ 3 (point-min)) 'category 'c->-as-paren-syntax)
+	    (goto-char (point-min))
+	    (forward-sexp)
+	    (= (point) (+ 4 (point-min))))
+	(kill-buffer buf)))))
 
 (defmacro c-get-char-property (pos property)
   ;; Get the value of the given property on the character at POS if
@@ -1039,8 +1075,12 @@ nil; point is then left undefined."
      (while
 	 (and
 	  (< place ,(or limit '(point-max)))
-	  (not (equal (get-text-property place ,property) ,value)))
-       (setq place (next-single-property-change
+	  (not (equal (c-get-char-property place ,property) ,value)))
+       (setq place (,(if c-use-extents
+			 ;; XEmacs.
+			 'next-single-char-property-change
+		       ;; Emacs.
+		       'next-single-property-change)
 		    place ,property nil ,(or limit '(point-max)))))
      (when (< place ,(or limit '(point-max)))
        (goto-char place)
@@ -1058,10 +1098,14 @@ point is then left undefined."
      (while
 	 (and
 	  (> place ,(or limit '(point-min)))
-	  (not (equal (get-text-property (1- place) ,property) ,value)))
-       (setq place (previous-single-property-change
+	  (not (equal (c-get-char-property (1- place) ,property) ,value)))
+       (setq place (,(if c-use-extents
+			 ;; XEmacs.
+			 'previous-single-char-property-change
+		       ;; Emacs.
+		       'previous-single-property-change)
 		    place ,property nil ,(or limit '(point-min)))))
-     (when (> place ,(or limit '(point-max)))
+     (when (> place ,(or limit '(point-min)))
        (goto-char place)
        (search-backward-regexp ".")	; to set the match-data.
        (point))))
@@ -1078,9 +1122,9 @@ been put there by c-put-char-property.	POINT remains unchanged."
 	      (and
 	       (< place to)
 	       (not (equal (get-text-property place property) value)))
-	    (setq place (next-single-property-change place property nil to)))
+	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
-      (setq end-place (next-single-property-change place property nil to))
+      (setq end-place (c-next-single-property-change place property nil to))
       (remove-text-properties place end-place (cons property nil))
       ;; Do we have to do anything with stickiness here?
       (setq place end-place))))
@@ -1181,42 +1225,43 @@ been put there by c-put-char-property.	POINT remains unchanged."
     (if (< (point) start)
 	(goto-char (point-max)))))
 
-(defconst c-<-as-paren-syntax '(4 . ?>))
-(put 'c-<-as-paren-syntax 'syntax-table c-<-as-paren-syntax)
-
-(defsubst c-mark-<-as-paren (pos)
+(defmacro c-mark-<-as-paren (pos)
   ;; Mark the "<" character at POS as a template opener using the
-  ;; `syntax-table' property via the `category' property.
+  ;; `syntax-table' property either directly (XEmacs) or via a `category'
+  ;; property (GNU Emacs).
   ;;
   ;; This function does a hidden buffer change.	 Note that we use
   ;; indirection through the `category' text property.	This allows us to
   ;; toggle the property in all template brackets simultaneously and
   ;; cheaply.  We use this, for instance, in `c-parse-state'.
-  (c-put-char-property pos 'category 'c-<-as-paren-syntax))
+  (if c-use-category
+      `(c-put-char-property ,pos 'category 'c-<-as-paren-syntax)
+    `(c-put-char-property ,pos 'syntax-table c-<-as-paren-syntax)))
+  
 
-(defconst c->-as-paren-syntax '(5 . ?<))
-(put 'c->-as-paren-syntax 'syntax-table c->-as-paren-syntax)
-
-(defsubst c-mark->-as-paren (pos)
+(defmacro c-mark->-as-paren (pos)
   ;; Mark the ">" character at POS as an sexp list closer using the
-  ;; syntax-table property.
+  ;; `syntax-table' property either directly (XEmacs) or via a `category'
+  ;; property (GNU Emacs).
   ;;
   ;; This function does a hidden buffer change.	 Note that we use
   ;; indirection through the `category' text property.	This allows us to
   ;; toggle the property in all template brackets simultaneously and
   ;; cheaply.  We use this, for instance, in `c-parse-state'.
-  (c-put-char-property pos 'category 'c->-as-paren-syntax))
+  (if c-use-category
+      `(c-put-char-property ,pos 'category 'c->-as-paren-syntax)
+    `(c-put-char-property ,pos 'syntax-table c->-as-paren-syntax)))
 
-(defsubst c-unmark-<->-as-paren (pos)
-  ;; Unmark the "<" or "<" character at POS as an sexp list opener using
-  ;; the syntax-table property indirectly through the `category' text
-  ;; property.
+(defmacro c-unmark-<->-as-paren (pos)
+  ;; Unmark the "<" or "<" character at POS as an sexp list opener using the
+  ;; `syntax-table' property either directly or indirectly through a
+  ;; `category' text property.
   ;;
-  ;; This function does a hidden buffer change.	 Note that we use
-  ;; indirection through the `category' text property.	This allows us to
+  ;; This function does a hidden buffer change.  Note that we try to use
+  ;; indirection through the `category' text property.  This allows us to
   ;; toggle the property in all template brackets simultaneously and
   ;; cheaply.  We use this, for instance, in `c-parse-state'.
-  (c-clear-char-property pos 'category))
+  `(c-clear-char-property ,pos ,(if c-use-category ''category ''syntax-table)))
 
 (defsubst c-suppress-<->-as-parens ()
   ;; Suppress the syntactic effect of all marked < and > as parens.  Note
@@ -1292,6 +1337,122 @@ been put there by c-put-char-property.	POINT remains unchanged."
 	 ,`(c-with-cpps-commented-out ,@forms))
      (c-save-buffer-state ()
        (c-set-cpp-delimiters ,beg ,end))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The following macros are to be used only in `c-parse-state' and its
+;; subroutines.  Their main purpose is to simplify the handling of C++/Java
+;; template delimiters and CPP macros.  In GNU Emacs, this is done slickly by
+;; the judicious use of 'category properties.  These don't exist in XEmacs.
+;; 
+;; Note: in the following macros, there is no special handling for parentheses
+;; inside CPP constructs.  That is because CPPs are always syntactically
+;; balanced, thanks to `c-neutralize-CPP-line' in cc-mode.el.
+(defmacro c-sc-scan-lists-no-category+1+1 (from)
+  ;; Do a (scan-lists FROM 1 1).  Any finishing position which either (i) is
+  ;; determined by and angle bracket; or (ii) is inside a macro whose start
+  ;; isn't POINT-MACRO-START doesn't count as a finishing position.
+  `(let ((here (point))
+	 (pos (scan-lists ,from 1 1)))
+     (while (eq (char-before pos) ?>)
+       (setq pos (scan-lists pos 1 1)))
+     pos))
+
+(defmacro c-sc-scan-lists-no-category+1-1 (from) 
+  ;; Do a (scan-lists FROM 1 -1).  Any finishing position which either (i) is
+  ;; determined by and angle bracket; or (ii) is inside a macro whose start
+  ;; isn't POINT-MACRO-START doesn't count as a finishing position.
+  `(let ((here (point))
+	 (pos (scan-lists ,from 1 -1)))
+     (while (eq (char-before pos) ?<)
+       (setq pos (scan-lists pos 1 1))
+       (setq pos (scan-lists pos 1 -1)))
+     pos))
+
+(defmacro c-sc-scan-lists-no-category-1+1 (from)
+  ;; Do a (scan-lists FROM -1 1).  Any finishing position which either (i) is
+  ;; determined by and angle bracket; or (ii) is inside a macro whose start
+  ;; isn't POINT-MACRO-START doesn't count as a finishing position.
+  `(let ((here (point))
+	 (pos (scan-lists ,from -1 1)))
+     (while (eq (char-after pos) ?<)
+       (setq pos (scan-lists pos -1 1)))
+     pos))
+
+(defmacro c-sc-scan-lists-no-category-1-1 (from)
+  ;; Do a (scan-lists FROM -1 -1).  Any finishing position which either (i) is
+  ;; determined by and angle bracket; or (ii) is inside a macro whose start
+  ;; isn't POINT-MACRO-START doesn't count as a finishing position.
+  `(let ((here (point))
+	 (pos (scan-lists ,from -1 -1)))
+     (while (eq (char-after pos) ?>)
+       (setq pos (scan-lists pos -1 1))
+       (setq pos (scan-lists pos -1 -1)))
+     pos))
+
+(defmacro c-sc-scan-lists (from count depth)
+  (if c-use-category
+      `(scan-lists ,from ,count ,depth)
+    (cond
+     ((and (eq count 1) (eq depth 1))
+      `(c-sc-scan-lists-no-category+1+1 ,from))
+     ((and (eq count 1) (eq depth -1))
+      `(c-sc-scan-lists-no-category+1-1 ,from))
+     ((and (eq count -1) (eq depth 1))
+      `(c-sc-scan-lists-no-category-1+1 ,from))
+     ((and (eq count -1) (eq depth -1))
+      `(c-sc-scan-lists-no-category-1-1 ,from))
+     (t (error "Invalid parameter(s) to c-sc-scan-lists")))))
+	      
+
+(defun c-sc-parse-partial-sexp-no-category (from to targetdepth stopbefore
+						 oldstate)
+  ;; Do a parse-partial-sexp using the supplied arguments, disregarding
+  ;; template/generic delimiters < > and disregarding macros other than the
+  ;; one at POINT-MACRO-START.
+  ;;
+  ;; NOTE that STOPBEFORE must be nil.  TARGETDEPTH should be one less than
+  ;; the depth in OLDSTATE.  This function is thus a SPECIAL PURPOSE variation
+  ;; on parse-partial-sexp, designed for calling from
+  ;; `c-remove-stale-state-cache'.
+  ;;
+  ;; Any finishing position which is determined by an angle bracket delimiter
+  ;; doesn't count as a finishing position.
+  ;;
+  ;; Note there is no special handling of CPP constructs here, since these are
+  ;; always syntactically balanced (thanks to `c-neutralize-CPP-line').
+  (let ((state
+	 (parse-partial-sexp from to targetdepth stopbefore oldstate)))
+    (while
+	(and (< (point) to)
+	     ;; We must have hit targetdepth.
+	     (or (eq (char-before) ?<)
+		 (eq (char-before) ?>)))
+      (setcar state
+	      (if (memq (char-before) '(?> ?\) ?\} ?\]))
+		  (1+ (car state))
+		(1- (car state))))
+      (setq state
+	    (parse-partial-sexp (point) to targetdepth stopbefore oldstate)))
+    state))
+
+(defmacro c-sc-parse-partial-sexp (from to &optional targetdepth stopbefore
+					oldstate)
+  (if c-use-category
+      `(parse-partial-sexp ,from ,to ,targetdepth ,stopbefore ,oldstate)
+    `(c-sc-parse-partial-sexp-no-category ,from ,to ,targetdepth ,stopbefore
+					  ,oldstate)))
+
+
+(defmacro c-looking-at-non-alphnumspace ()
+  "Are we looking at a character which isn't alphanumeric or space?"
+  (if (memq 'gen-comment-delim c-emacs-features)
+      `(looking-at
+"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\|\\s!\\)")
+    `(or (looking-at
+"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\)"
+         (let ((prop (c-get-char-property (point) 'syntax-table)))
+	   (eq prop '(14)))))))		; '(14) is generic comment delimiter.
+
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
@@ -1592,6 +1753,9 @@ non-nil, a caret is prepended to invert the set."
 			       (not (end-of-defun))))
 	  (setq list (cons 'argumentative-bod-function list))))
 
+    ;; Record whether the `category' text property works.
+    (if c-use-category (setq list (cons 'category-properties list)))
+
     (let ((buf (generate-new-buffer " test"))
 	  parse-sexp-lookup-properties
 	  parse-sexp-ignore-comments
@@ -1622,13 +1786,13 @@ non-nil, a caret is prepended to invert the set."
 		  "support for the `syntax-table' text property "
 		  "is required.")))
 
-	;; Find out if generic comment delimiters work.
+	;; Find out if "\\s!" (generic comment delimiters) work.
 	(c-safe
 	  (modify-syntax-entry ?x "!")
 	  (if (string-match "\\s!" "x")
 	      (setq list (cons 'gen-comment-delim list))))
 
-	;; Find out if generic string delimiters work.
+	;; Find out if "\\s|" (generic string delimiters) work.
 	(c-safe
 	  (modify-syntax-entry ?x "|")
 	  (if (string-match "\\s|" "x")
@@ -1698,6 +1862,8 @@ might be present:
 		    in the buffer with the 'syntax-table property.  It's
 		    always set - CC Mode no longer works in emacsen without
 		    this feature.
+'category-properties Syntax routines can add a level of indirection to text
+		    properties using the 'category property.
 'gen-comment-delim  Generic comment delimiters work
 		    (i.e. the syntax class `!').
 'gen-string-delim   Generic string delimiters work

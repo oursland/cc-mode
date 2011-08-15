@@ -1409,8 +1409,7 @@ No indentation or other \"electric\" behavior is performed."
 	;; Kluge so that c-beginning-of-decl-1 won't go back if we're already
 	;; at a declaration.
 	(if (or (and (eolp) (not (eobp))) ; EOL is matched by "\\s>"
-		(not (looking-at
-"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\|\\s!\\)")))
+		(not (c-looking-at-non-alphnumspace)))
 	    (forward-char))
 	(setq kluge-start (point))
 	(setq decl-result
@@ -1803,7 +1802,7 @@ with a brace block."
 	      (looking-at c-symbol-key))
 	    (match-string-no-properties 0))
 
-	   ((looking-at "DEFUN\\_>")
+	   ((looking-at "DEFUN\\s-*(") ;"DEFUN\\_>") think of XEmacs!
 	    ;; DEFUN ("file-name-directory", Ffile_name_directory, Sfile_name_directory, ...) ==> Ffile_name_directory
 	    ;; DEFUN(POSIX::STREAM-LOCK, stream lockp &key BLOCK SHARED START LENGTH) ==> POSIX::STREAM-LOCK	  
 	    (down-list 1)

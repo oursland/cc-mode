@@ -919,10 +919,13 @@ Note that the style variables are always made local to the buffer."
 			 (+ (- c-old-EOM old-len) (- endd begg))
 			 (point)))
 
-    ;; Clear all old relevant properties.
+    ;; Clear 'syntax-table properties "punctuation":
     (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
-    (c-clear-char-property-with-value c-new-BEG c-new-END 'category 'c-cpp-delimiter)
-    ;; FIXME!!!  What about the "<" and ">" category properties?  2009-11-16
+
+    ;; CPP "comment" markers:
+    (if (memq 'category-properties c-emacs-features) ; GNU Emacs.
+	(c-clear-char-property-with-value
+	 c-new-BEG c-new-END 'category 'c-cpp-delimiter))
 
     ;; Add needed properties to each CPP construct in the region.
     (goto-char c-new-BEG)
@@ -939,8 +942,9 @@ Note that the style variables are always made local to the buffer."
 	  (setq mbeg (point))
 	  (if (> (c-syntactic-end-of-macro) mbeg)
 	      (progn
-		(c-neutralize-CPP-line mbeg (point))
-		(c-set-cpp-delimiters mbeg (point))
+		(c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
+		(if (memq 'category-properties c-emacs-features) ; GNU Emacs.
+		    (c-set-cpp-delimiters mbeg (point))) ; "comment" markers
 		;(setq pps-position (point))
 		)
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
@@ -1018,7 +1022,7 @@ Note that the style variables are always made local to the buffer."
 		  (skip-chars-forward "^;{}") ; FIXME!!!  loop for comment, maybe
 		  (setq lim (point))
 		  (setq term-pos
-			(or (next-single-property-change end 'c-type nil lim) lim))
+			(or (c-next-single-property-change end 'c-type nil lim) lim))
 		  (setq c-maybe-stale-found-type
 			(list type marked-id
 			      type-pos term-pos
@@ -1066,10 +1070,11 @@ Note that the style variables are always made local to the buffer."
 	;; C-y is capable of spuriously converting category properties
 	;; c-</>-as-paren-syntax into hard syntax-table properties.  Remove
 	;; these when it happens.
-	(c-clear-char-property-with-value beg end 'syntax-table
-					  c-<-as-paren-syntax)
-	(c-clear-char-property-with-value beg end 'syntax-table
-					  c->-as-paren-syntax)
+	(when (memq 'category-property c-emacs-features)
+	  (c-clear-char-property-with-value beg end 'syntax-table
+					    c-<-as-paren-syntax)
+	  (c-clear-char-property-with-value beg end 'syntax-table
+					    c->-as-paren-syntax))
 
 	(c-trim-found-types beg end old-len) ; maybe we don't need all of these.
 	(c-invalidate-sws-region-after beg end)
