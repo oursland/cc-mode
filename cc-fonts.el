@@ -258,7 +258,7 @@
     ;; This function might do hidden buffer changes.
     (when (c-got-face-at (point) c-literal-faces)
       (while (progn
-	       (goto-char (next-single-property-change
+	       (goto-char (c-next-single-property-change
 			   (point) 'face nil limit))
 	       (and (< (point) limit)
 		    (c-got-face-at (point) c-literal-faces))))
@@ -431,8 +431,7 @@ stuff.  Used on level 1 and higher."
 				   (progn
 				     (c-mark-<-as-paren beg)
 				     (c-mark->-as-paren end))
-				 ;; (c-clear-char-property beg 'syntax-table)
-				 (c-clear-char-property beg 'category)))
+				 (c-unmark-<->-as-paren beg)))
 			     nil)))))))
 
 	      ;; #define.
@@ -551,7 +550,11 @@ stuff.  Used on level 1 and higher."
   (let ((start (1- (point))))
     (save-excursion
       (and (eq (elt (parse-partial-sexp start (c-point 'eol)) 8) start)
-	   (if (integerp c-multiline-string-start-char)
+	   (if (if (integerp ?c)
+		   ;; Emacs
+		   (integerp c-multiline-string-start-char)
+		 ;; XEmacs
+		 (characterp c-multiline-string-start-char))
 	       ;; There's no multiline string start char before the
 	       ;; string, so newlines aren't allowed.
 	       (not (eq (char-before start) c-multiline-string-start-char))
