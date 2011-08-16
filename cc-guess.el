@@ -49,6 +49,10 @@
 (cc-require 'cc-defs)
 (cc-require 'cc-engine)
 
+(cc-bytecomp-defvar make-progress-reporter)
+(cc-bytecomp-defvar progress-reporter-update)
+(cc-bytecomp-defvar progress-reporter-done)
+
 
 (defvar cc-guessed-style nil
   "Currently guessed style.")

@@ -98,6 +98,9 @@
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
 (cc-bytecomp-defun run-mode-hooks)	; Emacs 21.1
 (cc-bytecomp-obsolete-fun make-local-hook) ; Marked obsolete in Emacs 21.1.
+(cc-bytecomp-defvar normal-erase-is-backspace)
+(cc-bytecomp-defvar file-local-variables-alist)
+(cc-bytecomp-defvar dir-local-variables-alist)
 
 ;; We set these variables during mode init, yet we don't require
 ;; font-lock.

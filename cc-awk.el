@@ -505,7 +505,7 @@
 	(insert-char ?\n 1) ; ...artificial eol is needed for comment detection.
 	(setq extra-nl t))
       (prog1 (c-awk-get-NL-prop-prev-line do-lim)
-	(if extra-nl (delete-backward-char 1))))))
+	(if extra-nl (delete-char -1))))))
 
 (defsubst c-awk-prev-line-incomplete-p (&optional do-lim)
   ;; Is there an incomplete statement at the end of the previous line?
