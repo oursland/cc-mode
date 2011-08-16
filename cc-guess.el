@@ -78,6 +78,9 @@
 (cc-require 'cc-defs)
 (cc-require 'cc-engine)
 (cc-require 'cc-styles)
+(cc-bytecomp-defvar make-progress-reporter)
+(cc-bytecomp-defvar progress-reporter-update)
+(cc-bytecomp-defvar progress-reporter-done)
 
 
 

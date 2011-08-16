@@ -1454,9 +1454,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Note that this function won't attempt to fontify beyond the end of the
   ;; current enum block, if any.
   (let* ((paren-state (c-parse-state))
-	 (encl-pos (c-most-enclosing-brace paren-state))
-	 (start (point))
-	)
+	 (encl-pos (c-most-enclosing-brace paren-state)))
     (when (and
 	   encl-pos
 	   (eq (char-after encl-pos) ?\{)

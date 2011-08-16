@@ -337,7 +337,6 @@ Example:
 	;;
 	(classcount 0)
 	toplist
-	stupid
 	str
 	str2
 	(intflen (length "@interface"))

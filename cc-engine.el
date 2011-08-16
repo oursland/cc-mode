@@ -152,6 +152,7 @@
 
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
+(cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defvar c-maybe-stale-found-type)
 
 
@@ -2573,7 +2574,7 @@ comment at the start of cc-engine.el for more info."
 	paren+1		      ; Pos after some opening or closing paren.
 	paren+1s	      ; A list of `paren+1's; used to determine a
 			      ; good-pos.
-	bra+1 ce+1	      ; just after L/R bra-ces.
+	bra+1		      ; just after L bra-ce.
 	bra+1s		      ; list of OLD values of bra+1.
 	mstart)		      ; start of a macro.
 
@@ -3874,6 +3875,7 @@ comment at the start of cc-engine.el for more info."
 	(goto-char bound))
       nil)))
 
+(cc-bytecomp-defvar safe-pos-list)
 (defsubst c-ssb-lit-begin ()
   ;; Return the start of the literal point is in, or nil.
   ;; We read and write the variables `safe-pos', `safe-pos-list', `state'
@@ -3882,7 +3884,7 @@ comment at the start of cc-engine.el for more info."
   ;; Use `parse-partial-sexp' from a safe position down to the point to check
   ;; if it's outside comments and strings.
   (save-excursion
-    (let ((pos (point)) safe-pos state pps-end-pos)
+    (let ((pos (point)) safe-pos state)
       ;; Pick a safe position as close to the point as possible.
       ;;
       ;; FIXME: Consult `syntax-ppss' here if our cache doesn't give a good
@@ -5575,30 +5577,29 @@ comment at the start of cc-engine.el for more info."
 	(while (and
 		(progn
 		  (c-forward-syntactic-ws)
-		  (let ((orig-record-found-types c-record-found-types))
-		    (when (or (and c-record-type-identifiers all-types)
-			      (c-major-mode-is 'java-mode))
-		      ;; All encountered identifiers are types, so set the
-		      ;; promote flag and parse the type.
-		      (progn
-			(c-forward-syntactic-ws)
-			(if (looking-at "\\?")
-			    (forward-char)
-			  (when (looking-at c-identifier-start)
-			    (let ((c-promote-possible-types t)
-				  (c-record-found-types t))
-			      (c-forward-type))))
-
-			(c-forward-syntactic-ws)
-
-			(when (or (looking-at "extends")
-				  (looking-at "super"))
-			  (forward-word)
-			  (c-forward-syntactic-ws)
+		  (when (or (and c-record-type-identifiers all-types)
+			    (c-major-mode-is 'java-mode))
+		    ;; All encountered identifiers are types, so set the
+		    ;; promote flag and parse the type.
+		    (progn
+		      (c-forward-syntactic-ws)
+		      (if (looking-at "\\?")
+			  (forward-char)
+			(when (looking-at c-identifier-start)
 			  (let ((c-promote-possible-types t)
 				(c-record-found-types t))
-			    (c-forward-type)
-			    (c-forward-syntactic-ws))))))
+			    (c-forward-type))))
+
+		      (c-forward-syntactic-ws)
+
+		      (when (or (looking-at "extends")
+				(looking-at "super"))
+			(forward-word)
+			(c-forward-syntactic-ws)
+			(let ((c-promote-possible-types t)
+			      (c-record-found-types t))
+			  (c-forward-type)
+			  (c-forward-syntactic-ws)))))
 
 		  (setq pos (point))	; e.g. first token inside the '<'
 
@@ -7487,7 +7488,7 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
 
-  (let ((beg (point)) end id-start)
+  (let ((beg (point)) id-start)
     (and
      (eq (c-beginning-of-statement-1 lim) 'same)
 
@@ -7939,10 +7940,7 @@ comment at the start of cc-engine.el for more info."
     (when (and c-recognize-<>-arglists
 	       (eq (char-before) ?>))
       ;; Could be at the end of a template arglist.
-      (let ((c-parse-and-markup-<>-arglists t)
-	    (c-disallow-comma-in-<>-arglists
-	     (and containing-sexp
-		  (not (eq (char-after containing-sexp) ?{)))))
+      (let ((c-parse-and-markup-<>-arglists t))
 	(while (and
 		(c-backward-<>-arglist nil limit)
 		(progn
