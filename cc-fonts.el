@@ -195,48 +195,6 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; F o n t   l o c k   c o n t e x t s
-;;
-;; The "context" of a buffer position from a font locking point of view.
-;; This indicates, for example, that the start of the font lock region is
-;; within a list of _typedef_ declarators:
-;;
-;;    typedef struct { ....} FOO, BAR;
-;;                           ^
-;; as opposed to _variable_ declarators:
-;;
-;;    struct { ....} FOO, BAR;
-;;                   ^
-;; , so that the identifiers be given the correct face
-;; (font-lock-type-face).
-;;
-;; A font lock context will be one of the following symbols:
-;; o - nil                  nothing notable
-;; o - in-id-decl           in the type part of a variable declaration
-;; o - in-type-decl         in the type part of a typedef declaration
-;; o - in-id-declarators    in the declarators of a variable declaration
-;; o - in-type-declarators  in the declarators of a typedef declaration
-;; o - in-id-struct         in the brace block of a "struct"-like
-;;                            declaration
-;; o - in-type-struct       in the brace block of a "struct"-like typedef
-;;                            declaration
-;; o - in-cpp-expr          in a preprocessor expr like "#if defined (.."
-;;
-;; Currently (2009-06), only in-cpp-expr is implemented.
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun c-guess-font-lock-context ()
-  ;; Determine what sort of construct POINT is in the middle of, from the
-  ;; point of view of font locking.  The result is a symbol such as
-  ;; `in-cpp-expr' or nil.
-  (save-excursion
-    (if (and c-cpp-expr-intro-re
-	     (c-beginning-of-macro)
-	     (looking-at c-cpp-expr-intro-re))
-	'in-cpp-expr)))
-
 (defvar c-annotation-face (make-face 'c-annotation-face)
   "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
 (set-face-foreground 'c-annotation-face "blue")
@@ -881,8 +839,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (c-forward-syntactic-ws limit)
       (c-font-lock-declarators limit t (eq prop 'c-decl-type-start))))
 
-  (setq c-font-lock-context (c-guess-font-lock-context))
-
+  (setq c-font-lock-context ;; (c-guess-font-lock-context)
+	(save-excursion
+	  (if (and c-cpp-expr-intro-re
+		   (c-beginning-of-macro)
+		   (looking-at c-cpp-expr-intro-re))
+	      'in-cpp-expr)))
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
