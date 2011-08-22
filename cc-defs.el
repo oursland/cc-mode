@@ -1076,11 +1076,7 @@ nil; point is then left undefined."
 	 (and
 	  (< place ,(or limit '(point-max)))
 	  (not (equal (c-get-char-property place ,property) ,value)))
-       (setq place (,(if c-use-extents
-			 ;; XEmacs.
-			 'next-single-char-property-change
-		       ;; Emacs.
-		       'next-single-property-change)
+       (setq place (c-next-single-property-change
 		    place ,property nil ,(or limit '(point-max)))))
      (when (< place ,(or limit '(point-max)))
        (goto-char place)

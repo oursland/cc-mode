@@ -557,7 +557,7 @@ the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
 move into or out of sexps (not even normal expression parentheses).
 
-If point is already at the earliest statment within braces or parens,
+If point is already at the earliest statement within braces or parens,
 this function doesn't move back into any whitespace preceding it; it
 returns 'same in this case.
 
@@ -607,7 +607,7 @@ comment at the start of cc-engine.el for more info."
   ;; The bulk of this function is a pushdown automaton that looks at statement
   ;; boundaries and the tokens (such as "while") in c-opt-block-stmt-key.  Its
   ;; purpose is to keep track of nested statements, ensuring that such
-  ;; statments are skipped over in their entirety (somewhat akin to what C-M-p
+  ;; statements are skipped over in their entirety (somewhat akin to what C-M-p
   ;; does with nested braces/brackets/parentheses).
   ;;
   ;; Note: The position of a boundary is the following token.
