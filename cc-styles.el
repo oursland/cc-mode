@@ -52,6 +52,8 @@
 ;; Silence the compiler.
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
 (cc-bytecomp-obsolete-fun make-local-hook) ; Marked obsolete in Emacs 21.1.
+					   ; Allegedly still required by
+					   ; XEmacs 21.4.n (2011-08).
 
 
 (defvar c-style-alist
@@ -650,7 +652,8 @@ any reason to call this function directly."
     (mapc func varsyms)
     ;; Hooks must be handled specially
     (if this-buf-only-p
-	(make-local-hook 'c-special-indent-hook)
+	(or (memq 'add-hook-local c-emacs-features)
+	   (make-local-hook 'c-special-indent-hook))
       (make-variable-buffer-local 'c-special-indent-hook)
       (setq c-style-variables-are-local-p t))
     ))

@@ -1834,6 +1834,28 @@ non-nil, a caret is prepended to invert the set."
 	(set-buffer-modified-p nil))
       (kill-buffer buf))
 
+    ;; Will the "LOCAL" parameter of `add-hook' work without the hook first
+    ;; being made local by `make-local-hook'?
+    (if (let ((buf1 (generate-new-buffer " test1"))
+	      (buf2 (generate-new-buffer " test2"))
+	      changed)
+	  (set-buffer buf1)
+	  (add-hook 'after-change-functions
+		    (lambda (beg end old-len) (setq changed t))
+		    nil
+		    t)
+	  (set-buffer buf2)
+	  (insert ?c)
+	  (set-buffer buf1)
+	  (remove-hook 'after-change-functions
+		       (lambda (beg end old-len) (setq changed t))
+		       t)
+	  (kill-buffer buf1)
+	  (kill-buffer buf2)
+	  (not changed))
+	(setq list (cons 'add-hook-local list)))
+
+
     ;; See if `parse-partial-sexp' returns the eighth element.
     (if (c-safe (>= (length (save-excursion
 			      (parse-partial-sexp (point) (point))))
