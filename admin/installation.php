@@ -33,15 +33,6 @@ make sure they are found before any CC Mode files which are
 distributed with (X)Emacs.  A directory has higher precendence than
 all directories after it in the <code>load-path</code> list.
 
-If you're going to be using AWK Mode, insert the following line
-into your <code>.emacs</code> or <code>init.el</code> file:
-
-<pre>
-(autoload 'awk-mode "cc-mode" nil t)</pre>
-
-This will cause (X)Emacs to use the new AWK Mode for AWK files, rather
-than the older mode contained in the file <code>awk-mode.elc</code>.
-
 <p>To test that you have things set up correctly, visit a C file and
 then type:<br>
 
