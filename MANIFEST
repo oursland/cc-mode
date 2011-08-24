@@ -9,8 +9,8 @@ You should have received the following files in this distribution:
     NEWS: A list of the user visible changes in each version.
 
     cc-align.el, cc-awk.el, cc-cmds.el, cc-defs.el, cc-engine.el,
-    cc-fonts.el, cc-langs.el, cc-menus.el, cc-mode.el, cc-styles.el,
-    cc-subword.el, cc-vars.el: The source code.
+    cc-fonts.el, cc-guess.el, cc-langs.el, cc-menus.el, cc-mode.el,
+    cc-styles.el, cc-subword.el, cc-vars.el: The source code.
 
     cc-compat.el: Helps ease the transition from c-mode.el (BOCM) to
     the new indentation engine.  This is provided for your convenience
@@ -18,9 +18,6 @@ You should have received the following files in this distribution:
 
     cc-fix.el: (previously named cc-mode-19.el).  Detects and corrects
     bugs in various older (X)Emacs versions.
-
-    cc-guess.el: Experiments in style guessing.  This is provided for
-    your convenience only, and is unguaranteed and unsupported.
 
     cc-lobotomy.el: Performance vs. accuracy trade-offs.  May not
     work, yadda, yadda.
@@ -38,5 +35,6 @@ Note that of the above files, the following are distributed with Emacs
 and XEmacs:
 
     cc-align.el, cc-awk.el, cc-bytecomp.el, cc-cmds.el, cc-compat.el,
-    cc-defs.el, cc-engine.el, cc-fonts.el, cc-langs.el, cc-menus.el,
-    cc-mode.el, cc-styles.el, cc-subword.el, cc-vars.el, cc-mode.texi
+    cc-defs.el, cc-engine.el, cc-fonts.el, cc-guess.el, cc-langs.el,
+    cc-menus.el, cc-mode.el, cc-styles.el, cc-subword.el, cc-vars.el,
+    cc-mode.texi

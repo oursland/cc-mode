@@ -1,5 +1,34 @@
 CC Mode NEWS -- user visible changes.  -*- outline -*-
 
+* Changes in 5.32
+
+This version contains few, but big, new features, and significant internal
+improvements.
+
+** CC Mode is now licensed under the GPL version 3 or any later version.
+
+** Emacs 21 is no longer supported,
+although CC Mode might well still work with it.  The minimum versions
+supported are Emacs 22 and XEmacs 21.4.
+
+** It is now possible for CC Mode to "guess" an existing buffer's style.
+This style can then be used in other buffers.  Contributed by Masatake YAMATO,
+after original code by Barry Warsaw.
+
+** Java Mode has been enhanced to support Java 5.0 (Tiger) and Java 6 (Mustang).
+Contributed by Nathaniel Flath.
+
+** c-beginning-of-defun and c-end-of-defun now respect nested scopes.
+Thus C-M-a will, by default, go to the beginning of the immediate function,
+not the top level.
+
+** "Macros with semicolons" can be registered, for correct indentation.
+Where such a macro ends a line (no semicolon), the next statement is no longer
+parsed as a statement continuation.
+
+** Many bugs have been fixed, font locking has become more accurate, angle
+brackets are better handled, and sluggish code has been optimised.
+
 * Changes in 5.31
 
 This version contains only a few new visible features, but significant
