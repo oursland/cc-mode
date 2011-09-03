@@ -1,8 +1,8 @@
 ;;; cc-defs.el --- compile time definitions for CC Mode
 
 ;; Copyright (C) 1985, 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006  Free Software
-;;   Foundation, Inc.
+;;   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+;;   2010, 2011   Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;	       1998- Martin Stjernholm
@@ -18,7 +18,7 @@
 
 ;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
+;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
@@ -27,9 +27,8 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with this program; see the file COPYING.  If not, see
+;; <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -335,10 +334,11 @@ to it is returned.  This function does not modify the point or the mark."
 
 (defmacro c-next-single-property-change (position prop &optional object limit)
   ;; See the doc string for either of the defuns expanded to.
-  (if c-use-extents
-      ;; XEmacs
+  (if (and c-use-extents
+	   (fboundp 'next-single-char-property-change))
+      ;; XEmacs >= 2005-01-25
       `(next-single-char-property-change ,position ,prop ,object ,limit)
-    ;; Emacs
+    ;; Emacs and earlier XEmacs
     `(next-single-property-change ,position ,prop ,object ,limit)))
 
 (defmacro c-region-is-active-p ()
@@ -1095,10 +1095,11 @@ point is then left undefined."
 	 (and
 	  (> place ,(or limit '(point-min)))
 	  (not (equal (c-get-char-property (1- place) ,property) ,value)))
-       (setq place (,(if c-use-extents
-			 ;; XEmacs.
+       (setq place (,(if (and c-use-extents
+			      (fboundp 'previous-single-char-property-change))
+			 ;; XEmacs > 2005-01-25.
 			 'previous-single-char-property-change
-		       ;; Emacs.
+		       ;; Emacs and earlier XEmacs.
 		       'previous-single-property-change)
 		    place ,property nil ,(or limit '(point-min)))))
      (when (> place ,(or limit '(point-min)))
