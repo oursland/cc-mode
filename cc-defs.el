@@ -1840,20 +1840,22 @@ non-nil, a caret is prepended to invert the set."
     (if (let ((buf1 (generate-new-buffer " test1"))
 	      (buf2 (generate-new-buffer " test2"))
 	      changed)
-	  (set-buffer buf1)
-	  (add-hook 'after-change-functions
-		    (lambda (beg end old-len) (setq changed t))
-		    nil
-		    t)
-	  (set-buffer buf2)
-	  (insert ?c)
-	  (set-buffer buf1)
-	  (remove-hook 'after-change-functions
-		       (lambda (beg end old-len) (setq changed t))
-		       t)
-	  (kill-buffer buf1)
-	  (kill-buffer buf2)
-	  (not changed))
+	  
+	  (save-excursion		; Needed for XEmacs's byte compiler
+	    (set-buffer buf1)
+	    (add-hook 'after-change-functions
+		      (lambda (beg end old-len) (setq changed t))
+		      nil
+		      t)
+	    (set-buffer buf2)
+	    (insert ?c)
+	    (set-buffer buf1)
+	    (remove-hook 'after-change-functions
+			 (lambda (beg end old-len) (setq changed t))
+			 t)
+	    (kill-buffer buf1)
+	    (kill-buffer buf2)
+	    (not changed)))
 	(setq list (cons 'add-hook-local list)))
 
 
