@@ -1,3 +1,48 @@
+2011-09-12  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* Patch release 5.32.1
+
+	* cc-defs (c-version): Increment to 5.32.1
+
+2011-09-11  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-defs (c-emacs-features): add-local-hook-test: Put a save-excursion
+	round the buffer manipulation.  Error detected by XEmacs byte compiler.
+
+2011-09-04  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el: Reapply the changes of 2011-08-28
+
+	* cc-menus.el: Reapply the change of 2011-08-27.
+
+2011-09-03  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-fix.el, cc-fonts.el, cc-guess.el, cc-langs.el, cc-lobotomy.el, cc-menus.el, cc-mode.el, cc-styles.el, cc-subword.el, cc-vars.el, cc-align.el, cc-awk.el, cc-bytecomp.el, cc-cmds.el, cc-compat.el, cc-defs.el, cc-engine.el:
+	Correct the copyright and license statements for release 5.32.
+
+	* cc-defs.el (c-next-single-property-change)
+	(c-search-backward-char-property): For XEmacs, only use
+	next/previous-single-char-property-change in versions >= 2005-01-25
+
+	* cc-fonts.el, cc-menus.el: Restore to the state of Release_5_32.
+
+2011-08-28  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el:
+	Fix - typing on a C++ inher-intro or inher-cont line should preserve the
+	fontification of the inherited class names.  Analogously for namespace
+	names and Java import, extends, etc.
+
+	* cc-fonts.el: (c-make-font-lock-BO-decl-search-function): New function.
+	(c-basic-matchers-after - "Fontify the clauses after various keywords"):
+	Extract the three keyword lists for the 3 erroneous constructs from the
+	list of four, and use the new function above in place of an old one.
+
+2011-08-27  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-menus.el (cc-imenu-c++-generic-expression): Make it handle function
+	pointer parameters properly.
+
 2011-08-22  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Release 5.32
