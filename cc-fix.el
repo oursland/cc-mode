@@ -137,6 +137,19 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
 	       (font-lock-compile-keywords font-lock-keywords))))
      ))
 
+;; XEmacs 21.4 doesn't have `delete-dups'.
+(if (not (fboundp 'delete-dups))
+    (defun delete-dups (list)
+      "Destructively remove `equal' duplicates from LIST.
+Store the result in LIST and return it.  LIST must be a proper list.
+Of several `equal' occurrences of an element in LIST, the first
+one is kept."
+      (let ((tail list))
+	(while tail
+	  (setcdr tail (delete (car tail) (cdr tail)))
+	  (setq tail (cdr tail))))
+      list))
+
 
 (cc-provide 'cc-fix)
 ;;; cc-fix.el ends here

@@ -91,10 +91,15 @@
 	       font-lock-keywords)))
       (cc-load "cc-fix")))
 
+;; XEmacs 21.4 doesn't have `delete-dups'.
+(eval-and-compile
+  (if (and (not (fboundp 'delete-dups))
+	   (not (featurep 'cc-fix)))
+      (cc-load "cc-fix")))
 
 ;;; Variables also used at compile time.
 
-(defconst c-version "5.32"
+(defconst c-version "5.33"
   "CC Mode version number.")
 
 (defconst c-version-sym (intern c-version))
