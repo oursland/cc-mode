@@ -195,10 +195,6 @@
 	 (unless (face-property-instance oldface 'reverse)
 	   (invert-face newface)))))
 
-(defvar c-annotation-face (make-face 'c-annotation-face)
-  "Face used to highlight annotations in java-mode and other modes that may wish to use it.")
-(set-face-foreground 'c-annotation-face "blue")
-
 (eval-and-compile
   ;; We need the following definitions during compilation since they're
   ;; used when the `c-lang-defconst' initializers are evaluated.  Define
@@ -737,6 +733,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	     2 font-lock-keyword-face)
 	 `(,(concat "\\<" (c-lang-const c-regular-keywords-regexp))
 	   1 font-lock-keyword-face))
+
+      ;; The following must come before c-font-lock-enclosing-decls in
+      ;; c-complex-decl-matchers.  It fontifies java @annotations.
+      ,@(when (c-major-mode-is 'java-mode)
+	  `((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1
+			  c-preprocessor-face-name
+			  ))))
 
       ;; Fontify leading identifiers in fully qualified names like
       ;; "foo::bar" in languages that supports such things.
@@ -1526,7 +1529,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(setq decl-context (c-beginning-of-decl-1)
 	      in-typedef (looking-at c-typedef-key))
 	(if in-typedef (c-forward-token-2))
-	(when (looking-at c-opt-block-decls-with-vars-key)
+	(when (and c-opt-block-decls-with-vars-key
+		   (looking-at c-opt-block-decls-with-vars-key))
 	  (goto-char ps-elt)
 	  (when (c-safe (c-forward-sexp))
 	    (c-forward-syntactic-ws)
@@ -1870,11 +1874,7 @@ higher."
 			 "\\)\\>")
 		 '((c-fontify-types-and-refs ((c-promote-possible-types t))
 		     (c-forward-keyword-clause 1)
-		     (if (> (point) limit) (goto-char limit))))))))
-
-	,@(when (c-major-mode-is 'java-mode)
-	    `((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1 c-annotation-face))))
-      ))
+		     (if (> (point) limit) (goto-char limit))))))))))
 
 (c-lang-defconst c-matchers-1
   t (c-lang-const c-cpp-matchers))
