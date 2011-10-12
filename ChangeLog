@@ -1,3 +1,59 @@
+2011-10-12  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* Patch release 5.32.2
+
+	* ChangeLog: Update for patch release 5.32.2.
+
+	* cc-defs.el (c-version): Increment to 5.32.2
+
+2011-10-11  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Enhance cc-bytecomp-ignore-obsolete to cope with the missing
+	function `byte-compile-obsolete' in Emacs >= 24.
+
+	* cc-bytecomp.el: (top-level): Add variable cc-bytecomp-push-vars.
+	Set this and similar variables to nil each time the file is
+	loaded.
+	(cc-bytecomp-setup-environment, cc-bytecomp-restore-environment):
+	Add clauses to setup and restore "pushed" variables.
+	(cc-bytecomp-push): New macro to "push" a variable onto an
+	internal stack.
+	(cc-bytecomp-ignore-obsolete): Add a superfluous check to suppress
+	a compiler warning
+	(cc-bytecomp-ignore-obsolete): In Emacs >= 24, use
+	byte-compile-not-obsolete-funcs to mark a function as obsolete.
+
+2011-10-07  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Fontify Java @annotations with c-preprocessor-face-name instead of
+	c-annotation-face.  Protect against a one line change misfontifying an
+	annotation as a variable declaration.  Fix a "minor" bug.
+
+	* cc-fonts.el (c-annotation-face): Remove
+	(c-basic-matchers-before): Move the stanza for Java @annotations here
+	from c-basic-matchers-after.  Replace c-annotation-face by c-preprocessor
+	face name.
+	(c-font-lock-enclosing-decls): Check that c-opt-block-decls-with-vars-key
+	is non-nil before using it.
+
+	* annotations-1.face: recalculate this file.
+
+2011-09-15  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (top level): Add a test for the existence of delete-dups.
+
+	* cc-fix.el (top level): (defun delete-dups) when necessary.
+
+2011-09-13  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* admin/index.php, admin/release.php: Update version to 5.32.1
+
+2011-09-12  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* ChangeLog: Update for patch release 5.32.1.
+
+	* cc-defs.el (c-version): Increment to 5.32.1
+
 2011-09-12  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Patch release 5.32.1
