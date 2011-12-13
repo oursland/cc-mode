@@ -1503,10 +1503,17 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Fontification".
   (let* ((paren-state (c-parse-state))
 	 (start (point))
+	 (bod-lim (max (- (point) 500) (point-min)))
+	 (safe-place (c-state-safe-place (point)))
+	 (pp-to-lit (c-state-pp-to-literal safe-place (point)))
+	 (lit-limits (car (cddr pp-to-lit)))
 	 decl-context bo-decl in-typedef type-type ps-elt)
 
+    (when lit-limits			; Are we in a literal?
+      (goto-char (cdr lit-limits)))
+    
     ;; First, are we actually in a "local" declaration?
-    (setq decl-context (c-beginning-of-decl-1)
+    (setq decl-context (c-beginning-of-decl-1 bod-lim)
 	  bo-decl (point)
 	  in-typedef (looking-at c-typedef-key))
     (if in-typedef (c-forward-token-2))
