@@ -640,13 +640,13 @@ compatible with old code; callers should always specify it."
     (setq c-new-BEG (point-min))
     (setq c-new-END (point-max))
     (save-excursion
-      (if c-get-state-before-change-functions
-	  (mapc (lambda (fn)
-		  (funcall fn (point-min) (point-max)))
-		c-get-state-before-change-functions))
-      (if c-before-font-lock-function
-	  (funcall c-before-font-lock-function (point-min) (point-max)
-		   (- (point-max) (point-min))))))
+      (mapc (lambda (fn)
+	      (funcall fn (point-min) (point-max)))
+	    c-get-state-before-change-functions)
+      (mapc (lambda (fn)
+	      (funcall fn (point-min) (point-max)
+		       (- (point-max) (point-min))))
+	    c-before-font-lock-functions)))
 
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
@@ -810,8 +810,8 @@ Note that the style variables are always made local to the buffer."
 
 ;; Buffer local variables defining the region to be fontified by a font lock
 ;; after-change function.  They are set in c-after-change to
-;; after-change-function's BEG and END, and may be modified by a
-;; `c-before-font-lock-function'.
+;; after-change-functions' BEG and END, and may be modified by functions in
+;; `c-before-font-lock-functions'.
 (defvar c-new-BEG 0)
 (make-variable-buffer-local 'c-new-BEG)
 (defvar c-new-END 0)
@@ -898,7 +898,7 @@ Note that the style variables are always made local to the buffer."
   ;; Point is undefined both before and after this function call, the buffer
   ;; has been widened, and match-data saved.  The return value is ignored.
   ;;
-  ;; This function is the C/C++/ObjC value of `c-before-font-lock-function'.
+  ;; This function is in the C/C++/ObjC value of `c-before-font-lock-functions'.
   ;;
   ;; Note: SPEED _MATTERS_ IN THIS FUNCTION!!!
   ;;
@@ -1050,7 +1050,7 @@ Note that the style variables are always made local to the buffer."
   ;; these caches from inside them, and we must thus be sure that this
   ;; has already been executed.
   ;;
-  ;; This calls the language variable c-before-font-lock-function, if non nil.
+  ;; This calls the language variable c-before-font-lock-functions, if non nil.
   ;; This typically sets `syntax-table' properties.
 
   (setq c-just-done-before-change nil)
@@ -1092,9 +1092,53 @@ Note that the style variables are always made local to the buffer."
 	;; larger than (beg end).
 	(setq c-new-BEG beg
 	      c-new-END end)
-	(if c-before-font-lock-function
-	    (save-excursion
-	      (funcall c-before-font-lock-function beg end old-len)))))))
+	(save-excursion
+	  (mapc (lambda (fn)
+		  (funcall fn beg end old-len))
+		c-before-font-lock-functions))))))
+
+(defun c-set-fl-decl-start (beg end old-len)
+  ;; If the beginning of line containing c-new-BEG is in the middle of a
+  ;; "local" declaration (i.e. one which does not start outside of braces
+  ;; enclosing this pos, such as a struct), set c-new-BEG to (at most) the
+  ;; beginning of that declaration.  Note that declarations, in this sense,
+  ;; can be nested.  c-new-BEG will be used later by c-font-lock-declarations.
+  ;;
+  ;; This function is an element of c-before-font-lock-functions, being called
+  ;; (indirectly) from an after-change function.  The after-change-functions'
+  ;; parameters BEG, OLD and OLD-LEN are ignored here.
+  (when font-lock-mode
+    (goto-char (c-point 'bol c-new-BEG))
+    (let ((lit-limits (c-literal-limits))
+	   bod-lim bo-decl)
+
+      (when lit-limits			; Comment or string.
+	(goto-char (car lit-limits)))
+      (setq bod-lim (max (- (point) 500) (point-min)))
+
+      (while
+	  ;; Go to a less nested declaration each time round this loop.
+	  (and
+	   (eq (car (c-beginning-of-decl-1 bod-lim)) 'same)
+	   (progn (setq bo-decl (point))
+		  ;; Are we looking at a keyword such as "template" or
+		  ;; "typedef" which can decorate a type, or the type itself?
+		  (when (or (looking-at c-prefix-spec-kwds-re)
+			    (c-forward-type t))
+		    ;; We've found another candidate position.
+		    (setq c-new-BEG (min c-new-BEG bo-decl))
+		    (goto-char bo-decl))
+		  t)
+	   ;; Try and go out a level to search again.
+	   (progn
+	     (c-backward-syntactic-ws bod-lim)
+	     (or (memq (char-before) '(?\( ?\[))
+		 (and (eq (char-before) ?\<)
+		      (eq (c-get-char-property
+			   (1- (point)) 'syntax-table)
+			  c-<-as-paren-syntax))))
+	   (not (bobp)))
+	(backward-char)))))		; back over (, [, <.
 
 (defun c-after-font-lock-init ()
   ;; Put on `font-lock-mode-hook'.
@@ -1138,16 +1182,16 @@ This does not load the font-lock package.  Use after
 (defmacro c-advise-fl-for-region (function)
   `(defadvice ,function (before get-awk-region activate)
      ;; Make sure that any string/regexp is completely font-locked.
-  (when ;; (eq major-mode 'awk-mode)
-      c-buffer-is-cc-mode
-    (save-excursion
-      (ad-set-arg 1 c-new-END)   ; end
-      (ad-set-arg 0 c-new-BEG)))))	; beg
+     (when c-buffer-is-cc-mode
+       (save-excursion
+	 (ad-set-arg 1 c-new-END)   ; end
+	 (ad-set-arg 0 c-new-BEG)))))	; beg
 
-(c-advise-fl-for-region font-lock-after-change-function)
-(c-advise-fl-for-region jit-lock-after-change)
-(c-advise-fl-for-region lazy-lock-defer-rest-after-change)
-(c-advise-fl-for-region lazy-lock-defer-line-after-change)
+(unless (boundp 'font-lock-extend-after-change-region-function)
+  (c-advise-fl-for-region font-lock-after-change-function)
+  (c-advise-fl-for-region jit-lock-after-change)
+  (c-advise-fl-for-region lazy-lock-defer-rest-after-change)
+  (c-advise-fl-for-region lazy-lock-defer-line-after-change))
 
 
 ;; Support for C
