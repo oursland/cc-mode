@@ -2930,6 +2930,12 @@ expression is considered to be a type."
 		    ; generics is not yet coded in CC Mode.
 (c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
 
+(c-lang-defconst c-enums-contain-decls
+  "Non-nil means that an enum structure can contain declarations."
+  t nil
+  java t)
+(c-lang-defvar c-enums-contain-decls (c-lang-const c-enums-contain-decls))
+
 (c-lang-defconst c-recognize-paren-inits
   "Non-nil means that parenthesis style initializers exist,
 i.e. constructs like
