@@ -501,6 +501,7 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
+  (make-local-variable 'fill-paragraph-handle-comment)
 
   ;; now set their values
   (setq parse-sexp-ignore-comments t
@@ -509,6 +510,9 @@ that requires a literal mode spec at compile time."
 	normal-auto-fill-function 'c-do-auto-fill
 	comment-multi-line t
 	comment-line-break-function 'c-indent-new-comment-line)
+
+  ;; For the benefit of adaptive file, which otherwise mis-fills.
+  (setq fill-paragraph-handle-comment nil)
 
   ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
   ;; direct call to `fill-paragraph' behaves better.  This still
