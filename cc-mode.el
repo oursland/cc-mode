@@ -1100,7 +1100,7 @@ Note that the style variables are always made local to the buffer."
 	;; C-y is capable of spuriously converting category properties
 	;; c-</>-as-paren-syntax into hard syntax-table properties.  Remove
 	;; these when it happens.
-	(when (memq 'category-property c-emacs-features)
+	(when (memq 'category-properties c-emacs-features)
 	  (c-clear-char-property-with-value beg end 'syntax-table
 					    c-<-as-paren-syntax)
 	  (c-clear-char-property-with-value beg end 'syntax-table
