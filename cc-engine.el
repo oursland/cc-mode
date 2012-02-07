@@ -7426,6 +7426,7 @@ comment at the start of cc-engine.el for more info."
   (let ((start (point))
 	start-char
 	(c-promote-possible-types t)
+	lim
 	;; Turn off recognition of angle bracket arglists while parsing
 	;; types here since the protocol reference list might then be
 	;; considered part of the preceding name or superclass-name.
@@ -7453,6 +7454,7 @@ comment at the start of cc-engine.el for more info."
 					;	      (c-forward-token-2) ; 2006/1/13 This doesn't move if the token's
 					;	      at EOB.
 	    (goto-char (match-end 0))
+	    (setq lim (point))
 	    (c-skip-ws-forward)
 	    (c-forward-type))
 
@@ -7477,7 +7479,7 @@ comment at the start of cc-engine.el for more info."
 	      t))))
 
 	(progn
-	  (c-backward-syntactic-ws)
+	  (c-backward-syntactic-ws lim)
 	  (c-clear-c-type-property start (1- (point)) 'c-decl-end)
 	  (c-put-c-type-property (1- (point)) 'c-decl-end)
 	  t)
