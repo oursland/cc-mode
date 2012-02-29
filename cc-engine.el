@@ -2130,43 +2130,45 @@ comment at the start of cc-engine.el for more info."
     (widen)
     (save-excursion
       (let ((c c-state-nonlit-pos-cache)
-	    pos npos lit macro-beg macro-end)
+	    pos npos high-pos lit macro-beg macro-end)
 	;; Trim the cache to take account of buffer changes.
 	(while (and c (> (car c) c-state-nonlit-pos-cache-limit))
 	  (setq c (cdr c)))
 	(setq c-state-nonlit-pos-cache c)
 
 	(while (and c (> (car c) here))
+	  (setq high-pos (car c))
 	  (setq c (cdr c)))
 	(setq pos (or (car c) (point-min)))
 
-	(while
-	    ;; Add an element to `c-state-nonlit-pos-cache' each iteration.
-	    (and
-	     (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
+	(unless high-pos
+	  (while
+	      ;; Add an element to `c-state-nonlit-pos-cache' each iteration.
+	      (and
+	       (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
 
-	     ;; Test for being in a literal.
-	     (progn
-	       (setq lit (car (cddr (c-state-pp-to-literal pos npos))))
-	       (or (null lit)
-		   (prog1 (<= (cdr lit) here)
-		     (setq npos (cdr lit)))))
+	       ;; Test for being in a literal.  If so, go to after it.
+	       (progn
+		 (setq lit (car (cddr (c-state-pp-to-literal pos npos))))
+		 (or (null lit)
+		     (prog1 (<= (cdr lit) here)
+		       (setq npos (cdr lit)))))
 
-	     ;; Test for being in a macro.
-	     (progn
-	       (goto-char npos)
-	       (setq macro-beg
-		     (and (c-beginning-of-macro) (/= (point) npos) (point)))
-	       (when macro-beg
-		 (c-syntactic-end-of-macro)
-		 (or (eobp) (forward-char))
-		 (setq macro-end (point)))
-	       (or (null macro-beg)
-		   (prog1 (<= macro-end here)
-		     (setq npos macro-end)))))
+	       ;; Test for being in a macro.  If so, go to after it.
+	       (progn
+		 (goto-char npos)
+		 (setq macro-beg
+		       (and (c-beginning-of-macro) (/= (point) npos) (point)))
+		 (when macro-beg
+		   (c-syntactic-end-of-macro)
+		   (or (eobp) (forward-char))
+		   (setq macro-end (point)))
+		 (or (null macro-beg)
+		     (prog1 (<= macro-end here)
+		       (setq npos macro-end)))))
 
-	  (setq pos npos)
-	  (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache)))
+	    (setq pos npos)
+	    (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache))))
 
 	(if (> pos c-state-nonlit-pos-cache-limit)
 	    (setq c-state-nonlit-pos-cache-limit pos))
