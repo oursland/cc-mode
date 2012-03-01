@@ -222,6 +222,38 @@
 	       (point))))
     c-macro-start))
 
+;; One element macro cache to cope with continual movement within very large
+;; CPP macros.
+(defvar c-macro-cache nil)
+(make-variable-buffer-local 'c-macro-cache)
+;; Nil or cons of the bounds of the most recent CPP form probed by
+;; `c-beginning-of-macro', `c-end-of-macro' or `c-syntactic-end-of-macro'.
+;; The cdr will be nil if we know only the start of the CPP form.
+(defvar c-macro-cache-start-pos nil)
+(make-variable-buffer-local 'c-macro-cache-start-pos)
+;; The starting position from where we determined `c-macro-cache'.
+(defvar c-macro-cache-syntactic nil)
+(make-variable-buffer-local 'c-macro-cache-syntactic)
+;; non-nil iff `c-macro-cache' has both elements set AND the cdr is at a
+;; syntactic end of macro, not merely an apparent one.
+
+(defun c-invalidate-macro-cache (beg end)
+  ;; Called from a before-change function.  If the change region is before or
+  ;; in the macro characterised by `c-macro-cache' etc., nullify it
+  ;; appropriately.  BEG and END are the standard before-change-functions
+  ;; parameters.  END isn't used.
+  (cond
+   ((null c-macro-cache))
+   ((< beg (car c-macro-cache))
+    (setq c-macro-cache nil
+	  c-macro-cache-start-pos nil
+	  c-macro-cache-syntactic nil))
+   ((and (cdr c-macro-cache)
+	 (< beg (cdr c-macro-cache)))
+    (setcdr c-macro-cache nil)
+    (setq c-macro-cache-start-pos beg
+	  c-macro-cache-syntactic nil))))
+
 (defun c-beginning-of-macro (&optional lim)
   "Go to the beginning of a preprocessor directive.
 Leave point at the beginning of the directive and return t if in one,
@@ -229,19 +261,36 @@ otherwise return nil and leave point unchanged.
 
 Note that this function might do hidden buffer changes.	 See the
 comment at the start of cc-engine.el for more info."
-  (when c-opt-cpp-prefix
-    (let ((here (point)))
-      (save-restriction
-	(if lim (narrow-to-region lim (point-max)))
-	(beginning-of-line)
-	(while (eq (char-before (1- (point))) ?\\)
-	  (forward-line -1))
-	(back-to-indentation)
-	(if (and (<= (point) here)
-		 (looking-at c-opt-cpp-start))
-	    t
-	  (goto-char here)
-	  nil)))))
+  (let ((here (point)))
+    (when c-opt-cpp-prefix
+      (if (and (car c-macro-cache)
+	       (>= (point) (car c-macro-cache))
+	       (or (and (cdr c-macro-cache)
+			(<= (point) (cdr c-macro-cache)))
+		   (<= (point) c-macro-cache-start-pos)))
+	  (unless (< (car c-macro-cache) (or lim (point-min)))
+	    (progn (goto-char (max (or lim (point-min)) (car c-macro-cache)))
+		   (setq c-macro-cache-start-pos
+			 (max c-macro-cache-start-pos here))
+		   t))
+	(setq c-macro-cache nil
+	      c-macro-cache-start-pos nil
+	      c-macro-cache-syntactic nil)
+
+	(save-restriction
+	  (if lim (narrow-to-region lim (point-max)))
+	  (beginning-of-line)
+	  (while (eq (char-before (1- (point))) ?\\)
+	    (forward-line -1))
+	  (back-to-indentation)
+	  (if (and (<= (point) here)
+		   (looking-at c-opt-cpp-start))
+	      (progn
+		(setq c-macro-cache (cons (point) nil)
+		      c-macro-cache-start-pos here)
+		t)
+	    (goto-char here)
+	    nil))))))
 
 (defun c-end-of-macro ()
   "Go to the end of a preprocessor directive.
@@ -251,12 +300,24 @@ done that the point is inside a cpp directive to begin with.
 
 Note that this function might do hidden buffer changes.	 See the
 comment at the start of cc-engine.el for more info."
-  (while (progn
-	   (end-of-line)
-	   (when (and (eq (char-before) ?\\)
-		      (not (eobp)))
-	     (forward-char)
-	     t))))
+   (if (and (cdr c-macro-cache)
+	    (<= (point) (cdr c-macro-cache))
+	    (>= (point) (car c-macro-cache)))
+       (goto-char (cdr c-macro-cache))
+     (unless (and (car c-macro-cache)
+		  (<= (point) c-macro-cache-start-pos)
+		  (>= (point) (car c-macro-cache)))
+       (setq c-macro-cache nil
+	     c-macro-cache-start-pos nil
+	     c-macro-cache-syntactic nil))
+     (while (progn
+	      (end-of-line)
+	      (when (and (eq (char-before) ?\\)
+			 (not (eobp)))
+		(forward-char)
+		t)))
+     (when (car c-macro-cache)
+       (setcdr c-macro-cache (point)))))
 
 (defun c-syntactic-end-of-macro ()
   ;; Go to the end of a CPP directive, or a "safe" pos just before.
@@ -271,12 +332,15 @@ comment at the start of cc-engine.el for more info."
   ;; at the start of cc-engine.el for more info.
   (let* ((here (point))
 	 (there (progn (c-end-of-macro) (point)))
-	 (s (parse-partial-sexp here there)))
-    (while (and (or (nth 3 s)	 ; in a string
-		    (nth 4 s))	 ; in a comment (maybe at end of line comment)
-		(> there here))	 ; No infinite loops, please.
-      (setq there (1- (nth 8 s)))
-      (setq s (parse-partial-sexp here there)))
+	 s)
+    (unless c-macro-cache-syntactic
+      (setq s (parse-partial-sexp here there))
+      (while (and (or (nth 3 s)	 ; in a string
+		      (nth 4 s)) ; in a comment (maybe at end of line comment)
+		  (> there here))	; No infinite loops, please.
+	(setq there (1- (nth 8 s)))
+	(setq s (parse-partial-sexp here there)))
+      (setq c-macro-cache-syntactic (car c-macro-cache)))
     (point)))
 
 (defun c-forward-over-cpp-define-id ()
