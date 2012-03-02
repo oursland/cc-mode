@@ -409,8 +409,7 @@
 	       (cc-eval-when-compile
 		 (boundp 'parse-sexp-lookup-properties)))
 	      (BOD-limit
-	       (c-determine-limit 500 ;; 1000
-				  )))
+	       (c-determine-limit 1000)))
 	  (goto-char
 	   (let ((here (point)))
 	     (if (eq (car (c-beginning-of-decl-1 BOD-limit)) 'same)

@@ -1653,8 +1653,7 @@ c-macro-names-with-semicolon: %s"
 		    c-macro-names-with-semicolon))))))
     
 (defvar c-macro-names-with-semicolon
-;  '("Q_OBJECT" "Q_PROPERTY" "Q_DECLARE" "Q_ENUMS")
-  nil
+  '("Q_OBJECT" "Q_PROPERTY" "Q_DECLARE" "Q_ENUMS")
   "List of #defined symbols whose expansion ends with a semicolon.
 Alternatively it can be a string, a regular expression which
 matches all such symbols.

@@ -2154,6 +2154,18 @@ comment at the start of cc-engine.el for more info."
 ;; reduced by buffer changes, and increased by invocations of
 ;; `c-state-literal-at'.
 
+(defvar c-state-semi-nonlit-pos-cache nil)
+(make-variable-buffer-local 'c-state-semi-nonlit-pos-cache)
+;; A list of buffer positions which are known not to be in a literal.  This is
+;; ordered with higher positions at the front of the list.  Only those which
+;; are less than `c-state-semi-nonlit-pos-cache-limit' are valid.
+
+(defvar c-state-semi-nonlit-pos-cache-limit 1)
+(make-variable-buffer-local 'c-state-semi-nonlit-pos-cache-limit)
+;; An upper limit on valid entries in `c-state-semi-nonlit-pos-cache'.  This is
+;; reduced by buffer changes, and increased by invocations of
+;; `c-state-literal-at'.  FIMXE!!!
+
 (defsubst c-state-pp-to-literal (from to)
   ;; Do a parse-partial-sexp from FROM to TO, returning either
   ;;     (STATE TYPE (BEG . END))     if TO is in a literal; or
@@ -2232,10 +2244,53 @@ comment at the start of cc-engine.el for more info."
 		       (setq npos macro-end)))))
 
 	    (setq pos npos)
-	    (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache))))
+	    (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache)))
+	  ;; Add one extra element above HERE so as to to avoid the previous
+	  ;; expensive calculation when the next call is close to the current
+	  ;; one.  This is especially useful when inside a large macro.
+	  (setq c-state-nonlit-pos-cache (cons npos c-state-nonlit-pos-cache)))
 
 	(if (> pos c-state-nonlit-pos-cache-limit)
 	    (setq c-state-nonlit-pos-cache-limit pos))
+	pos))))
+
+(defun c-state-semi-safe-place (here)
+  ;; Return a buffer position before HERE which is "safe", i.e. outside any
+  ;; string or comment.  It may be in a macro.
+  (save-restriction
+    (widen)
+    (save-excursion
+      (let ((c c-state-semi-nonlit-pos-cache)
+	    pos npos high-pos lit macro-beg macro-end)
+	;; Trim the cache to take account of buffer changes.
+	(while (and c (> (car c) c-state-semi-nonlit-pos-cache-limit))
+	  (setq c (cdr c)))
+	(setq c-state-semi-nonlit-pos-cache c)
+	
+	(while (and c (> (car c) here))
+	  (setq high-pos (car c))
+	  (setq c (cdr c)))
+	(setq pos (or (car c) (point-min)))
+	
+	(unless high-pos
+	  (while
+	      ;; Add an element to `c-state-semi-nonlit-pos-cache' each iteration.
+	      (and
+	       (<= (setq npos (+ pos c-state-nonlit-pos-interval)) here)
+	       
+	       ;; Test for being in a literal.  If so, go to after it.
+	       (progn
+		 (setq lit (car (cddr (c-state-pp-to-literal pos npos))))
+		 (or (null lit)
+		     (prog1 (<= (cdr lit) here)
+		       (setq npos (cdr lit))))))
+	       
+	    (setq pos npos)
+	    (setq c-state-semi-nonlit-pos-cache
+		  (cons pos c-state-semi-nonlit-pos-cache))))
+
+	(if (> pos c-state-semi-nonlit-pos-cache-limit)
+	    (setq c-state-semi-nonlit-pos-cache-limit pos))
 	pos))))
 
 (defun c-state-literal-at (here)
@@ -3056,9 +3111,11 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function is called from c-after-change.
 
-  ;; The cache of non-literals:
+  ;; The caches of non-literals:
   (if (< here c-state-nonlit-pos-cache-limit)
       (setq c-state-nonlit-pos-cache-limit here))
+  (if (< here c-state-semi-nonlit-pos-cache-limit)
+      (setq c-state-semi-nonlit-pos-cache-limit here))
 
   ;; `c-state-cache':
   ;; Case 1: if `here' is in a literal containing point-min, everything
@@ -4310,7 +4367,7 @@ Note that this function might do hidden buffer changes.	 See the
 comment at the start of cc-engine.el for more info."
   (save-restriction
     (widen)
-    (let* ((safe-place (c-state-safe-place (point)))
+    (let* ((safe-place (c-state-semi-safe-place (point)))
 	   (lit (c-state-pp-to-literal safe-place (point))))
       (or (cadr lit)
 	  (and detect-cpp
@@ -4334,7 +4391,7 @@ comment at the start of cc-engine.el for more info."
 
   (save-excursion
     (let* ((pos (point))
-	   (lim (or lim (c-state-safe-place pos)))
+	   (lim (or lim (c-state-semi-safe-place pos)))
 	   (pp-to-lit (save-restriction
 			(widen)
 			(c-state-pp-to-literal lim pos)))
@@ -4452,7 +4509,7 @@ comment at the start of cc-engine.el for more info."
   ;; Get a "safe place" approximately TRY-SIZE characters before START.
   ;; This doesn't preserve point.
   (let* ((pos (max (- start try-size) (point-min)))
-	 (base (c-state-safe-place pos))
+	 (base (c-state-semi-safe-place pos))
 	 (s (parse-partial-sexp base pos)))
     (if (or (nth 4 s) (nth 3 s))	; comment or string
 	(nth 8 s)
