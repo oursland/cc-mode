@@ -1950,10 +1950,17 @@ with a brace block."
 
 (defun c-mark-function ()
   "Put mark at end of the current top-level declaration or macro, point at beginning.
-If point is not inside any then the closest following one is chosen.
+If point is not inside any then the closest following one is
+chosen.  Each successive call of this command extends the marked
+region by one function.
+
+A mark is left where the command started.
 
 As opposed to \\[c-beginning-of-defun] and \\[c-end-of-defun], this
 function does not require the declaration to contain a brace block."
+  ;; Middle sentence of doc-string was: A mark is left where the command
+  ;; started, unless the region is already active \(in Transient Mark mode).
+  ;; FIXME!!!  for transient-mark/zemacs sometime.  (2012-03-08.)
   (interactive)
 
   (let (decl-limits)
@@ -1966,8 +1973,26 @@ function does not require the declaration to contain a brace block."
 
     (if (not decl-limits)
 	(error "Cannot find any declaration")
-      (goto-char (car decl-limits))
-      (push-mark (cdr decl-limits) nil t))))
+      (let* ((extend-region-p
+	      (and (eq this-command 'c-mark-function)
+		   (eq last-command 'c-mark-function)))
+	     (push-mark-p (and (eq this-command 'c-mark-function)
+			       (not extend-region-p)
+			       ;; (not (and transient-mark-mode mark-active))
+			       ;; FIXME!!!, sometime (2012-03-08.)
+			       )))
+	(if push-mark-p (push-mark (point)))
+	(if extend-region-p
+	    (progn
+	      (exchange-point-and-mark)
+	      (setq decl-limits (c-declaration-limits t))
+	      (when (not decl-limits)
+		(exchange-point-and-mark)
+		(error "Cannot find any declaration"))
+	      (goto-char (cdr decl-limits))
+	      (exchange-point-and-mark))
+	  (goto-char (car decl-limits))
+	  (push-mark (cdr decl-limits) nil t))))))
 
 (defun c-cpp-define-name ()
   "Return the name of the current CPP macro, or NIL if we're not in one."
