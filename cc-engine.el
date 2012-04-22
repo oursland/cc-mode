@@ -3296,8 +3296,6 @@ comment at the start of cc-engine.el for more info."
   ;; of all parens in preprocessor constructs, except for any such construct
   ;; containing point.	We can then call `c-invalidate-state-cache-1' without
   ;; worrying further about macros and template delimiters.
-  (c-record-parse-state-state) (c-replay-parse-state-state)
-  (message "Invalidate: \n%s\n" here)
   (if (memq 'category-properties c-emacs-features)
       ;; Emacs
       (c-with-<->-as-parens-suppressed
@@ -3310,8 +3308,7 @@ comment at the start of cc-engine.el for more info."
 	 (c-with-cpps-commented-out
 	  (c-invalidate-state-cache-1 here))))
     ;; XEmacs
-    (c-invalidate-state-cache-1 here))
-  (c-record-parse-state-state) (c-replay-parse-state-state))
+    (c-invalidate-state-cache-1 here)))
 
 (defun c-parse-state ()
   ;; This is a wrapper over `c-parse-state-1'.	See that function for a
@@ -3321,8 +3318,6 @@ comment at the start of cc-engine.el for more info."
   ;; of all parens in preprocessor constructs, except for any such construct
   ;; containing point.	We can then call `c-parse-state-1' without worrying
   ;; further about macros and template delimiters.
-; (c-record-parse-state-state)
-; (c-replay-parse-state-state)
   (let (here-cpp-beg here-cpp-end)
     (save-excursion
       (if (c-beginning-of-macro)
@@ -3361,21 +3356,20 @@ comment at the start of cc-engine.el for more info."
 (make-variable-buffer-local 'c-parse-state-state)
 (defun c-record-parse-state-state ()
   (setq c-parse-state-state
-	(cons `(point . ,(point))
-	      (mapcar
-	       (lambda (arg)
-		 (cons arg (symbol-value arg)))
-	       '(c-state-cache
-		 c-state-cache-good-pos
-		 c-state-nonlit-pos-cache
-		 c-state-nonlit-pos-cache-limit
-		 c-state-brace-pair-desert
-		 c-state-point-min
-		 c-state-point-min-lit-type
-		 c-state-point-min-lit-start
-		 c-state-min-scan-pos
-		 c-state-old-cpp-beg
-		 c-state-old-cpp-end)))))
+	(mapcar
+	 (lambda (arg)
+	   (cons arg (symbol-value arg)))
+	 '(c-state-cache
+	   c-state-cache-good-pos
+	   c-state-nonlit-pos-cache
+	   c-state-nonlit-pos-cache-limit
+	   c-state-brace-pair-desert
+	   c-state-point-min
+	   c-state-point-min-lit-type
+	   c-state-point-min-lit-start
+	   c-state-min-scan-pos
+	   c-state-old-cpp-beg
+	   c-state-old-cpp-end))))
 (defun c-replay-parse-state-state ()
   (message
    (concat "(setq "
