@@ -8,6 +8,9 @@ You should have received the following files in this distribution:
 
     NEWS: A list of the user visible changes in each version.
 
+    COPYING: The copyright license under which this package is
+    released.
+
     cc-align.el, cc-awk.el, cc-cmds.el, cc-defs.el, cc-engine.el,
     cc-fonts.el, cc-guess.el, cc-langs.el, cc-menus.el, cc-mode.el,
     cc-styles.el, cc-subword.el, cc-vars.el: The source code.
