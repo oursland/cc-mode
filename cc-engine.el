@@ -2450,8 +2450,12 @@ comment at the start of cc-engine.el for more info."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Variables which keep track of preprocessor constructs.
+(defvar c-state-old-cpp-beg-marker nil)
+(make-variable-buffer-local 'c-state-old-cpp-beg-marker)
 (defvar c-state-old-cpp-beg nil)
 (make-variable-buffer-local 'c-state-old-cpp-beg)
+(defvar c-state-old-cpp-end-marker nil)
+(make-variable-buffer-local 'c-state-old-cpp-end-marker)
 (defvar c-state-old-cpp-end nil)
 (make-variable-buffer-local 'c-state-old-cpp-end)
 ;; These are the limits of the macro containing point at the previous call of
@@ -2560,8 +2564,11 @@ comment at the start of cc-engine.el for more info."
 	      start-point cache-pos)))
 
     ;; Might we be better off starting from the top level, two defuns back,
-    ;; instead?
-    (when (> how-far c-state-cache-too-far)
+    ;; instead?  This heuristic no longer works well in C++, where
+    ;; declarations inside namespace brace blocks are frequently placed at
+    ;; column zero.
+    (when (and (not (c-major-mode-is 'c++-mode))
+	       (> how-far c-state-cache-too-far))
       (setq BOD-pos (c-get-fallback-scan-pos here)) ; somewhat EXPENSIVE!!!
       (if (< (- here BOD-pos) how-far)
 	  (setq strategy 'BOD
@@ -2636,29 +2643,40 @@ comment at the start of cc-engine.el for more info."
   ;; reduce the time wasted in repeated fruitless searches in brace deserts.
   (save-excursion
     (save-restriction
-      (let ((bra from) ce		; Positions of "{" and "}".
-	    new-cons
-	    (cache-pos (c-state-cache-top-lparen)) ; might be nil.
-	    (macro-start-or-from
-	     (progn (goto-char from)
-		    (c-beginning-of-macro)
-		    (point))))
+      (let* (new-cons
+	     (cache-pos (c-state-cache-top-lparen)) ; might be nil.
+	     (macro-start-or-from
+	      (progn (goto-char from)
+		     (c-beginning-of-macro)
+		     (point)))
+	     (bra			; Position of "{".
+	      ;; Don't start scanning in the middle of a CPP construct unless
+	      ;; it contains HERE - these constructs, in Emacs, are "commented
+	      ;; out" with category properties.
+	      (if (eq (c-get-char-property macro-start-or-from 'category)
+			'c-cpp-delimiter)
+		    macro-start-or-from
+		  from))
+	     ce)			; Position of "}"
 	(or upper-lim (setq upper-lim from))
 
 	;; If we're essentially repeating a fruitless search, just give up.
 	(unless (and c-state-brace-pair-desert
 		     (eq cache-pos (car c-state-brace-pair-desert))
+		     (or (null (car c-state-brace-pair-desert))
+			 (> from (car c-state-brace-pair-desert)))
 		     (<= from (cdr c-state-brace-pair-desert)))
-	  ;; DESERT-LIM.  Only search what we absolutely need to,
+	  ;; DESERT-LIM.  Avoid repeated searching through the cached desert.
 	  (let ((desert-lim
 		 (and c-state-brace-pair-desert
 		      (eq cache-pos (car c-state-brace-pair-desert))
+		      (>= from (cdr c-state-brace-pair-desert))
 		      (cdr c-state-brace-pair-desert)))
 		;; CACHE-LIM.  This limit will be necessary when an opening
 		;; paren at `cache-pos' has just had its matching close paren
-		;; inserted.  `cache-pos' continues to be a search bound, even
-		;; though the algorithm below would skip over the new paren
-		;; pair.
+		;; inserted into the buffer.  `cache-pos' continues to be a
+		;; search bound, even though the algorithm below would skip
+		;; over the new paren pair.
 		(cache-lim (and cache-pos (< cache-pos from) cache-pos)))
 	    (narrow-to-region
 		(cond
@@ -2879,7 +2897,9 @@ comment at the start of cc-engine.el for more info."
 		  (point-max)
 		(min (point-max) c-state-old-cpp-beg)))
 	(while (and c-state-cache (>= (c-state-cache-top-lparen) upper-lim))
+	  (setq scan-back-pos (car-safe (car c-state-cache)))
 	  (setq c-state-cache (cdr c-state-cache)))
+
 	;; If `upper-lim' is inside the last recorded brace pair, remove its
 	;; RBrace and indicate we'll need to search backwards for a previous
 	;; brace pair.
@@ -3312,6 +3332,13 @@ comment at the start of cc-engine.el for more info."
     ;; XEmacs
     (c-invalidate-state-cache-1 here)))
 
+(defmacro c-state-maybe-marker (place marker)
+  ;; If PLACE is non-nil, return a marker marking it, otherwise nil.
+  ;; We (re)use MARKER.
+  `(and ,place
+	(or ,marker (setq ,marker (make-marker)))
+	(set-marker ,marker ,place)))
+
 (defun c-parse-state ()
   ;; This is a wrapper over `c-parse-state-1'.	See that function for a
   ;; description of the functionality and return value.
@@ -3343,9 +3370,10 @@ comment at the start of cc-engine.el for more info."
 		(c-parse-state-1))))
 	  ;; XEmacs
 	  (c-parse-state-1))
-      (setq c-state-old-cpp-beg (and here-cpp-beg (copy-marker here-cpp-beg t))
-	    c-state-old-cpp-end (and here-cpp-end (copy-marker here-cpp-end t)))
-      )))
+      (setq c-state-old-cpp-beg
+	    (c-state-maybe-marker here-cpp-beg c-state-old-cpp-beg-marker)
+	    c-state-old-cpp-end
+	    (c-state-maybe-marker here-cpp-end c-state-old-cpp-end-marker)))))
 
 ;; Debug tool to catch cache inconsistencies.  This is called from
 ;; 000tests.el.
@@ -3354,13 +3382,26 @@ comment at the start of cc-engine.el for more info."
   (fset 'c-real-parse-state (symbol-function 'c-parse-state)))
 (cc-bytecomp-defun c-real-parse-state)
 
+(defvar c-parse-state-point nil)
 (defvar c-parse-state-state nil)
 (make-variable-buffer-local 'c-parse-state-state)
 (defun c-record-parse-state-state ()
+  (setq c-parse-state-point (point))
   (setq c-parse-state-state
 	(mapcar
 	 (lambda (arg)
-	   (cons arg (symbol-value arg)))
+	   (let ((val (symbol-value arg)))
+	     (cons arg
+
+		   ;; (if (consp val)
+		   ;;     (copy-tree val)
+		   ;;   val)
+
+		   (cond ((consp val) (copy-tree val))
+			 ((markerp val) (copy-marker val))
+			 (t val))
+
+)))
 	 '(c-state-cache
 	   c-state-cache-good-pos
 	   c-state-nonlit-pos-cache
@@ -3373,15 +3414,30 @@ comment at the start of cc-engine.el for more info."
 	   c-state-point-min-lit-start
 	   c-state-min-scan-pos
 	   c-state-old-cpp-beg
-	   c-state-old-cpp-end))))
+	   c-state-old-cpp-end
+	   c-parse-state-point))))
 (defun c-replay-parse-state-state ()
   (message
    (concat "(setq "
     (mapconcat
      (lambda (arg)
-       (format "%s %s%s" (car arg) (if (atom (cdr arg)) "" "'") (cdr arg)))
+       (format "%s %s%s" (car arg)
+	       (if (atom (cdr arg)) "" "'")
+	       (if (markerp (cdr arg))
+		   (format "(copy-marker %s)" (marker-position (cdr arg)))
+		 (cdr arg))))
      c-parse-state-state "  ")
     ")")))
+
+(defun c-debug-parse-state-double-cons (state)
+  (let (state-car conses-not-ok)
+    (while state
+      (setq state-car (car state)
+	    state (cdr state))
+      (if (and (consp state-car)
+	       (consp (car state)))
+	  (setq conses-not-ok t)))
+    conses-not-ok))
 
 (defun c-debug-parse-state ()
   (let ((here (point)) (res1 (c-real-parse-state)) res2)
@@ -3415,8 +3471,16 @@ comment at the start of cc-engine.el for more info."
 	       here res1 res2)
       (message "Old state:")
       (c-replay-parse-state-state))
+
+    (when (c-debug-parse-state-double-cons res1)
+      (message "c-parse-state INVALIDITY at %s: %s"
+	       here res1)
+      (message "Old state:")
+      (c-replay-parse-state-state))
+
     (c-record-parse-state-state)
-    res1))
+    res2 ; res1 correct a cascading series of errors ASAP
+    ))
 
 (defun c-toggle-parse-state-debug (&optional arg)
   (interactive "P")
@@ -3424,7 +3488,9 @@ comment at the start of cc-engine.el for more info."
   (fset 'c-parse-state (symbol-function (if c-debug-parse-state
 					    'c-debug-parse-state
 					  'c-real-parse-state)))
-  (c-keep-region-active))
+  (c-keep-region-active)
+  (message "c-debug-parse-state %sabled"
+	   (if c-debug-parse-state "en" "dis")))
 (when c-debug-parse-state
   (c-toggle-parse-state-debug 1))
 
