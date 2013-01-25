@@ -18,4 +18,5 @@
 (NF < 5)
 #
 /regexp/
-(NF == 3)
+NF == 3
+/regexp/
