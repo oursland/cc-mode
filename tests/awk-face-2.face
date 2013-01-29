@@ -1,0 +1,22 @@
+(0 key) (5 reg)
+(1 str) (2 reg) (6 cpp) (11 reg) (13 str) (16 reg)
+(1 str) (2 reg) (6 cpp) (11 reg) (14 str) (17 reg)
+(1 str) (2 reg) (6 cpp) (11 reg) (13 str) (16 reg)
+(1 str) (2 reg) (5 cpp) (10 reg) (13 str) (16 reg)
+(1 str) (2 reg)
+(0 key) (8 reg) (9 fun) (12 reg)
+(4 key) (10 reg)
+(4 key) (8 reg)
+(4 key) (8 reg) (10 str) (11 reg)
+(8 key) (14 reg) (16 str) (19 reg)
+(4 key) (11 reg)
+(8 key) (14 reg)
+
+(4 key) (6 reg) (9 str) (12 reg)
+
+(4 key) (6 reg) (9 str) (12 reg) (17 str) (20 reg)
+
+
+(0 var) (2 reg)
+(5 str) (8 reg)
+
