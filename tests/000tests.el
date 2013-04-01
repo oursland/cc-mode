@@ -123,9 +123,36 @@ simplifications with lesser accuracy.")
     (font-lock-make-faces)))
 
 (when cc-test-extend-faces
+  (defconst c-test-faces
+	  '(font-lock-comment-face
+	    font-lock-string-face
+	    font-lock-keyword-face
+	    font-lock-function-name-face
+	    font-lock-variable-name-face
+	    font-lock-type-face
+	    font-lock-reference-face
+	    font-lock-doc-string-face
+	    font-lock-constant-face
+	    font-lock-preprocessor-face
+	    font-lock-builtin-face
+	    font-lock-warning-face
+	    font-lock-negation-char-face
+	    font-lock-comment-delimiter-face))
   ;; Make sure all used faces are unique before loading cc-fonts.  We
   ;; might be screwed if it's already loaded - the check for ambiguous
   ;; faces below will complain in that case.
+
+  ;; Separate any faces that are aliases of eachother.  Necessary for Emacs
+  ;; 24.
+  (mapc (lambda (face)
+	  (when (and (not (eq (indirect-variable face) face))
+		     (memq (indirect-variable face) c-test-faces))
+	    (let* ((s-bound (boundp face))
+		   (s-val (and s-bound (symbol-value face))))
+	      (defvaralias face (gensym))
+	      (if s-bound
+		  (set face s-val)))))
+	c-test-faces)
 
   (defun c-test-construct-face (face &rest fallback-faces)
     ;; If `face' doesn't exist, define it.  The face definition is
@@ -157,20 +184,7 @@ simplifications with lesser accuracy.")
 		       (not (eq (symbol-value face) face)))
 	      (copy-face (symbol-value face) face)
 	      (set face face)))
-	  '(font-lock-comment-face
-	    font-lock-string-face
-	    font-lock-keyword-face
-	    font-lock-function-name-face
-	    font-lock-variable-name-face
-	    font-lock-type-face
-	    font-lock-reference-face
-	    font-lock-doc-string-face
-	    font-lock-constant-face
-	    font-lock-preprocessor-face
-	    font-lock-builtin-face
-	    font-lock-warning-face
-	    font-lock-negation-char-face
-	    font-lock-comment-delimiter-face)))
+	  c-test-faces))
 
 (require 'cc-mode)
 
