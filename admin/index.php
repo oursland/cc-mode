@@ -15,7 +15,7 @@ CC Mode what it is today, notably Barry Warsaw who took over BOCM
 Martin Stjernholm, CC Mode's maintainer from 2000 to 2005.
 
 <p>The current release available for <a
-href="release.php">download</a> is 5.32.3.  There is a detailed list
+href="release.php">download</a> is 5.32.5.  There is a detailed list
 of <a href="changes-532.php">user visible changes</a>, as well as <a
 href="installation.php">installation instructions</a> and Emacs/XEmacs
 <a href="compat.php">compatibility details</a>.
