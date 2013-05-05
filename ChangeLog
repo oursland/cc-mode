@@ -1,3 +1,226 @@
+2013-05-03  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* Patch release 5.32.5
+
+	* ChangeLog: Update for patch release 5.32.5.
+
+	* cc-defs.el (c-version): Increment to 5.32.5.
+
+	* *.el, cc-mode.texi: Add 2013 to copyright notices.
+
+	* admin/index.php, admin/release.php: Update version to 5.32.5
+
+2013-05-02  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Eliminate variable c-standard-font-lock-fontify-region-function.
+	* cc-mode.el (c-standard-font-lock-fontify-region-function): Remove.
+	(c-font-lock-fontify-region, c-after-font-lock-init): Adapt.
+
+2013-04-30  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Handle arbitrarily long C++ member initialisation lists.  Test files.
+	* tests/member-init-1.cc: Remove erroneous code which clashes with
+	this change.
+	* tests/member-init-1.res: Recreated.
+	* tests/class-31.cc: Renamed from member-9.cc; replace a
+	constructor with a member init list by a class with inheritance.
+	* tests/class-31.res: Renamed from member-9.res and recreated.
+
+2013-04-30  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Handle arbitrarily long C++ member initialisation lists.
+	Made necessary by change 2012-02-26-ell-m, where a search limit of
+	500 was introduced.
+
+	* cc-engine.el (c-back-over-member-initializers): new function.
+	(c-guess-basic-syntax): New CASE 5R (extracted from 5B) to handle
+	(most) member init lists.
+
+2013-04-15  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Correct the placement of c-cpp-delimiters when there're #s not at col 0.
+	* cc-langs.el (c-anchored-cpp-prefix): Reformulate and place a
+	submatch around the #.
+	* cc-mode.el (c-neutralize-syntax-in-and-mark-CPP): Start a search
+	at BOL.  Put the c-cpp-delimiter category text propertiy on the #,
+	not BOL.
+
+2013-04-15  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Reformulate java imenu-generic-expression.  Contributed by Filipp Gunbin.
+	The old expression contained ill formed regexps.
+
+	* cc-menus.el (cc-imenu-java-ellipsis-regexp)
+	(cc-imenu-java-type-spec-regexp, cc-imenu-java-comment-regexp)
+	(cc-imenu-java-method-arg-regexp): New defconsts.
+	(cc-imenu-java-build-type-args-regex): New defun.
+	(cc-imenu-java-generic-expression): Fixed, to remove "ambiguous"
+	handling of spaces in the regexp.
+
+2013-04-03  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Handle `parse-partial-sexp' landing inside a comment opener.
+	Also adapt to the new values of element 7 of a parse state.
+
+	* cc-engine.el (c-state-pp-to-literal): New optional parameter
+	`not-in-delimiter'.  Handle being inside comment opener.
+	(c-invalidate-state-cache-1): Reckon with an extra "invalid"
+	character in case we're typing a '*' after a '/'.
+	(c-literal-limits): Handle the awkward "not-in-delimiter" cond arm
+	instead by passing the parameter to c-state-pp-to-literal.
+
+	* cc-fonts.el (c-font-lock-doc-comments): New handling for elt. 7
+	of a parse state.
+
+2013-04-01  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Test suite: separate test faces which have been aliased to eachother.
+	* tests/000tests.el (top level) Add extra test on all pairs of
+	faces.
+
+2013-03-06  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Correct the position of point in some line-up functions.
+	* cc-align.el (c-lineup-whitesmith-in-block, c-lineup-assignments)
+	(c-lineup-gcc-asm-reg ): take position of point at column 0 rather
+	than at a random place in the line.
+	* cc-mode.texi (Custom Line-Up): State explicitly that point
+	starts at a random position in the line being indented.
+
+2013-03-04  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Replace `last-command-event' by `last-command-char' in XEmacs.
+	* cc-defs.el (c-last-command-char): New macro.
+	* cc-align.el (c-semi&comma-inside-parenlist)
+	(c-semi&comma-no-newlines-before-nonblanks)
+	(c-semi&comma-no-newlines-for-oneline-inliners): Use the new macro
+	in place of `last-command-event'.
+	* cc-cmds.el (c-electric-pound, c-electric-brace)
+	(c-electric-slash, c-electric-semi&comma, c-electric-lt-gt)
+	(c-electric-paren, c-electric-continued-statement): Use the new
+	macro in place of `last-command-event'.
+
+2013-02-02  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Fix bug in the state cache mechanism.  Remove 'BOD "strategy".  Refactor.
+	* cc-engine.el (c-get-fallback-scan-pos): Remove.
+	(c-parse-state-get-strategy): Don't return 'BOD any more.
+	(c-append-lower-brace-pair-to-state-cache): Extra parameter HERE
+	instead of narrowing.  Widen to top of buffer before searching
+	backwards for a brace pair.
+	(c-state-push-any-brace-pair): Add HERE parameter to function
+	call.
+	(c-append-to-state-cache): Extra parameter HERE in place of
+	narrowing.  Narrow to parameter HERE, in place of being called
+	narrowed.
+	(c-remove-stale-state-cache): Extra parameter HERE in place of
+	narrowing.  Check there's an open brace in the cache before
+	searching for its match.
+	(c-invalidate-state-cache-1): Add HERE parameter to function call.
+	(c-parse-state-1): Don't narrow here for 'forward strategy,
+	instead passing extra parameter HERE to several functions.  Remove
+	'BOD strategy.
+
+2013-01-29  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Amend to fontify /regexp/s in actions correctly.
+	* cc-awk.el (c-awk-harmless-char-re, c-awk-harmless-string*-re)
+	(c-awk-harmless-string*-here-re): braces, parens and semicolons
+	are no longer included.
+	(c-awk-harmless-line-char-re, c-awk-harmless-line-string*-re):
+	What used to be these variables without "-line" in the name.
+	(c-awk-neutral-re): { is no longer neutral.  Escaped newlines now
+	are.
+	(c-awk-non-arith-op-bra-re): Now also matches {.
+	(c-awk-pre-exp-alphanum-kwd-re): New regexp to match "print",
+	"return", and "case".
+	(c-awk-kwd-regexp-sign-re): New, to match "print", etc., followed
+	by /.
+	(c-awk-syntax-tablify-/): Check special cases "print /re/", etc.
+	(c-awk-set-syntax-table-properties): Extend FSM to handle
+	{,},(,),;.
+
+	awk-face-2.awk, awk-face-2.face: New test files for /regexp/s.
+
+2013-01-25  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	AWK Mode: Fix indentation bug at top level.
+	* cc-engine.el (c-guess-basic-syntax): Move CASE 5P to just before
+	CASE 5D.
+	* awk-top-1.awk, awk-top-1.res:  Add an extra test for this.
+
+2013-01-23  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Fix a bug in the state cache mechanism.  Refactor this a bit.
+
+	* cc-engine.el (c-parse-state-get-strategy): Remove the
+	`cache-pos' element from the return value.
+	(c-append-lower-brace-pair-to-state-cache): "Narrow" to end of
+	buffer to enable proper searching from beyond HERE.  Amend the
+	test for detecting the sought brace pair.  Amend the value written
+	to the "brace desert cache" when the brace isn't found.
+	(c-remove-stale-state-cache): Rename `good-pos' to `start-point',
+	and several other variables analogously.
+	(c-remove-stale-state-cache-backwards): Change `cache-pos' from a
+	parameter to a locally calculated variable.
+	(c-parse-state-1): Change the calling conventions to the two
+	defuns involving `cache-pos'.
+
+2013-01-17  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Fix bugs in the state cache.  Enhance a debugging mechanism.
+
+	* cc-engine.el (c-state-old-cpp-beg-marker)
+	(c-state-old-cpp-end-marker): New variables.
+	(c-parse-state-get-strategy): Don't use "brace at column zero"
+	strategy for C++.
+	(c-append-lower-brace-pair-to-state-cache): Repair algorithm.
+	Start a backward search for "}" definitively outside CPP
+	constructs.
+	(c-remove-stale-state-cache): Inform the caller of a need to
+	search back for a brace pair in certain circumstances.
+	(c-state-maybe-marker): New macro.
+	(c-parse-state): Reuse markers when appropriate.
+	(c-parse-state-point): New variable.
+	(c-record-parse-state-state): Record old parse state with
+	`copy-tree'.  Record previous value of point.
+	(c-replay-parse-state-state): Replay markers more correctly.
+	(c-debug-parse-state-double-cons): New debugging function.
+	(c-debug-parse-state): Call the above new function.
+	(c-toggle-parse-state-debug): Output a confirmatory message.
+
+	* cc-mode.el (c-before-change, c-after-change): Call
+	c-invalidate-state-cache from `c-before-change' instead of
+	`c-after-change'.
+
+2012-12-23  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Speed up fontification where there's large brace blocks.
+	* cc-fonts.el (c-font-lock-enclosing-decls): Add a limit to a call
+	of c-beginning-of-decl-1.
+
+2012-12-09  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Make CC Mode not hang when _some_ lines end in CRLF.
+	* cc-engine.el (c-backward-comments): Add code to work around
+	`forward-comment' not recognizing ^M as whitespace.
+
+2012-09-09  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	Correct the handling of two c-state-cache state variables.
+	* cc-engine.el (c-state-cache-init): Initialise
+	c-state-semi-nonlit-pos-cache\(-limit\)? properly.
+	(c-record-parse-state-state): record
+	c-state-semi-nonlit-pos-cache\(-limit\)?.
+
+2012-08-19  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	AWK Mode: make auto-newline work when there's "==" in the pattern.
+	* cc-cmds.el (c-point-syntax): Handle virtual semicolons
+	correctly.
+	* cc-engine.el (c-guess-basic-syntax CASE 5A.3): Test more
+	rigorously for "=" token.
+
 2012-05-05  Alan Mackenzie  <bug-cc-mode@gnu.org>
 
 	* Patch release 5.32.3
