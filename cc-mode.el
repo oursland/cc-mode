@@ -1082,7 +1082,7 @@ Note that the style variables are always made local to the buffer."
   ;; This typically sets `syntax-table' properties.
 
   (setq c-just-done-before-change nil)
-  (c-save-buffer-state ()
+  (c-save-buffer-state (case-fold-search)
     ;; When `combine-after-change-calls' is used we might get calls
     ;; with regions outside the current narrowing.  This has been
     ;; observed in Emacs 20.7.
