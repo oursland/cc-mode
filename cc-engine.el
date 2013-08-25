@@ -8513,7 +8513,7 @@ comment at the start of cc-engine.el for more info."
 	    ;; check for the class key here.
 	    (and (c-major-mode-is 'pike-mode)
 		 c-decl-block-key))
-	   bufpos braceassignp lim next-containing)
+	   bufpos braceassignp lim next-containing macro-start)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (when paren-state
@@ -8600,19 +8600,35 @@ comment at the start of cc-engine.el for more info."
 	     (if (and (eq braceassignp 'dontknow)
 		      (/= (c-backward-token-2 1 t lim) 0))
 		 (setq braceassignp nil)))
-	   (if (not braceassignp)
-	       (if (eq (char-after) ?\;)
-		   ;; Brace lists can't contain a semicolon, so we're done.
-		   (setq containing-sexp nil)
-		 ;; Go up one level.
-		 (setq containing-sexp next-containing
-		       lim nil
-		       next-containing nil))
-	     ;; we've hit the beginning of the aggregate list
+	   (cond
+	    (braceassignp
+	     ;; We've hit the beginning of the aggregate list.
 	     (c-beginning-of-statement-1
 	      (c-most-enclosing-brace paren-state))
-	     (setq bufpos (point))))
-	 )
+	     (setq bufpos (point)))
+	    ((eq (char-after) ?\;)
+	     ;; Brace lists can't contain a semicolon, so we're done.
+	     (setq containing-sexp nil))
+	    ((and (setq macro-start (point))
+		  (c-forward-to-cpp-define-body)
+		  (eq (point) containing-sexp))
+	     ;; We've a macro whose expansion starts with the '{'.
+	     ;; Heuristically, if we have a ';' in it we've not got a
+	     ;; brace list, otherwise we have.
+	     (let ((macro-end (progn (c-end-of-macro) (point))))
+	       (goto-char containing-sexp)
+	       (forward-char)
+	       (if (and (c-syntactic-re-search-forward "[;,]" macro-end t t)
+			(eq (char-before) ?\;))
+		   (setq bufpos nil
+			 containing-sexp nil)
+		 (setq bufpos macro-start))))
+	    (t
+	     ;; Go up one level
+	     (setq containing-sexp next-containing
+		   lim nil
+		   next-containing nil)))))
+
        bufpos))
    ))
 
