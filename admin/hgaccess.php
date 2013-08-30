@@ -4,45 +4,34 @@
   include ("header.h");
 ?>
 
-<h3>Downloading the repository without a SourceForge ID</h3>
+<h3>Downloading the repository</h3>
 
-<p>To download a snapshot of the CC Mode master repository, first move to the
-  directory you want it in, then execute this command:
+<p>To download a snapshot of the CC Mode master repository, just use the
+  standard mercurial "clone" command, like this:
 
-<pre>rsync -av cc-mode.hg.sourceforge.net::hgroot/cc-mode/cc-mode .</pre>
+  <pre>hg clone http://hg.code.sf.net/p/cc-mode/cc-mode TARGET-DIRECTORY</pre>
 
-<p>At the moment (February 2012) there is unfortunately no way to pull changes
-from the master repository into your own one.
+  , or alternatively, if you have a SourceForge ID:
 
-<h3>Downloading the repository with a SourceForge ID</h3>
+  <pre>hg clone ssh://USERNAME@hg.code.sf.net/p/cc-mode/cc-mode TARGET-DIRECTORY</pre>
 
-<p>To download the CC master repository, move to the directory you want it in,
-  then execute this command:
+  .  After cloning the repository, you will be able to pull future revisions
+  from it in the normal way.  (Note that the former location of the repository
+  is now a read-only fossilised snapshop from June 2013.  Don't use it!)
 
-<pre>hg clone ssh://USERNAME@cc-mode.hg.sourceforge.net/hgroot/cc-mode/cc-mode .</pre>
-
-You will then be able to pull future revisions from the repository in the
-normal way.
-
-<br><br>
-
-Whichever way you get the repository, you can then populate its directory tree with
-
-<pre>hg update</pre>
-
-Being under development, there is no guarantee that this version will work
+<p>Being under development, there is no guarantee that this version will work
 properly, or even at all.  That said, it usually works well: at least I (Alan)
 use it in my daily work, not only when I hack on it.  It might not be entirely
 compatible with user settings, but it can get more advanced fixes that are
 considered too risky to be allowed into the patch branch.
 
-Alternatively, you can switch to using the patch branch, the one with just bug
+<p>Alternatively, you can switch to using the patch branch, the one with just bug
 fixes in it.  Use this command:
 
 <pre>hg update Branch_5_32</pre>
 
-<p>To browse the project's history and current state, use
-<a href="http://cc-mode.hg.sourceforge.net:8000/hgroot/cc-mode/cc-mode">hgweb</a>.
+<p>To browse the project's history and current state online, use
+<a href="https://sourceforge.net/p/cc-mode/cc-mode/ci/default/tree/">this</a>.
 
 <p>You are especially welcome to report bugs, opinions and patches
 regarding the development version.  However if you've found a bug,
@@ -64,8 +53,8 @@ interesting; it just contains the source for this web site.
 <p>The canonical reference work for Mercurial is
 <a href="http://hgbook.red-bean.com">Mercurial: the Definitive Guide</a> by
 Bryan O'Sullivan.  The SourceForge
-<a href="http://sourceforge.net/apps/trac/sourceforge/wiki/Mercurial">documentation</a>
-can be helpful when setting up your Mercurial host.  If you are new to Mercurial,
+<a href="http://sourceforge.net/p/forge/documentation/Mercurial">documentation</a>
+might be helpful when setting up your Mercurial host.  If you are new to Mercurial,
 you might want to read Joel Spolsky's
 excellent <a href="http://hginit.com">tutorial</a>.
 
