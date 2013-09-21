@@ -3,6 +3,6 @@ public class Test {
         Path dir = Paths.get(System.getProperty("user.home"));
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             System.out.println("test");
-            }
+        }
     }
 }
