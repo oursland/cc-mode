@@ -4781,7 +4781,6 @@ comment at the start of cc-engine.el for more info."
        (if (> cfd-re-match-end (point))
 	   (goto-char cfd-re-match-end))
 
-;;;; NEW STOUGH, 2013-09-21
        ;; Each time round, the next `while' moves forward over a pseudo match
        ;; of `c-decl-prefix-or-start-re' which is either inside a literal, or
        ;; is a ":" not preceded by "public", etc..  `cfd-re-match' and
@@ -4821,7 +4820,6 @@ comment at the start of cc-engine.el for more info."
 	       ;; Found a ":" which isn't part of "public:", etc.
 	       t)
 	      (t nil)))) ;; Found a real match.  Exit the pseudo-match loop.
-;;;; END OF NEW STOUGH
 
        ;; If our match was at the decl start, we have to back up over the
        ;; preceding syntactic ws to set `cfd-match-pos' and to catch
@@ -8525,15 +8523,19 @@ comment at the start of cc-engine.el for more info."
    (c-safe
      (save-excursion
        (goto-char containing-sexp)
-       (c-forward-sexp -1)
-       (let (bracepos)
-	 (if (and (or (looking-at c-brace-list-key)
-		      (progn (c-forward-sexp -1)
-			     (looking-at c-brace-list-key)))
-		  (setq bracepos (c-down-list-forward (point)))
-		  (not (c-crosses-statement-barrier-p (point)
-						      (- bracepos 2))))
-	     (point)))))
+       (let (before-identifier)
+	 (while
+	     (progn
+	       (c-forward-sexp -1)
+	       (cond
+		((c-on-identifier) (setq before-identifier t))
+		((and before-identifier
+		      (looking-at c-postfix-decl-spec-key))
+		 (setq before-identifier nil)
+		 t)
+		((looking-at c-brace-list-key) nil)
+		(t nil))))
+	 (looking-at c-brace-list-key))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
      (let ((class-key
