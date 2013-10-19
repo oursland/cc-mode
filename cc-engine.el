@@ -6956,7 +6956,9 @@ comment at the start of cc-engine.el for more info."
 	  ;; can happen since we don't know if
 	  ;; `c-restricted-<>-arglists' will be correct inside the
 	  ;; arglist paren that gets entered.
-	  c-parse-and-markup-<>-arglists)
+	  c-parse-and-markup-<>-arglists
+	  ;; Start of the identifier for which `got-identifier' was set.
+	  name-start)
 
       (goto-char id-start)
 
@@ -6974,7 +6976,9 @@ comment at the start of cc-engine.el for more info."
 			;; If the third submatch matches in C++ then
 			;; we're looking at an identifier that's a
 			;; prefix only if it specifies a member pointer.
-			(when (setq got-identifier (c-forward-name))
+			(when (progn (setq pos (point))
+				     (setq got-identifier (c-forward-name)))
+			  (setq name-start pos)
 			  (if (looking-at "\\(::\\)")
 			      ;; We only check for a trailing "::" and
 			      ;; let the "*" that should follow be
@@ -7000,7 +7004,9 @@ comment at the start of cc-engine.el for more info."
       ;; Skip over an identifier.
       (or got-identifier
 	  (and (looking-at c-identifier-start)
-	       (setq got-identifier (c-forward-name))))
+	       (setq pos (point))
+	       (setq got-identifier (c-forward-name))
+	       (setq name-start pos)))
 
       ;; Skip over type decl suffix operators.
       (while (if (looking-at c-type-decl-suffix-key)
@@ -7093,17 +7099,21 @@ comment at the start of cc-engine.el for more info."
 
 	       (when (and got-parens
 			  (not got-prefix)
-			  (not got-suffix-after-parens)
+			  ;; (not got-suffix-after-parens)
 			  (or backup-at-type
 			      maybe-typeless
-			      backup-maybe-typeless))
-		 ;; Got a declaration of the form "foo bar (gnu);" where we've
-		 ;; recognized "bar" as the type and "gnu" as the declarator.
-		 ;; In this case it's however more likely that "bar" is the
-		 ;; declarator and "gnu" a function argument or initializer (if
-		 ;; `c-recognize-paren-inits' is set), since the parens around
-		 ;; "gnu" would be superfluous if it's a declarator.  Shift the
-		 ;; type one step backward.
+			      backup-maybe-typeless
+			      (eq at-decl-or-cast t)
+			      (save-excursion
+				(goto-char name-start)
+				(not (memq (c-forward-type) '(nil maybe))))))
+		 ;; Got a declaration of the form "foo bar (gnu);" or "bar
+		 ;; (gnu);" where we've recognized "bar" as the type and "gnu"
+		 ;; as the declarator.  In this case it's however more likely
+		 ;; that "bar" is the declarator and "gnu" a function argument
+		 ;; or initializer (if `c-recognize-paren-inits' is set),
+		 ;; since the parens around "gnu" would be superfluous if it's
+		 ;; a declarator.  Shift the type one step backward.
 		 (c-fdoc-shift-type-backward)))
 
 	   ;; Found no identifier.
