@@ -1342,10 +1342,14 @@ been put there by c-put-char-property.	POINT remains unchanged."
   ;; suppressed.
   `(unwind-protect
        (c-save-buffer-state ()
-	 (c-clear-cpp-delimiters ,beg ,end)
+	 (save-restriction
+	   (widen)
+	   (c-clear-cpp-delimiters ,beg ,end))
 	 ,`(c-with-cpps-commented-out ,@forms))
      (c-save-buffer-state ()
-       (c-set-cpp-delimiters ,beg ,end))))
+       (save-restriction
+	 (widen)
+	 (c-set-cpp-delimiters ,beg ,end)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The following macros are to be used only in `c-parse-state' and its
