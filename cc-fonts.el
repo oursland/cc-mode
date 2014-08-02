@@ -1009,7 +1009,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
        paren-depth
        id-face got-init
        c-last-identifier-range
-       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
+       brackets-after-id)
 
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
@@ -1082,13 +1083,24 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; Search syntactically to the end of the declarator (";",
 	    ;; ",", a closen paren, eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
-	    ;; Note that the open paren will match array specs in
-	    ;; square brackets, and we treat them as initializers too.
-	    (c-syntactic-re-search-forward
-	     "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+	    ;; Note that square brackets are now not also treated as
+	    ;; initializers, since this broke when there were also
+	    ;; initializing brace lists.
+	    (let (found)
+	      (while
+	    	  (and (setq found
+	    		     (c-syntactic-re-search-forward
+	    		      "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
+	    	       (eq (char-before) ?\[))
+	    	(backward-char)
+	    	(c-safe (c-forward-sexp 1))
+	    	(setq found nil)
+	    	(setq brackets-after-id t))
+	      found))
 
       (setq next-pos (match-beginning 0)
-	    id-face (if (eq (char-after next-pos) ?\()
+	    id-face (if (and (eq (char-after next-pos) ?\()
+			     (not brackets-after-id))
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
 	    got-init (and (match-beginning 1)
@@ -1459,7 +1471,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (forward-char))
 		  (setq bod-res (car (c-beginning-of-decl-1 decl-search-lim)))
 		  (if (and (eq bod-res 'same)
-			   (progn
+			   (save-excursion
 			     (c-backward-syntactic-ws)
 			     (eq (char-before) ?\})))
 		      (c-beginning-of-decl-1 decl-search-lim))
