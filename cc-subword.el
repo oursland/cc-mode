@@ -322,5 +322,8 @@ Optional argument ARG is the same as for `capitalize-word'."
 
 (cc-provide 'cc-subword)
 
-;; arch-tag: 2be9d294-7f30-4626-95e6-9964bb93c7a3
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-subword.el ends here

@@ -291,7 +291,7 @@ control).  See \"cc-mode.el\" for more info."
   ;; replaces `fill-paragraph' and does the adaption before calling
   ;; `fill-paragraph-function', and we have to mask comments etc
   ;; before that.  Also, `c-fill-paragraph' chains on to
-  ;; `fill-paragraph' and the value on `fill-parapgraph-function' to
+  ;; `fill-paragraph' and the value on `fill-paragraph-function' to
   ;; do the actual filling work.
   (substitute-key-definition 'fill-paragraph 'c-fill-paragraph
 			     c-mode-base-map global-map)
@@ -520,7 +520,7 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'fill-paragraph-function)
   (setq fill-paragraph-function 'c-fill-paragraph)
 
-  ;; Initialise the cache of brace pairs, and opening braces/brackets/parens.
+  ;; Initialize the cache of brace pairs, and opening braces/brackets/parens.
   (c-state-cache-init)
 
   (when (or c-recognize-<>-arglists
@@ -558,6 +558,8 @@ that requires a literal mode spec at compile time."
   ;; heuristic that open parens in column 0 are defun starters.  Since
   ;; we have c-state-cache, that heuristic isn't useful and only causes
   ;; trouble, so turn it off.
+;; 2006/12/17: This facility is somewhat confused, and doesn't really seem
+;; helpful.  Comment it out for now.
 ;;   (when (memq 'col-0-paren c-emacs-features)
 ;;     (make-local-variable 'open-paren-in-column-0-is-defun-start)
 ;;     (setq open-paren-in-column-0-is-defun-start nil))
@@ -672,7 +674,7 @@ compatible with old code; callers should always specify it."
       (when (eq (car elt) 'c-file-style)
 	(setq cownt (1+ cownt))))
     cownt))
-							  
+
 (defun c-before-hack-hook ()
   "Set the CC Mode style and \"offsets\" when in the buffer's local variables.
 They are set only when, respectively, the pseudo variables
@@ -908,8 +910,8 @@ Note that the style variables are always made local to the buffer."
 
 (defun c-neutralize-syntax-in-and-mark-CPP (begg endd old-len)
   ;; (i) Extend the font lock region to cover all changed preprocessor
-  ;; regions; it sets the variables `c-new-BEG' and `c-new-END' to the new
-  ;; boundaries.
+  ;; regions; it does this by setting the variables `c-new-BEG' and
+  ;; `c-new-END' to the new boundaries.
   ;;
   ;; (ii) "Neutralize" every preprocessor line wholly or partially in the
   ;; extended changed region.  "Restore" lines which were CPP lines before the
@@ -984,7 +986,7 @@ Note that the style variables are always made local to the buffer."
   ;; Note that this function must be FAST rather than accurate.  Note
   ;; also that it only has any effect when font locking is enabled.
   ;; We exploit this by checking for font-lock-*-face instead of doing
-  ;; rigourous syntactic analysis.
+  ;; rigorous syntactic analysis.
 
   ;; If either change boundary is wholly inside an identifier, delete
   ;; it/them from the cache.  Don't worry about being inside a string
@@ -1136,7 +1138,7 @@ Note that the style variables are always made local to the buffer."
   ;; nested.
   ;;
   ;; This function is called indirectly from font locking stuff - either from
-  ;; c-after-change (to prepare for after-change font-lockng) or from font
+  ;; c-after-change (to prepare for after-change font-locking) or from font
   ;; lock context (etc.) fontification.
   (let ((lit-limits (c-literal-limits))
 	(new-pos pos)
@@ -1213,10 +1215,10 @@ Note that the style variables are always made local to the buffer."
 		c-before-context-fontification-functions))))
     (funcall (default-value 'font-lock-fontify-region-function)
 	     new-beg new-end verbose)))
-  
+
 (defun c-after-font-lock-init ()
   ;; Put on `font-lock-mode-hook'.  This function ensures our after-change
-  ;; function will get excuted before the font-lock one.
+  ;; function will get executed before the font-lock one.
   (remove-hook 'after-change-functions 'c-after-change t)
   (add-hook 'after-change-functions 'c-after-change nil t))
 
@@ -1829,5 +1831,8 @@ Key bindings:
 
 (cc-provide 'cc-mode)
 
-;;; arch-tag: 7825e5c4-fd09-439f-a04d-4c13208ba3d7
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-mode.el ends here
