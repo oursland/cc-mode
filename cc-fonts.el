@@ -287,7 +287,7 @@
 	  res))))
 
   (defun c-make-font-lock-search-form (regexp highlights)
-    ;; Return a lisp form which will fontify every occurence of REGEXP
+    ;; Return a lisp form which will fontify every occurrence of REGEXP
     ;; (a regular expression, NOT a function) between POINT and `limit'
     ;; with HIGHLIGHTS, a list of highlighters as specified on page
     ;; "Search-based Fontification" in the elisp manual.
@@ -314,7 +314,7 @@
 			(match-beginning ,(car highlight))
 			(match-end ,(car highlight))
 			,(elt highlight 1))))
-		;; highlight is an "ANCHORED HIGHLIGHER" of the form
+		;; highlight is an "ANCHORED HIGHLIGHTER" of the form
 		;; (ANCHORED-MATCHER PRE-FORM POST-FORM SUBEXP-HIGHLIGHTERS...)
 		(when (nth 3 highlight)
 		  (error "Match highlights currently not supported in %s"
@@ -373,7 +373,7 @@
     ;; establish a context for the current text when, e.g., a character
     ;; is typed on a C++ inheritance continuation line, or a jit-lock
     ;; chunk starts there.
-    ;; 
+    ;;
     ;; The new function works much like a matcher element in
     ;; `font-lock-keywords'.  It cuts out a little bit of the overhead
     ;; compared to a real matcher.  The main reason is however to pass the
@@ -449,7 +449,7 @@
     ;; This function does not do any hidden buffer changes, but the
     ;; generated functions will.  (They are however used in places
     ;; covered by the font-lock context.)
-    ;; 
+    ;;
     ;; Note: Replace `byte-compile' with `eval' to debug the generated
     ;; lambda more easily.
     (byte-compile
@@ -1018,7 +1018,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	;; Inside the following "condition form", we move forward over the
 	;; declarator's identifier up as far as any opening bracket (for array
 	;; size) or paren (for parameters of function-type) or brace (for
-	;; array/struct initialisation) or "=" or terminating delimiter
+	;; array/struct initialization) or "=" or terminating delimiter
 	;; (e.g. "," or ";" or "}").
 	(and
 	    pos
@@ -1081,7 +1081,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      (<= (point) limit))
 
 	    ;; Search syntactically to the end of the declarator (";",
-	    ;; ",", a closen paren, eob etc) or to the beginning of an
+	    ;; ",", a closing paren, eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
 	    ;; Note that square brackets are now not also treated as
 	    ;; initializers, since this broke when there were also
@@ -1104,7 +1104,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  (char-after (match-beginning 1))))
 
       (if types
-	  ;; Register and fontify the identifer as a type.
+	  ;; Register and fontify the identifier as a type.
 	  (let ((c-promote-possible-types t))
 	    (goto-char id-start)
 	    (c-forward-type))
@@ -1188,7 +1188,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; o - '<> if the arglist is of angle bracket type;
 	  ;; o - 'arglist if it's some other arglist;
 	  ;; o - nil, if not in an arglist at all.  This includes the
-	  ;;   parenthesised condition which follows "if", "while", etc.
+	  ;;   parenthesized condition which follows "if", "while", etc.
 	  context
 	  ;; A list of starting positions of possible type declarations, or of
 	  ;; the typedef preceding one, if any.
@@ -1445,7 +1445,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      nil)
 
 	     ((and (not c-enums-contain-decls)
-		   ;; An optimisation quickly to eliminate scans of long enum
+		   ;; An optimization quickly to eliminate scans of long enum
 		   ;; declarations in the next cond arm.
 		   (let ((paren-state (c-parse-state)))
 		     (and
@@ -1461,7 +1461,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      ;; to check this.  If we get there, check whether a "typedef"
 	      ;; is there, then fontify the declarators accordingly.
 	      (let ((decl-search-lim (c-determine-limit 1000))
-		    paren-state bod-res encl-pos is-typedef 
+		    paren-state bod-res encl-pos is-typedef
 		    c-recognize-knr-p) ; Strictly speaking, bogus, but it
 				       ; speeds up lisp.h tremendously.
 		(save-excursion
@@ -1555,7 +1555,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Fontify the declarators of (nested) declarations we're in the middle of.
   ;; This is mainly for when a jit-lock etc. chunk starts inside the brace
   ;; block of a struct/union/class, etc.
-  ;; 
+  ;;
   ;; This function will be called from font-lock for a region bounded by POINT
   ;; and LIMIT, as though it were to identify a keyword for
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
@@ -1580,7 +1580,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (when (c-safe (c-forward-sexp))
 	    (c-forward-syntactic-ws)
 	    (c-font-lock-declarators limit t in-typedef)))))))
-	
+
 (c-lang-defconst c-simple-decl-matchers
   "Simple font lock matchers for types and declarations.  These are used
 on level 2 only and so aren't combined with `c-complex-decl-matchers'."
@@ -1694,7 +1694,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
 
-      ;; The first two rules here mostly find occurences that
+      ;; The first two rules here mostly find occurrences that
       ;; `c-font-lock-declarations' has found already, but not
       ;; declarations containing blocks in the type (see note below).
       ;; It's also useful to fontify these everywhere to show e.g. when
@@ -2016,7 +2016,7 @@ styles specified by `c-doc-comment-style'.")
 
 (defconst c-font-lock-keywords-3 (c-lang-const c-matchers-3 c)
   "Accurate normal font locking for C mode.
-Like `c-font-lock-keywords-2' but detects declarations in a more
+Like the variable `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
 
@@ -2177,7 +2177,7 @@ styles specified by `c-doc-comment-style'.")
 
 (defconst c++-font-lock-keywords-3 (c-lang-const c-matchers-3 c++)
   "Accurate normal font locking for C++ mode.
-Like `c++-font-lock-keywords-2' but detects declarations in a more
+Like the variable `c++-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c++-font-lock-extra-types'.")
 
@@ -2283,7 +2283,7 @@ comment styles specified by `c-doc-comment-style'.")
 
 (defconst objc-font-lock-keywords-3 (c-lang-const c-matchers-3 objc)
   "Accurate normal font locking for Objective-C mode.
-Like `objc-font-lock-keywords-2' but detects declarations in a more
+Like the variable `objc-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `objc-font-lock-extra-types'.")
 
@@ -2326,7 +2326,7 @@ comment styles specified by `c-doc-comment-style'.")
 
 (defconst java-font-lock-keywords-3 (c-lang-const c-matchers-3 java)
   "Accurate normal font locking for Java mode.
-Like `java-font-lock-keywords-2' but detects declarations in a more
+Like variable `java-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `java-font-lock-extra-types'.")
 
@@ -2359,7 +2359,7 @@ styles specified by `c-doc-comment-style'.")
 
 (defconst idl-font-lock-keywords-3 (c-lang-const c-matchers-3 idl)
   "Accurate normal font locking for CORBA IDL mode.
-Like `idl-font-lock-keywords-2' but detects declarations in a more
+Like the variable `idl-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `idl-font-lock-extra-types'.")
 
@@ -2392,7 +2392,7 @@ comment styles specified by `c-doc-comment-style'.")
 
 (defconst pike-font-lock-keywords-3 (c-lang-const c-matchers-3 pike)
   "Accurate normal font locking for Pike mode.
-Like `pike-font-lock-keywords-2' but detects declarations in a more
+Like the variable `pike-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `pike-font-lock-extra-types'.")
 
@@ -2505,7 +2505,7 @@ need for `pike-font-lock-extra-types'.")
 
 (defun c-find-invalid-doc-markup (regexp limit)
   ;; Used to fontify invalid markup in doc comments after the correct
-  ;; ones have been fontified: Find the first occurence of REGEXP
+  ;; ones have been fontified: Find the first occurrence of REGEXP
   ;; between the point and LIMIT that only is fontified with
   ;; `c-doc-face-name'.  If a match is found then submatch 0 surrounds
   ;; the first char and t is returned, otherwise nil is returned.
@@ -2698,5 +2698,8 @@ need for `pike-font-lock-extra-types'.")
 ;; 2006-07-10:  awk-font-lock-keywords has been moved back to cc-awk.el.
 (cc-provide 'cc-fonts)
 
-;;; arch-tag: 2f65f405-735f-4da5-8d4b-b957844c5203
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-fonts.el ends here
