@@ -6588,7 +6588,7 @@ comment at the start of cc-engine.el for more info."
        (progn (c-forward-syntactic-ws) t)
        (if (looking-at "(")
 	   (c-go-list-forward)
-         t)))
+	 t)))
 
 (defmacro c-pull-open-brace (ps)
   ;; Pull the next open brace from PS (which has the form of paren-state),
@@ -9483,16 +9483,16 @@ comment at the start of cc-engine.el for more info."
      ;;annotations.
      ((and (c-major-mode-is 'java-mode)
 	   (setq placeholder (point))
-            (c-beginning-of-statement-1)
-            (progn
-              (while (and (c-forward-annotation)
-                          (< (point) placeholder))
-                (c-forward-syntactic-ws))
-              t)
-            (prog1
-                (>= (point) placeholder)
-              (goto-char placeholder)))
-       (c-beginning-of-statement-1 containing-sexp)
+	   (c-beginning-of-statement-1)
+	   (progn
+	     (while (and (c-forward-annotation)
+			 (< (point) placeholder))
+	       (c-forward-syntactic-ws))
+	     t)
+	   (prog1
+	       (>= (point) placeholder)
+	     (goto-char placeholder)))
+      (c-beginning-of-statement-1 containing-sexp)
        (c-add-syntax 'annotation-var-cont (point)))
 
      ;; CASE G: a template list continuation?
@@ -10403,15 +10403,15 @@ comment at the start of cc-engine.el for more info."
      ;;preceding items are annotations.
 	 ((and (c-major-mode-is 'java-mode)
 	       (setq placeholder (point))
-           (c-beginning-of-statement-1)
-           (progn
+	       (c-beginning-of-statement-1)
+	       (progn
 		 (while (and (c-forward-annotation))
-	       (c-forward-syntactic-ws))
-	     t)
-	   (prog1
-             (>= (point) placeholder)
-             (goto-char placeholder)))
-      (c-add-syntax 'annotation-top-cont (c-point 'boi)))
+		   (c-forward-syntactic-ws))
+		 t)
+	       (prog1
+		   (>= (point) placeholder)
+		 (goto-char placeholder)))
+	  (c-add-syntax 'annotation-top-cont (c-point 'boi)))
 
 	 ;; CASE 5M: we are at a topmost continuation line
 	 (t
