@@ -22,7 +22,7 @@
 
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -83,7 +83,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 (defvar cc-imenu-c++-generic-expression
   `(
     ;; Try to match ::operator definitions first. Otherwise `X::operator new ()'
-    ;; will be incorrectly recognised as function `new ()' because the regexps
+    ;; will be incorrectly recognized as function `new ()' because the regexps
     ;; work by backtracking from the end of the definition.
     (nil
      ,(concat
@@ -102,7 +102,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 					      ; avoid prototypes.  Can't
 					      ; catch cases with () inside
 					      ; the parentheses surrounding
-					      ; the parameters.	 e.g.:
+					      ; the parameters.  e.g.:
 					      ; `int foo(int a=bar()) {...}'
        ) 1)
     ;; Special case to match a line like `main() {}'
@@ -160,7 +160,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 
 (defvar cc-imenu-c-generic-expression
   cc-imenu-c++-generic-expression
-  "Imenu generic expression for C mode.	 See `imenu-generic-expression'.")
+  "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
 
 
 ;; Auxiliary regexps for Java try to match their trailing whitespace where
@@ -270,7 +270,7 @@ nested angle brackets constructs."
        "\\("				      ; method name which gets captured
 					      ; into index
          "[" c-alpha "_]"
-         "[" c-alnum "_]*"
+	 "[" c-alnum "_]*"
        "\\)"
        "[ \t\n\r]*"
        ;; An argument list that contains zero or more arguments.
@@ -326,7 +326,7 @@ nested angle brackets constructs."
    ;; Pick a token by (match-string 8 or 9)
    ;;
    "\\|\\("
-   "^[-+][:" c-alnum "()*_<>\n\t ]*[;{]"	; Methods
+   "^[-+][:" c-alnum "()*_<>\n\t ]*[;{]"        ; Methods
    "\\|"
    "^@interface[\t ]+[" c-alnum "_]+[\t ]*:"
    "\\|"
@@ -362,7 +362,7 @@ Example:
 	    p (1+ p))
       (cond
        ;; Is CHAR part of a objc token?
-       ((and (not inargvar)	; Ignore if CHAR is part of an argument variable.
+       ((and (not inargvar)   ; Ignore if CHAR is part of an argument variable.
 	     (eq 0 betweenparen) ; Ignore if CHAR is in parentheses.
 	     (or (and (<= ?a char) (<= char ?z))
 		 (and (<= ?A char) (<= char ?Z))
@@ -388,7 +388,7 @@ Example:
 	(setq betweenparen (1- betweenparen)))))
     return))
 
-(defun cc-imenu-objc-remove-white-space	 (str)
+(defun cc-imenu-objc-remove-white-space  (str)
   "Remove all spaces and tabs from STR."
   (let ((return "")
 	(p 0)
@@ -403,13 +403,13 @@ Example:
     return))
 
 (defun cc-imenu-objc-function ()
-  "imenu supports for objc-mode."
+  "Imenu support for Objective C mode."
   (let (methodlist
 	clist
 	;;
 	;; OBJC, Cnoreturn, Cgeneralfunc, Cproto are constants.
 	;;
-	;;		    *Warning for developers*
+	;;                  *Warning for developers*
 	;; These constants depend on `cc-imenu-c++-generic-expression'.
 	;;
 	(OBJC cc-imenu-objc-generic-expression-objc-base-index)
@@ -426,11 +426,11 @@ Example:
 	str
 	str2
 	(intflen (length "@interface"))
-	(implen	 (length "@implementation"))
-	(prtlen	 (length "@protocol"))
+	(implen  (length "@implementation"))
+	(prtlen  (length "@protocol"))
 	(func
 	 ;;
-	 ;; Does this emacs has buffer-substring-no-properties?
+	 ;; Does this emacs have buffer-substring-no-properties?
 	 ;;
 	 (if (fboundp 'buffer-substring-no-properties)
 	     'buffer-substring-no-properties
@@ -483,7 +483,7 @@ Example:
 		str2 "@protocol")))
 	(setq str (cc-imenu-objc-remove-white-space str))
 	(setq methodlist (cons (cons str2
-			      (match-beginning langnum))
+				     (match-beginning langnum))
 			       methodlist))
 	(setq toplist (cons nil (cons (cons str
 					  methodlist) toplist))
@@ -526,5 +526,8 @@ Example:
 
 (cc-provide 'cc-menus)
 
-;;; arch-tag: f6b60933-91f0-4145-ab44-70ca6d1b919b
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-menus.el ends here

@@ -152,4 +152,8 @@ one is kept."
 
 
 (cc-provide 'cc-fix)
+;;; Local Variables:
+;;; indent-tabs-mode: t
+;;; tab-width: 8
+;;; End:
 ;;; cc-fix.el ends here
