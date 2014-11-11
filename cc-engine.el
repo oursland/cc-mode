@@ -5483,7 +5483,7 @@ comment at the start of cc-engine.el for more info."
       (when (equal (c-get-char-property (point) 'syntax-table)
 			c-<-as-paren-syntax) ; should always be true.
 	(c-unmark-<->-as-paren (point)))
-      (c-unmark-<->-as-paren (point)))))
+      (c-unmark-<->-as-paren pos))))
 
 (defun c-clear-<>-pair-props (&optional pos)
   ;; POS (default point) is at a < or > character.  If it has an
