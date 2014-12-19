@@ -1,16 +1,16 @@
 enum class Enumeration
 {
-  Val1,
-  Val2,
-  Val3 = 100,
-  Val4 /* = 101 */
+    Val1,
+    Val2,
+    Val3 = 100,
+    Val4 /* = 101 */
 };
 
 enum class Enum2 : unsigned int
-    {
-        Val1,
-        Val2
-    };
+{
+    Val1,
+    Val2
+};
 
 enum Enum3 : unsigned long {Val1 = 1, Val2};
 
