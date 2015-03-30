@@ -480,7 +480,7 @@ parameters \(point-min) and \(point-max).")
   ;; The value here may be a list of functions or a single function.
   t 'c-change-set-fl-decl-start
   (c c++ objc) '(c-neutralize-syntax-in-and-mark-CPP
-		 c-change-set-fl-decl-start)
+		 c-change-expand-fl-region)
   awk 'c-awk-extend-and-syntax-tablify-region)
 (c-lang-defvar c-before-font-lock-functions
 	       (let ((fs (c-lang-const c-before-font-lock-functions)))
@@ -507,7 +507,7 @@ parameters \(point-min), \(point-max) and <buffer size>.")
 
 (c-lang-defconst c-before-context-fontification-functions
   awk nil
-  t 'c-context-set-fl-decl-start)
+  t 'c-context-expand-fl-region)
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
 (c-lang-defvar c-before-context-fontification-functions
