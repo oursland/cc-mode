@@ -1314,10 +1314,12 @@ This function is called from `c-common-init', once per mode initialization."
   ;; Objc (the languages with #define) and AWK Mode make non-null use of
   ;; this function.
   (when (eq font-lock-support-mode 'jit-lock-mode)
-    (if (< c-new-BEG beg)
-	(put-text-property c-new-BEG beg 'fontified nil))
-    (if (> c-new-END end)
-	(put-text-property end c-new-END 'fontified nil)))
+    (save-restriction
+      (widen)
+      (if (< c-new-BEG beg)
+	  (put-text-property c-new-BEG beg 'fontified nil))
+      (if (> c-new-END end)
+	  (put-text-property end c-new-END 'fontified nil))))
   (cons c-new-BEG c-new-END))
 
 ;; Emacs < 22 and XEmacs
