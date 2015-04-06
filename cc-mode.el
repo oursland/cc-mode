@@ -646,13 +646,14 @@ compatible with old code; callers should always specify it."
     (setq c-new-BEG (point-min))
     (setq c-new-END (point-max))
     (save-excursion
-      (mapc (lambda (fn)
-	      (funcall fn (point-min) (point-max)))
-	    c-get-state-before-change-functions)
-      (mapc (lambda (fn)
-	      (funcall fn (point-min) (point-max)
-		       (- (point-max) (point-min))))
-	    c-before-font-lock-functions)))
+      (let (before-change-functions after-change-functions)
+	(mapc (lambda (fn)
+		(funcall fn (point-min) (point-max)))
+	      c-get-state-before-change-functions)
+	(mapc (lambda (fn)
+		(funcall fn (point-min) (point-max)
+			 (- (point-max) (point-min))))
+	      c-before-font-lock-functions))))
 
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
@@ -964,7 +965,9 @@ Note that the style variables are always made local to the buffer."
 	(unless
 	    (or (save-excursion
 		  (goto-char (match-beginning 0))
-		  (c-beginning-of-macro))
+		  (let ((here (point)))
+		    (and (save-match-data (c-beginning-of-macro))
+			 (< (point) here))))
 		(progn
 		  (setq pps-state
 			(parse-partial-sexp pps-position (point) nil nil pps-state)
@@ -1157,6 +1160,7 @@ Note that the style variables are always made local to the buffer."
 	;; Go to a less nested declaration each time round this loop.
 	(and
 	 (eq (car (c-beginning-of-decl-1 bod-lim)) 'same)
+	 (> (point) bod-lim)
 	 (progn (setq bo-decl (point))
 		;; Are we looking at a keyword such as "template" or
 		;; "typedef" which can decorate a type, or the type itself?
